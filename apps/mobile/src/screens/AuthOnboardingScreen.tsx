@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  Modal,
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { useApp } from '../context/AppContext';
@@ -17,6 +18,8 @@ import { LandlordDashboardScreen } from './LandlordDashboardScreen';
 import { ContractDetailModal } from './ContractDetailModal';
 import { InvoiceDetailModal } from './InvoiceDetailModal';
 import { AreaInsightsModal } from './AreaInsightsModal';
+import { RoommateMatchingScreen } from './RoommateMatchingScreen';
+import { ViewingHandoverModal } from './ViewingHandoverModal';
 import { PropertyType, UserRole, RentalContract, RentInvoice } from '@troviet/shared';
 
 const PREFERRED_TYPES: Array<{ type: PropertyType; label: string }> = [
@@ -55,11 +58,13 @@ export const AuthOnboardingScreen: React.FC = () => {
   const [isPrivacyPolicyOpen, setIsPrivacyPolicyOpen] = useState(false);
   const [isDataManagementOpen, setIsDataManagementOpen] = useState(false);
 
-  // Phase 6 modals state
+  // Phase 6 & 7 modals state
   const [isLandlordDashboardOpen, setIsLandlordDashboardOpen] = useState(false);
   const [selectedContract, setSelectedContract] = useState<RentalContract | null>(null);
   const [selectedInvoice, setSelectedInvoice] = useState<RentInvoice | null>(null);
   const [isAreaInsightsOpen, setIsAreaInsightsOpen] = useState(false);
+  const [isRoommateMatchingOpen, setIsRoommateMatchingOpen] = useState(false);
+  const [isHandoverOpen, setIsHandoverOpen] = useState(false);
 
   const toggleType = (t: PropertyType) => {
     setSelectedTypes((prev) =>
@@ -187,6 +192,18 @@ export const AuthOnboardingScreen: React.FC = () => {
             title="📊 Xem mặt bằng giá thị trường Đà Nẵng (6 tháng)"
             variant="outline"
             onPress={() => setIsAreaInsightsOpen(true)}
+          />
+
+          <Button
+            title="🤝 Tìm bạn ở ghép (AI Habit Match)"
+            variant="secondary"
+            onPress={() => setIsRoommateMatchingOpen(true)}
+          />
+
+          <Button
+            title="📋 Biên bản bàn giao nhận phòng & Công tơ"
+            variant="outline"
+            onPress={() => setIsHandoverOpen(true)}
           />
         </View>
       </View>
@@ -392,6 +409,18 @@ export const AuthOnboardingScreen: React.FC = () => {
       <AreaInsightsModal
         visible={isAreaInsightsOpen}
         onClose={() => setIsAreaInsightsOpen(false)}
+      />
+
+      {/* Phase 7 Roommate Matching Modal */}
+      <RoommateMatchingScreen
+        visible={isRoommateMatchingOpen}
+        onClose={() => setIsRoommateMatchingOpen(false)}
+      />
+
+      {/* Phase 7 Property Handover Modal */}
+      <ViewingHandoverModal
+        visible={isHandoverOpen}
+        onClose={() => setIsHandoverOpen(false)}
       />
     </ScrollView>
   );

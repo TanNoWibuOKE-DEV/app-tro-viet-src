@@ -6,11 +6,14 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  Modal,
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { useApp } from '../context/AppContext';
 import { ListingCard } from '../components/ListingCard';
 import { AreaInsightsModal } from './AreaInsightsModal';
+import { RoommateMatchingScreen } from './RoommateMatchingScreen';
+import { ViewingHandoverModal } from './ViewingHandoverModal';
 import { PropertyType } from '@troviet/shared';
 
 const POPULAR_ALIASES = [
@@ -36,6 +39,8 @@ export const HomeScreen: React.FC<{ onNavigateToSearch: (query?: string) => void
   const [searchInput, setSearchInput] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<PropertyType | 'all'>('all');
   const [showAreaInsights, setShowAreaInsights] = useState(false);
+  const [showRoommateMatching, setShowRoommateMatching] = useState(false);
+  const [showHandoverModal, setShowHandoverModal] = useState(false);
 
   const publishedListings = listings.filter((l) => l.status === 'published');
 
@@ -139,6 +144,41 @@ export const HomeScreen: React.FC<{ onNavigateToSearch: (query?: string) => void
             </View>
           </View>
         </TouchableOpacity>
+
+        {/* Phase 7 Quick Entry Banners */}
+        <View style={styles.quickFeaturesRow}>
+          <TouchableOpacity
+            onPress={() => setShowRoommateMatching(true)}
+            style={[
+              styles.quickFeatureCard,
+              { backgroundColor: colors.background, borderColor: colors.border },
+            ]}
+          >
+            <Text style={{ fontSize: 20, marginBottom: 4 }}>🤝</Text>
+            <Text style={[styles.quickFeatureTitle, { color: colors.textPrimary }]}>
+              Ở ghép thông minh
+            </Text>
+            <Text style={[styles.quickFeatureSub, { color: colors.textSecondary }]}>
+              AI tìm bạn hợp nếp sống & ngân sách
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => setShowHandoverModal(true)}
+            style={[
+              styles.quickFeatureCard,
+              { backgroundColor: colors.background, borderColor: colors.border },
+            ]}
+          >
+            <Text style={{ fontSize: 20, marginBottom: 4 }}>📋</Text>
+            <Text style={[styles.quickFeatureTitle, { color: colors.textPrimary }]}>
+              Bàn giao nhận phòng
+            </Text>
+            <Text style={[styles.quickFeatureSub, { color: colors.textSecondary }]}>
+              Chốt chỉ số điện nước & kiểm kê phòng
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Category Pills */}
@@ -216,6 +256,18 @@ export const HomeScreen: React.FC<{ onNavigateToSearch: (query?: string) => void
       <AreaInsightsModal
         visible={showAreaInsights}
         onClose={() => setShowAreaInsights(false)}
+      />
+
+      {/* Roommate Matching Modal */}
+      <RoommateMatchingScreen
+        visible={showRoommateMatching}
+        onClose={() => setShowRoommateMatching(false)}
+      />
+
+      {/* Property Handover Modal */}
+      <ViewingHandoverModal
+        visible={showHandoverModal}
+        onClose={() => setShowHandoverModal(false)}
       />
     </ScrollView>
   );
@@ -336,5 +388,25 @@ const styles = StyleSheet.create({
   badgeCount: {
     fontSize: 13,
     fontWeight: '700',
+  },
+  quickFeaturesRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 10,
+  },
+  quickFeatureCard: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  quickFeatureTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  quickFeatureSub: {
+    fontSize: 11,
+    lineHeight: 15,
   },
 });
