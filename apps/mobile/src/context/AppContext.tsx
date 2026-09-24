@@ -17,6 +17,9 @@ import {
   LandlordVerification,
   RentalContract,
   RentInvoice,
+  RoommateProfile,
+  PropertyHandoverRecord,
+  TenancyReminder,
   MOCK_CONVERSATIONS,
   MOCK_MESSAGES,
   MOCK_REVIEWS,
@@ -24,6 +27,10 @@ import {
   MOCK_NOTIFICATIONS,
   MOCK_CONTRACTS,
   MOCK_INVOICES,
+  MOCK_ROOMMATE_PROFILES,
+  MOCK_PROPERTY_HANDOVERS,
+  checkRentInvoiceReminders,
+  checkContractExpiryReminders,
   analyzeChatMessageForRisks,
   checkReviewEligibility,
 } from '@troviet/shared';
@@ -124,6 +131,16 @@ interface AppContextType {
   createContract: (contract: Omit<RentalContract, 'id' | 'createdAt'>) => RentalContract;
   createInvoice: (invoiceData: Omit<RentInvoice, 'id' | 'createdAt'>) => RentInvoice;
   markInvoicePaid: (invoiceId: string) => void;
+
+  // Phase 7: Roommate Matching, Handover & Reminders
+  roommateProfiles: RoommateProfile[];
+  userRoommateProfile: RoommateProfile | null;
+  createRoommateProfile: (profile: Omit<RoommateProfile, 'id' | 'createdAt'>) => RoommateProfile;
+  toggleRoommateStatus: (profileId: string) => void;
+  handovers: PropertyHandoverRecord[];
+  createHandoverRecord: (record: Omit<PropertyHandoverRecord, 'id' | 'createdAt' | 'updatedAt'>) => PropertyHandoverRecord;
+  confirmHandover: (handoverId: string, role: 'tenant' | 'landlord') => void;
+  tenancyReminders: TenancyReminder[];
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -218,6 +235,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Phase 6: Contracts & Invoices State
   const [contracts, setContracts] = useState<RentalContract[]>(MOCK_CONTRACTS);
   const [invoices, setInvoices] = useState<RentInvoice[]>(MOCK_INVOICES);
+
+  // Phase 7: Roommate Profiles & Property Handovers State
+  const [roommateProfiles, setRoommateProfiles] = useState<RoommateProfile[]>(MOCK_ROOMMATE_PROFILES);
+  const [handovers, setHandovers] = useState<PropertyHandoverRecord[]>(MOCK_PROPERTY_HANDOVERS);
 
   const toggleFavorite = (id: string) => {
     setFavoriteIds((prev) =>
@@ -755,6 +776,85 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const userRoommateProfile = useMemo(
+    () => roommateProfiles.find((p) => p.userId === currentUser?.id) || null,
+    [roommateProfiles, currentUser]
+  );
+
+  const tenancyReminders = useMemo(() => {
+    const invReminders = checkRentInvoiceReminders(invoices);
+    const ctrReminders = checkContractExpiryReminders(contracts);
+    return [...invReminders, ...ctrReminders];
+  }, [invoices, contracts]);
+
+  const createRoommateProfile = (
+    profileData: Omit<RoommateProfile, 'id' | 'createdAt'>
+  ): RoommateProfile => {
+    const created: RoommateProfile = {
+      ...profileData,
+      id: `roommate-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    setRoommateProfiles((prev) => [created, ...prev]);
+    return created;
+  };
+
+  const toggleRoommateStatus = (profileId: string) => {
+    setRoommateProfiles((prev) =>
+      prev.map((p) => (p.id === profileId ? { ...p, isActive: !p.isActive } : p))
+    );
+  };
+
+  const createHandoverRecord = (
+    recordData: Omit<PropertyHandoverRecord, 'id' | 'createdAt' | 'updatedAt'>
+  ): PropertyHandoverRecord => {
+    const now = new Date().toISOString();
+    const created: PropertyHandoverRecord = {
+      ...recordData,
+      id: `handover-${Date.now()}`,
+      createdAt: now,
+      updatedAt: now,
+    };
+    setHandovers((prev) => [created, ...prev]);
+    return created;
+  };
+
+  const confirmHandover = (handoverId: string, role: 'tenant' | 'landlord') => {
+    const now = new Date().toISOString();
+    setHandovers((prev) =>
+      prev.map((h) => {
+        if (h.id !== handoverId) return h;
+        const updated = { ...h, updatedAt: now };
+        if (role === 'tenant') {
+          updated.tenantConfirmed = true;
+          updated.tenantConfirmedAt = now;
+        } else {
+          updated.landlordConfirmed = true;
+          updated.landlordConfirmedAt = now;
+        }
+        if (updated.tenantConfirmed && updated.landlordConfirmed) {
+          updated.status = 'completed';
+        }
+        return updated;
+      })
+    );
+
+    const target = handovers.find((h) => h.id === handoverId);
+    if (target) {
+      const recipientId = role === 'tenant' ? target.landlordId : target.tenantId;
+      const notif: AppNotification = {
+        id: `notif-${Date.now()}`,
+        userId: recipientId,
+        title: 'Biên bản bàn giao phòng đã được xác nhận 📋',
+        body: `${role === 'tenant' ? 'Khách thuê' : 'Chủ trọ'} đã xác nhận chỉ số đồng hồ điện nước ban đầu cho căn phòng "${target.listingTitle}".`,
+        type: 'contract_signed',
+        isRead: false,
+        createdAt: now,
+      };
+      setNotifications((prev) => [notif, ...prev]);
+    }
+  };
+
   const value = useMemo(
     () => ({
       currentUser,
@@ -814,6 +914,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       createContract,
       createInvoice,
       markInvoicePaid,
+      // Phase 7
+      roommateProfiles,
+      userRoommateProfile,
+      createRoommateProfile,
+      toggleRoommateStatus,
+      handovers,
+      createHandoverRecord,
+      confirmHandover,
+      tenancyReminders,
     }),
     [
       currentUser,
@@ -836,6 +945,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       l3VerificationRequests,
       contracts,
       invoices,
+      roommateProfiles,
+      userRoommateProfile,
+      handovers,
+      tenancyReminders,
     ]
   );
 
