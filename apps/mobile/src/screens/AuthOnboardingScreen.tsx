@@ -13,7 +13,11 @@ import { Button } from '../components/Button';
 import { Badge } from '../components/Badge';
 import { PrivacyPolicyModal } from './PrivacyPolicyModal';
 import { DataManagementModal } from './DataManagementModal';
-import { PropertyType, UserRole } from '@troviet/shared';
+import { LandlordDashboardScreen } from './LandlordDashboardScreen';
+import { ContractDetailModal } from './ContractDetailModal';
+import { InvoiceDetailModal } from './InvoiceDetailModal';
+import { AreaInsightsModal } from './AreaInsightsModal';
+import { PropertyType, UserRole, RentalContract, RentInvoice } from '@troviet/shared';
 
 const PREFERRED_TYPES: Array<{ type: PropertyType; label: string }> = [
   { type: 'room', label: 'Phòng trọ' },
@@ -38,7 +42,7 @@ const PREFERRED_WARDS = [
 
 export const AuthOnboardingScreen: React.FC = () => {
   const { colors } = useTheme();
-  const { currentUser, mockLoginAs, userPreferences, setUserPreferences } = useApp();
+  const { currentUser, mockLoginAs, userPreferences, setUserPreferences, contracts, invoices } = useApp();
 
   // Onboarding state
   const [selectedTypes, setSelectedTypes] = useState<PropertyType[]>(
@@ -50,6 +54,12 @@ export const AuthOnboardingScreen: React.FC = () => {
   );
   const [isPrivacyPolicyOpen, setIsPrivacyPolicyOpen] = useState(false);
   const [isDataManagementOpen, setIsDataManagementOpen] = useState(false);
+
+  // Phase 6 modals state
+  const [isLandlordDashboardOpen, setIsLandlordDashboardOpen] = useState(false);
+  const [selectedContract, setSelectedContract] = useState<RentalContract | null>(null);
+  const [selectedInvoice, setSelectedInvoice] = useState<RentInvoice | null>(null);
+  const [isAreaInsightsOpen, setIsAreaInsightsOpen] = useState(false);
 
   const toggleType = (t: PropertyType) => {
     setSelectedTypes((prev) =>
@@ -127,6 +137,57 @@ export const AuthOnboardingScreen: React.FC = () => {
               );
             })}
           </View>
+        </View>
+      </View>
+
+      {/* Phase 6: Rent & Tenancy Management Card */}
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Text style={[styles.sectionHeading, { color: colors.textPrimary }]}>
+          🏢 Quản lý Thuê & Hợp đồng Trọ Việt
+        </Text>
+        <Text style={[styles.sectionSub, { color: colors.textSecondary }]}>
+          Hợp đồng điện tử minh bạch, phân tích điều khoản bằng AI và thanh toán VietQR NAPAS 24/7.
+        </Text>
+
+        <View style={{ gap: 10 }}>
+          {currentUser?.role === 'landlord' ? (
+            <Button
+              title="🏠 Bảng điều khiển Chủ trọ (Hợp đồng & Hóa đơn)"
+              variant="primary"
+              onPress={() => setIsLandlordDashboardOpen(true)}
+            />
+          ) : (
+            <>
+              <Button
+                title={`📑 Hợp đồng thuê của tôi (${contracts.length})`}
+                variant="primary"
+                onPress={() => {
+                  if (contracts.length > 0) {
+                    setSelectedContract(contracts[0]);
+                  } else {
+                    Alert.alert('Chưa có hợp đồng', 'Hiện bạn chưa có hợp đồng thuê nào.');
+                  }
+                }}
+              />
+              <Button
+                title={`💳 Hóa đơn tiền phòng & VietQR (${invoices.length})`}
+                variant="secondary"
+                onPress={() => {
+                  if (invoices.length > 0) {
+                    setSelectedInvoice(invoices[0]);
+                  } else {
+                    Alert.alert('Chưa có hóa đơn', 'Hiện bạn chưa có hóa đơn tiền phòng nào.');
+                  }
+                }}
+              />
+            </>
+          )}
+
+          <Button
+            title="📊 Xem mặt bằng giá thị trường Đà Nẵng (6 tháng)"
+            variant="outline"
+            onPress={() => setIsAreaInsightsOpen(true)}
+          />
         </View>
       </View>
 
@@ -308,6 +369,29 @@ export const AuthOnboardingScreen: React.FC = () => {
       <DataManagementModal
         visible={isDataManagementOpen}
         onClose={() => setIsDataManagementOpen(false)}
+      />
+
+      {/* Phase 6 Modals */}
+      <LandlordDashboardScreen
+        visible={isLandlordDashboardOpen}
+        onClose={() => setIsLandlordDashboardOpen(false)}
+      />
+
+      <ContractDetailModal
+        visible={!!selectedContract}
+        contract={selectedContract}
+        onClose={() => setSelectedContract(null)}
+      />
+
+      <InvoiceDetailModal
+        visible={!!selectedInvoice}
+        invoice={selectedInvoice}
+        onClose={() => setSelectedInvoice(null)}
+      />
+
+      <AreaInsightsModal
+        visible={isAreaInsightsOpen}
+        onClose={() => setIsAreaInsightsOpen(false)}
       />
     </ScrollView>
   );

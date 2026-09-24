@@ -10,6 +10,7 @@ import {
 import { useTheme } from '../theme/ThemeContext';
 import { useApp } from '../context/AppContext';
 import { ListingCard } from '../components/ListingCard';
+import { AreaInsightsModal } from './AreaInsightsModal';
 import { PropertyType } from '@troviet/shared';
 
 const POPULAR_ALIASES = [
@@ -34,6 +35,7 @@ export const HomeScreen: React.FC<{ onNavigateToSearch: (query?: string) => void
   const { listings, setSelectedListing } = useApp();
   const [searchInput, setSearchInput] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<PropertyType | 'all'>('all');
+  const [showAreaInsights, setShowAreaInsights] = useState(false);
 
   const publishedListings = listings.filter((l) => l.status === 'published');
 
@@ -119,6 +121,24 @@ export const HomeScreen: React.FC<{ onNavigateToSearch: (query?: string) => void
             </TouchableOpacity>
           ))}
         </ScrollView>
+
+        {/* Da Nang Ward Price Trend Quick Banner */}
+        <TouchableOpacity
+          onPress={() => setShowAreaInsights(true)}
+          style={[styles.marketBanner, { backgroundColor: colors.card, borderColor: colors.primary }]}
+        >
+          <View style={styles.marketBannerContent}>
+            <Text style={{ fontSize: 16, marginRight: 8 }}>📊</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.marketBannerTitle, { color: colors.textPrimary }]}>
+                Mặt bằng giá thị trường Đà Nẵng
+              </Text>
+              <Text style={[styles.marketBannerSub, { color: colors.textSecondary }]}>
+                Xem xu hướng giá 6 tháng & biểu giá điện nước tham chiếu →
+              </Text>
+            </View>
+          </View>
+        </TouchableOpacity>
       </View>
 
       {/* Category Pills */}
@@ -191,6 +211,12 @@ export const HomeScreen: React.FC<{ onNavigateToSearch: (query?: string) => void
           />
         ))}
       </View>
+
+      {/* Area Insights Modal */}
+      <AreaInsightsModal
+        visible={showAreaInsights}
+        onClose={() => setShowAreaInsights(false)}
+      />
     </ScrollView>
   );
 };
@@ -255,6 +281,24 @@ const styles = StyleSheet.create({
   aliasPillText: {
     fontSize: 12,
     fontWeight: '600',
+  },
+  marketBanner: {
+    borderRadius: 10,
+    borderWidth: 1,
+    padding: 10,
+    marginTop: 12,
+  },
+  marketBannerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  marketBannerTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  marketBannerSub: {
+    fontSize: 11,
+    marginTop: 2,
   },
   categoryRow: {
     marginBottom: 16,
