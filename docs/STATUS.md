@@ -1,18 +1,16 @@
 # Trọ Việt — Tiến độ
 
-**Phase hiện tại:** Phase 4 — Hoàn thiện & Thử nghiệm Beta
-**Trạng thái:** Đã hoàn thành (Toàn bộ phạm vi MVP Phase 0–4 đã hoàn tất)
+**Phase hiện tại:** Phase 5 — Tin cậy nâng cao & AI (Sau MVP)
+**Trạng thái:** Đã hoàn thành (Chờ duyệt chuyển sang Phase 6)
 
-## Quyết định đã chốt (Sau Phase 4)
+## Quyết định đã chốt (Sau Phase 5)
 - **Tech Stack:** Monorepo (`apps/mobile`, `packages/shared`, `supabase/`), Expo (React Native + TypeScript + Expo Router) + Supabase (Postgres, PostGIS, Auth, Storage, Realtime). Chi tiết tại [001-stack.md](file:///d:/File_Website/web_tmđt/docs/adr/001-stack.md).
 - **Thị trường ra mắt đầu tiên:** TP. Đà Nẵng (áp dụng mô hình địa giới 2 cấp hiện hành và bảng `area_aliases`).
-- **Bản đồ & Khoảng cách:** Tính toán khoảng cách địa lý theo công thức Haversine, hỗ trợ lọc phòng quanh mốc quen thuộc (ĐH Duy Tân, ĐH Bách Khoa, Mỹ Khê, Cầu Rồng); hiển thị khoảng cách định dạng Việt Nam (`2,5 km`, `800 m`).
-- **Máy tính chi phí cá nhân:** Cho phép người dùng tùy biến số người, số xe máy, mức điện (kWh) và nước (m³) để ra ước tính chính xác theo nhu cầu ở thực tế.
-- **Xác minh L2:** Quy trình nộp CCCD và phê duyệt trên Admin có ghi nhận Audit Log.
-- **Anti-Scam có giải thích (Explainable Rule Engine):** Cảnh báo văn minh, minh bạch khi phát hiện giá thấp bất thường hoặc từ khóa đòi chuyển cọc sớm/kéo ra ngoài app ("chuyen coc", "zalo", "stk").
-- **Đánh giá có kiểm soát (Controlled Reviews):** Chống đánh giá ảo triệt để bằng việc chỉ cho phép người thuê đã từng nhắn tin liên hệ chủ trọ gửi đánh giá; hỗ trợ phản hồi chính thức từ chủ trọ.
-- **Bảo vệ dữ liệu cá nhân theo Luật số 91/2025/QH15:** Cung cấp đầy đủ công cụ tự quản lý quyền riêng tư: Điều khoản & Chính sách tiếng Việt, Quản lý đồng ý theo mục đích, Xuất bản sao dữ liệu (JSON) và Xóa tài khoản vĩnh viễn / Ẩn danh hóa.
-- **Khả năng phục hồi ngoại tuyến & Thảm họa:** Banner cảnh báo ngoại tuyến hỗ trợ thử lại kết nối; tài liệu Runbook vận hành và sao lưu định kỳ ([docs/RUNBOOK.md](file:///d:/File_Website/web_tmđt/docs/RUNBOOK.md)); hồ sơ niêm yết Store & Beta tại Đà Nẵng ([docs/STORE_METADATA.md](file:///d:/File_Website/web_tmđt/docs/STORE_METADATA.md)).
+- **Điểm tin cậy minh bạch (Explainable Trust Score):** Điểm số từ 0–100 tuyệt đối nói không với mô hình hộp đen; mọi điểm cộng/trừ đều hiển thị nguyên nhân rõ ràng (+35 điểm xác minh, +25 điểm minh bạch chi phí, +15 điểm kiểm duyệt, +15 điểm review, +10 điểm tiện nghi; trừ điểm nếu giá bất thường hoặc có report).
+- **AI có kỷ luật (Disciplined AI Search & Insights):** AI chỉ đọc và diễn giải các trường dữ liệu có thật trong CSDL; không bao giờ bịa thông tin; chuyển đổi ngôn ngữ tự nhiên/viết tắt/tiếng lóng ("2tr5", "gác lửng", "Hòa Khánh") thành cấu trúc JSON chuẩn Zod kèm giải thích minh bạch *"🤖 Trợ lý AI đã hiểu..."*.
+- **Sổ tay kiểm tra thực tế (Viewing Checklist):** 10 tiêu chí kiểm tra thực địa giúp người thuê phòng tự tin kiểm tra công tơ điện, áp lực nước sinh hoạt, trần tường ẩm mốc, khóa an ninh và đối chiếu CCCD chủ trọ trước khi chuyển cọc.
+- **Xác minh chính chủ cấp L3:** Kiểm duyệt giấy tờ pháp lý (Sổ đỏ / QSDĐ chính chủ hoặc Hợp đồng ủy quyền cho thuê) với hàng đợi duyệt riêng trên Admin và cấp huy hiệu L3.
+- **Lưu tìm kiếm (Saved Searches):** Cho phép người dùng lưu lại tiêu chí tìm kiếm ưa thích (có RLS bảo vệ) và kích hoạt lại nhanh chóng.
 
 ## Phase đã xong
 - **Phase 0 — Nền móng:**
@@ -51,9 +49,19 @@
   - Rà soát an ninh bảo mật theo chuẩn OWASP MASVS / ASVS: 100% các tiêu chí đạt chuẩn; RLS bảo vệ toàn diện.
   - Runbook vận hành, sao lưu và ứng phó sự cố ([docs/RUNBOOK.md](file:///d:/File_Website/web_tmđt/docs/RUNBOOK.md)).
   - Hồ sơ niêm yết Store & Metadata Beta tại TP. Đà Nẵng ([docs/STORE_METADATA.md](file:///d:/File_Website/web_tmđt/docs/STORE_METADATA.md)).
+- **Phase 5 — Tin cậy nâng cao & AI (Sau MVP):**
+  - Migration v4 (`20260924000004_phase5_trust_l3_saved_searches.sql` & rollback): Bảng `saved_searches` (bật RLS, index), mở rộng bảng `verifications` cho hồ sơ L3 chính chủ BĐS, enum thông báo `saved_search_match`.
+  - Bộ máy Điểm tin cậy minh bạch (`calculateListingTrustScore`) & Phát hiện tin trùng lặp (`detectDuplicateListing`).
+  - Bộ phân tích tìm kiếm ngôn ngữ tự nhiên bằng AI (`parseNaturalLanguageSearch`) kèm bộ test đánh giá đạt 100% độ chính xác.
+  - Bộ phân tích phòng AI (`analyzeRoomListing`) so sánh giá với mặt bằng từng phường và Sổ tay kiểm tra phòng 10 tiêu chí (`STANDARD_VIEWING_CHECKLIST`).
+  - Giao diện tìm kiếm AI & Quản lý tìm kiếm đã lưu trên `SearchScreen.tsx`, gợi ý câu lệnh AI trên `HomeScreen.tsx`.
+  - Thẻ điểm tin cậy kèm bảng phân tích tiêu chí chi tiết và mục Phân tích AI trên `PropertyDetailModal.tsx`.
+  - Màn hình sổ tay đi xem phòng tương tác `ViewingChecklistModal.tsx` theo dõi tiến độ và ghi chú chỉ số thực tế.
+  - Tab kiểm duyệt hồ sơ L3 (Sổ đỏ / Ủy quyền chính chủ BĐS) trên `AdminModerationScreen.tsx` với Audit Logging.
+  - Đạt 42/42 tests pass across 16 test suites, typecheck 100% sạch sẽ.
 
 ## Phase tiếp theo
-- **Phase 5 — Tin cậy nâng cao & AI (Sau MVP):** Anti-Scam nâng cao (phát hiện ảnh trùng và tin trùng, L3 xác minh quyền cho thuê), AI Search, AI Room Analysis, Roommate Matching, Viewing Mode & Checklist.
+- **Phase 6 — Thuê & Quản lý:** Hợp đồng điện tử, thanh toán, quản lý cho thuê, phân tích biến động giá thị trường (Price History & Area Insights).
 
 ## Việc nợ
 Xem [BACKLOG.md](file:///d:/File_Website/web_tmđt/docs/BACKLOG.md).
