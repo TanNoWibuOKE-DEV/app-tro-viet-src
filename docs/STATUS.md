@@ -1,9 +1,9 @@
 # Trọ Việt — Tiến độ
 
-**Phase hiện tại:** Phase 3 — Liên hệ & cộng đồng
-**Trạng thái:** Đã hoàn thành (Chờ xác nhận để chuyển sang Phase 4)
+**Phase hiện tại:** Phase 4 — Hoàn thiện & Thử nghiệm Beta
+**Trạng thái:** Đã hoàn thành (Toàn bộ phạm vi MVP Phase 0–4 đã hoàn tất)
 
-## Quyết định đã chốt (Sau Phase 3)
+## Quyết định đã chốt (Sau Phase 4)
 - **Tech Stack:** Monorepo (`apps/mobile`, `packages/shared`, `supabase/`), Expo (React Native + TypeScript + Expo Router) + Supabase (Postgres, PostGIS, Auth, Storage, Realtime). Chi tiết tại [001-stack.md](file:///d:/File_Website/web_tmđt/docs/adr/001-stack.md).
 - **Thị trường ra mắt đầu tiên:** TP. Đà Nẵng (áp dụng mô hình địa giới 2 cấp hiện hành và bảng `area_aliases`).
 - **Bản đồ & Khoảng cách:** Tính toán khoảng cách địa lý theo công thức Haversine, hỗ trợ lọc phòng quanh mốc quen thuộc (ĐH Duy Tân, ĐH Bách Khoa, Mỹ Khê, Cầu Rồng); hiển thị khoảng cách định dạng Việt Nam (`2,5 km`, `800 m`).
@@ -11,6 +11,8 @@
 - **Xác minh L2:** Quy trình nộp CCCD và phê duyệt trên Admin có ghi nhận Audit Log.
 - **Anti-Scam có giải thích (Explainable Rule Engine):** Cảnh báo văn minh, minh bạch khi phát hiện giá thấp bất thường hoặc từ khóa đòi chuyển cọc sớm/kéo ra ngoài app ("chuyen coc", "zalo", "stk").
 - **Đánh giá có kiểm soát (Controlled Reviews):** Chống đánh giá ảo triệt để bằng việc chỉ cho phép người thuê đã từng nhắn tin liên hệ chủ trọ gửi đánh giá; hỗ trợ phản hồi chính thức từ chủ trọ.
+- **Bảo vệ dữ liệu cá nhân theo Luật số 91/2025/QH15:** Cung cấp đầy đủ công cụ tự quản lý quyền riêng tư: Điều khoản & Chính sách tiếng Việt, Quản lý đồng ý theo mục đích, Xuất bản sao dữ liệu (JSON) và Xóa tài khoản vĩnh viễn / Ẩn danh hóa.
+- **Khả năng phục hồi ngoại tuyến & Thảm họa:** Banner cảnh báo ngoại tuyến hỗ trợ thử lại kết nối; tài liệu Runbook vận hành và sao lưu định kỳ ([docs/RUNBOOK.md](file:///d:/File_Website/web_tmđt/docs/RUNBOOK.md)); hồ sơ niêm yết Store & Beta tại Đà Nẵng ([docs/STORE_METADATA.md](file:///d:/File_Website/web_tmđt/docs/STORE_METADATA.md)).
 
 ## Phase đã xong
 - **Phase 0 — Nền móng:**
@@ -35,15 +37,23 @@
   - Quy trình Xác minh danh tính chủ trọ L2: Form nộp CCCD tại tab Cá nhân, giao diện duyệt L2 trên Admin có ghi nhận Audit Log.
 - **Phase 3 — Liên hệ & cộng đồng:**
   - Migration v3 (`20260924000003_phase3_chat_reviews_reports.sql` & rollback script): Bảng `notifications`, RLS policies cho `conversations`, `reviews` landlord reply, `reports`.
-  - Bộ máy phòng chống lừa đảo (Anti-Scam Rule Engine trong `@troviet/shared`): Phát hiện bất thường giá rẻ phòng trọ, quét từ khóa rủi ro trong chat ("chuyen coc", "zalo", "stk") sinh cảnh báo an toàn tức thời, kiểm tra điều kiện đánh giá phòng có kiểm soát. Đạt 100% test pass (22 tests).
+  - Bộ máy phòng chống lừa đảo (Anti-Scam Rule Engine trong `@troviet/shared`): Phát hiện bất thường giá rẻ phòng trọ, quét từ khóa rủi ro trong chat ("chuyen coc", "zalo", "stk") sinh cảnh báo an toàn tức thời, kiểm tra điều kiện đánh giá phòng có kiểm soát.
   - In-App Realtime Chat (`ChatListScreen`, `ChatRoomModal`): Tab Tin nhắn trực tiếp, ghim thông tin phòng ở đầu đoạn chat, banner nhắc nhở an toàn, banner cảnh báo khi phát hiện từ khóa đòi cọc, gợi ý câu hỏi nhanh (chips), gửi tin nhắn an toàn.
   - Đánh giá có kiểm soát (Controlled Reviews): Chặn chủ trọ tự đánh giá phòng của mình, chỉ người thuê đã từng nhắn tin trao đổi với chủ trọ mới được gửi đánh giá, hiển thị phản hồi chính thức từ chủ trọ.
   - Báo cáo vi phạm (Report Modal): Đầy đủ các lý do vi phạm (🚨 lừa đảo tiền cọc, ⚠️ phòng ảo, 💸 giá sai lệch, ⛔ thái độ khiếm nhã), bảo mật danh tính người báo cáo.
   - Hàng đợi duyệt Báo cáo vi phạm trên Admin (`AdminModerationScreen`): Tab Báo cáo vi phạm với các thao tác xử lý vi phạm / bỏ qua kèm ghi nhận Audit Log.
   - Trung tâm Thông báo (Notifications Modal): Hiển thị cảnh báo an toàn, tin nhắn mới, thông báo duyệt tin và đánh giá kèm chỉ báo chưa đọc trên header.
+- **Phase 4 — Hoàn thiện & Thử nghiệm Beta:**
+  - Bộ module Quyền riêng tư & Quản lý dữ liệu người dùng (`packages/shared/src/privacy/`): Quản lý sự đồng ý, Xuất dữ liệu JSON (Data Portability), Ẩn danh hóa / Xóa tài khoản (Right to Erasure) theo Luật 91/2025/QH15.
+  - Giao diện Chính sách quyền riêng tư (`PrivacyPolicyModal.tsx`) & Quản lý dữ liệu cá nhân (`DataManagementModal.tsx`) tích hợp vào tab Cá nhân.
+  - Thanh cảnh báo trạng thái mạng & Chống chịu ngoại tuyến (`NetworkStatusBanner.tsx`).
+  - Bộ kiểm thử luồng trọn vẹn E2E (`packages/shared/test/e2e-journey.test.ts`): Kiểm tra 4 hành trình người dùng toàn diện; 100% test pass (31/31 unit & e2e tests).
+  - Rà soát an ninh bảo mật theo chuẩn OWASP MASVS / ASVS: 100% các tiêu chí đạt chuẩn; RLS bảo vệ toàn diện.
+  - Runbook vận hành, sao lưu và ứng phó sự cố ([docs/RUNBOOK.md](file:///d:/File_Website/web_tmđt/docs/RUNBOOK.md)).
+  - Hồ sơ niêm yết Store & Metadata Beta tại TP. Đà Nẵng ([docs/STORE_METADATA.md](file:///d:/File_Website/web_tmđt/docs/STORE_METADATA.md)).
 
 ## Phase tiếp theo
-- **Phase 4 — Hoàn thiện & Thử nghiệm Beta (Tuần 13–15):** Kiểm thử luồng trọn vẹn (End-to-End Test), tối ưu hiệu năng mobile, tinh chỉnh trải nghiệm mạng yếu/offline cache, chuẩn bị bản thử nghiệm Beta đóng cho sinh viên & người đi làm tại Đà Nẵng.
+- **Phase 5 — Tin cậy nâng cao & AI (Sau MVP):** Anti-Scam nâng cao (phát hiện ảnh trùng và tin trùng, L3 xác minh quyền cho thuê), AI Search, AI Room Analysis, Roommate Matching, Viewing Mode & Checklist.
 
 ## Việc nợ
 Xem [BACKLOG.md](file:///d:/File_Website/web_tmđt/docs/BACKLOG.md).
