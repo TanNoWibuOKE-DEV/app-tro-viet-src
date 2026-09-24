@@ -97,6 +97,28 @@ export const HomeScreen: React.FC<{ onNavigateToSearch: (query?: string) => void
             </TouchableOpacity>
           ))}
         </ScrollView>
+
+        {/* Natural Language AI Search suggestions */}
+        <Text style={[styles.aliasLabel, { color: colors.textSecondary, marginTop: 10 }]}>
+          🤖 Trợ lý AI — Tìm bằng ngôn ngữ tự nhiên:
+        </Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.aliasScroll}>
+          {[
+            'Phòng trọ Hải Châu < 3tr có máy lạnh',
+            'Căn hộ Phước Mỹ gần biển < 5tr',
+            'Phòng Hòa Khánh Bắc có gác < 2tr5',
+          ].map((prompt) => (
+            <TouchableOpacity
+              key={prompt}
+              style={[styles.aliasPill, { backgroundColor: colors.background, borderColor: colors.primary }]}
+              onPress={() => onNavigateToSearch(prompt)}
+            >
+              <Text style={[styles.aliasPillText, { color: colors.primary, fontWeight: '600' }]}>
+                🤖 {prompt}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
 
       {/* Category Pills */}

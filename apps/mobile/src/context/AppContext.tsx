@@ -13,6 +13,8 @@ import {
   ReportCategory,
   ReportTargetType,
   AppNotification,
+  SavedSearch,
+  LandlordVerification,
   MOCK_CONVERSATIONS,
   MOCK_MESSAGES,
   MOCK_REVIEWS,
@@ -94,6 +96,21 @@ interface AppContextType {
   unreadNotificationsCount: number;
   markNotificationAsRead: (id: string) => void;
   markAllNotificationsAsRead: () => void;
+
+  // Phase 5: Saved Searches
+  savedSearches: SavedSearch[];
+  saveSearch: (name: string, criteria: SearchFilterParams) => void;
+  removeSavedSearch: (id: string) => void;
+
+  // Phase 5: L3 Landlord Verification
+  l3VerificationRequests: LandlordVerification[];
+  submitL3Verification: (
+    documentType: 'land_ownership_certificate' | 'lease_authorization',
+    propertyId: string,
+    propertyTitle: string,
+    notes?: string
+  ) => void;
+  moderateL3Verification: (requestId: string, status: 'approved' | 'rejected', reason?: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -149,6 +166,41 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Phase 3: Notifications State
   const [notifications, setNotifications] = useState<AppNotification[]>(MOCK_NOTIFICATIONS);
+
+  // Phase 5: Saved Searches State
+  const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([
+    {
+      id: 's-001',
+      userId: 'u-tenant-1',
+      name: 'Phòng trọ Hải Châu < 3 triệu có máy lạnh',
+      criteria: {
+        query: 'Hai Chau',
+        wardCode: '48_HAICHAU1',
+        maxRent: 3000000,
+        amenityCodes: ['air_conditioner'],
+      },
+      notifyNewMatches: true,
+      createdAt: '2026-09-24T10:00:00Z',
+      updatedAt: '2026-09-24T10:00:00Z',
+    },
+  ]);
+
+  // Phase 5: L3 Verification Requests State
+  const [l3VerificationRequests, setL3VerificationRequests] = useState<LandlordVerification[]>([
+    {
+      id: 'ver-l3-001',
+      userId: 'u-landlord-1',
+      userName: 'Cô Lan (Chủ nhà)',
+      userPhone: '0905666777',
+      level: 'L3',
+      status: 'pending',
+      documentType: 'land_ownership_certificate',
+      propertyId: 'l-001',
+      propertyTitle: 'Phòng trọ gác lửng kiệt Hải Châu',
+      notes: 'Giấy chứng nhận QSDĐ số AB123456 cấp tại TP. Đà Nẵng',
+      createdAt: '2026-09-24T08:30:00Z',
+    },
+  ]);
 
   const toggleFavorite = (id: string) => {
     setFavoriteIds((prev) =>
@@ -494,6 +546,87 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
   };
 
+  // Phase 5: Saved Searches methods
+  const saveSearch = (name: string, criteria: SearchFilterParams) => {
+    const newSaved: SavedSearch = {
+      id: `s-${Date.now()}`,
+      userId: currentUser?.id || 'u-tenant-1',
+      name,
+      criteria,
+      notifyNewMatches: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    setSavedSearches((prev) => [newSaved, ...prev]);
+  };
+
+  const removeSavedSearch = (id: string) => {
+    setSavedSearches((prev) => prev.filter((s) => s.id !== id));
+  };
+
+  // Phase 5: L3 Verification methods
+  const submitL3Verification = (
+    documentType: 'land_ownership_certificate' | 'lease_authorization',
+    propertyId: string,
+    propertyTitle: string,
+    notes?: string
+  ) => {
+    const newVer: LandlordVerification = {
+      id: `ver-l3-${Date.now()}`,
+      userId: currentUser?.id || 'u-landlord-1',
+      userName: currentUser?.fullName || 'Chủ trọ',
+      userPhone: currentUser?.phoneNumber || '0905666777',
+      level: 'L3',
+      status: 'pending',
+      documentType,
+      propertyId,
+      propertyTitle,
+      notes,
+      createdAt: new Date().toISOString(),
+    };
+    setL3VerificationRequests((prev) => [newVer, ...prev]);
+  };
+
+  const moderateL3Verification = (requestId: string, status: 'approved' | 'rejected', reason?: string) => {
+    setL3VerificationRequests((prev) =>
+      prev.map((req) =>
+        req.id === requestId
+          ? {
+              ...req,
+              status,
+              rejectionReason: reason,
+              verifiedAt: status === 'approved' ? new Date().toISOString() : undefined,
+            }
+          : req
+      )
+    );
+
+    const target = l3VerificationRequests.find((r) => r.id === requestId);
+    if (target && status === 'approved') {
+      setListings((prev) =>
+        prev.map((l) =>
+          l.landlordId === target.userId
+            ? { ...l, landlordVerificationLevel: 'L3' }
+            : l
+        )
+      );
+      if (currentUser?.id === target.userId) {
+        setCurrentUser((prev) => (prev ? { ...prev, verificationLevel: 'L3' } : null));
+      }
+
+      const notif: AppNotification = {
+        id: `notif-${Date.now()}`,
+        userId: target.userId,
+        title: 'Hồ sơ xác minh L3 đã được duyệt! 🎖️',
+        body: `Hồ sơ xác minh giấy tờ chính chủ cho bất động sản "${target.propertyTitle || 'Nhà trọ'}" đã được phê duyệt thành công.`,
+        type: 'verification_approved',
+        isRead: false,
+        createdAt: new Date().toISOString(),
+      };
+      setNotifications((prev) => [notif, ...prev]);
+    }
+  };
+
   const value = useMemo(
     () => ({
       currentUser,
@@ -538,6 +671,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       unreadNotificationsCount,
       markNotificationAsRead,
       markAllNotificationsAsRead,
+      // Phase 5
+      savedSearches,
+      saveSearch,
+      removeSavedSearch,
+      l3VerificationRequests,
+      submitL3Verification,
+      moderateL3Verification,
     }),
     [
       currentUser,
@@ -556,6 +696,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       reports,
       notifications,
       unreadNotificationsCount,
+      savedSearches,
+      l3VerificationRequests,
     ]
   );
 

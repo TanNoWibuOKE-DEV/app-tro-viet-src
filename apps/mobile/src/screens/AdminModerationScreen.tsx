@@ -21,17 +21,20 @@ export const AdminModerationScreen: React.FC = () => {
     setSelectedListing,
     verificationRequests,
     moderateL2Verification,
+    l3VerificationRequests,
+    moderateL3Verification,
     reports,
     resolveReport,
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<'listings' | 'verifications' | 'reports'>('listings');
+  const [activeTab, setActiveTab] = useState<'listings' | 'verifications' | 'l3' | 'reports'>('listings');
   const [auditLogs, setAuditLogs] = useState<string[]>([
     'Hệ thống khởi tạo kiểm soát bảo mật RLS và Audit Log',
   ]);
 
   const pendingListings = listings.filter((l) => l.status === 'pending_review');
   const pendingVerifications = verificationRequests.filter((v) => v.status === 'pending');
+  const pendingL3Verifications = l3VerificationRequests.filter((v) => v.status === 'pending');
   const pendingReports = reports.filter((r) => r.status === 'pending');
 
   const addAuditLog = (msg: string) => {
@@ -130,7 +133,24 @@ export const AdminModerationScreen: React.FC = () => {
               { color: activeTab === 'verifications' ? '#FFFFFF' : colors.textPrimary },
             ]}
           >
-            CCCD ({pendingVerifications.length})
+            L2 CCCD ({pendingVerifications.length})
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.tabItem,
+            activeTab === 'l3' && { backgroundColor: colors.primary },
+          ]}
+          onPress={() => setActiveTab('l3')}
+        >
+          <Text
+            style={[
+              styles.tabText,
+              { color: activeTab === 'l3' ? '#FFFFFF' : colors.textPrimary },
+            ]}
+          >
+            L3 Sổ đỏ ({pendingL3Verifications.length})
           </Text>
         </TouchableOpacity>
 
@@ -273,7 +293,83 @@ export const AdminModerationScreen: React.FC = () => {
         </View>
       )}
 
-      {/* Tab 3: Reports Queue (Phase 3) */}
+      {/* Tab: Landlord L3 Property Ownership Verifications (Phase 5) */}
+      {activeTab === 'l3' && (
+        <View>
+          {pendingL3Verifications.length === 0 ? (
+            <View style={[styles.emptyBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={{ fontSize: 32, marginBottom: 8 }}>📜</Text>
+              <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
+                Không có hồ sơ xác minh chính chủ L3 nào chờ xử lý
+              </Text>
+            </View>
+          ) : (
+            pendingL3Verifications.map((req) => (
+              <View
+                key={req.id}
+                style={[styles.moderationCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+              >
+                <View style={styles.cardTop}>
+                  <Badge level="L3" />
+                  <Text style={[styles.dateText, { color: colors.textSecondary }]}>
+                    Hồ sơ L3: Giấy tờ chính chủ BĐS
+                  </Text>
+                </View>
+
+                <Text style={[styles.title, { color: colors.textPrimary }]}>
+                  Chủ trọ: {req.userName} ({req.userPhone})
+                </Text>
+
+                <View style={[styles.detailsBox, { backgroundColor: colors.background }]}>
+                  <Text style={[styles.detailLine, { color: colors.textPrimary }]}>
+                    🏠 Bất động sản: <Text style={{ fontWeight: '700' }}>{req.propertyTitle || 'Chưa gắn phòng cụ thể'}</Text>
+                  </Text>
+                  <Text style={[styles.detailLine, { color: colors.textPrimary }]}>
+                    📑 Loại tài liệu: <Text style={{ fontWeight: '700' }}>
+                      {req.documentType === 'land_ownership_certificate' ? 'Sổ đỏ / QSDĐ chính chủ' : 'Hợp đồng ủy quyền cho thuê'}
+                    </Text>
+                  </Text>
+                  {req.notes && (
+                    <Text style={[styles.detailLine, { color: colors.textSecondary }]}>
+                      📝 Ghi chú: {req.notes}
+                    </Text>
+                  )}
+                </View>
+
+                <View style={styles.actionRow}>
+                  <View style={{ flex: 1, marginRight: 8 }}>
+                    <Button
+                      title="✕ Từ chối"
+                      variant="outline"
+                      onPress={() => {
+                        moderateL3Verification(req.id, 'rejected', 'Giấy tờ không đủ điều kiện pháp lý.');
+                        addAuditLog(`Từ chối hồ sơ L3 của chủ nhà ${req.userName}`);
+                        Alert.alert('Đã từ chối', `Hồ sơ L3 của ${req.userName} đã bị từ chối.`);
+                      }}
+                    />
+                  </View>
+                  <View style={{ flex: 1.5 }}>
+                    <Button
+                      title="✓ Duyệt cấp L3"
+                      variant="primary"
+                      onPress={() => {
+                        moderateL3Verification(req.id, 'approved');
+                        addAuditLog(`Phê duyệt cấp L3 (Chính chủ BĐS) cho ${req.userName}`);
+                        Alert.alert(
+                          'Đã phê duyệt cấp L3 🎖️',
+                          `Chủ nhà ${req.userName} và tin đăng đã được cấp huy hiệu "Xác minh L3 - Chính chủ bất động sản".`
+                        );
+                      }}
+                    />
+                  </View>
+                </View>
+              </View>
+            ))
+          )}
+        </View>
+      )}
+
+      {/* Tab: Reports Queue (Phase 3) */}
       {activeTab === 'reports' && (
         <View>
           {pendingReports.length === 0 ? (
