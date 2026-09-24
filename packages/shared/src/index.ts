@@ -17,3 +17,5 @@ export * from './privacy/data-rights.js';
 export * from './trust-score/calculator.js';
 export * from './ai-search/parser.js';
 export * from './ai-search/eval.js';
+export * from './ai-room/analysis.js';
+export * from './checklist/viewing-items.js';
