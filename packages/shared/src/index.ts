@@ -21,3 +21,4 @@ export * from './ai-room/analysis.js';
 export * from './checklist/viewing-items.js';
 export * from './contract/template.js';
 export * from './contract/analysis.js';
+export * from './payment/vietqr.js';
