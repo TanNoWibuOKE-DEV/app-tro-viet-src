@@ -6,12 +6,23 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  TextInput,
+  Modal,
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
+import { useApp } from '../context/AppContext';
 import { Badge } from '../components/Badge';
 import { Button } from '../components/Button';
 import { CostCard } from '../components/CostCard';
-import { ListingSummary, formatArea, formatVND } from '@troviet/shared';
+import { ReportModal } from '../components/ReportModal';
+import { ChatRoomModal } from './ChatRoomModal';
+import {
+  ListingSummary,
+  formatArea,
+  formatVND,
+  checkListingPricingAnomaly,
+  Review,
+} from '@troviet/shared';
 
 interface PropertyDetailModalProps {
   listing: ListingSummary;
@@ -24,19 +35,92 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
   onClose,
   isLoggedIn,
 }) => {
-  const { colors } = useTheme();
-  const [showPhone, setShowPhone] = useState(false);
+  const { colors, isDark } = useTheme();
+  const {
+    openChatWithLandlord,
+    reviews,
+    submitReview,
+    canUserReviewListing,
+  } = useApp();
 
-  const handleContactPress = () => {
+  const [showPhone, setShowPhone] = useState(false);
+  const [activeChatConvId, setActiveChatConvId] = useState<string | null>(null);
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const [isWriteReviewOpen, setIsWriteReviewOpen] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+
+  // Anti-scam price anomaly detection
+  const priceSignals = checkListingPricingAnomaly(
+    listing.monthlyRent,
+    listing.propertyType,
+    listing.areaSquareMeters
+  );
+
+  // Filter approved reviews for this listing
+  const listingReviews = reviews.filter(
+    (r) => r.listingId === listing.id && r.status === 'approved'
+  );
+
+  const avgRating =
+    listingReviews.length > 0
+      ? (
+          listingReviews.reduce((sum, r) => sum + r.rating, 0) /
+          listingReviews.length
+        ).toFixed(1)
+      : null;
+
+  const handleStartChat = () => {
     if (!isLoggedIn) {
       Alert.alert(
-        'Đăng nhập để xem số điện thoại',
-        'Để bảo vệ chủ trọ và người tìm trọ khỏi tin giả và tin rác, vui lòng đăng nhập trước khi xem số điện thoại liên hệ.',
+        'Đăng nhập để nhắn tin',
+        'Vui lòng đăng nhập để bắt đầu cuộc trò chuyện an toàn với chủ trọ.',
         [{ text: 'Đã hiểu' }]
       );
       return;
     }
-    setShowPhone(true);
+    const convId = openChatWithLandlord(listing);
+    setActiveChatConvId(convId);
+  };
+
+  const handleOpenWriteReview = () => {
+    if (!isLoggedIn) {
+      Alert.alert(
+        'Đăng nhập để đánh giá',
+        'Vui lòng đăng nhập trước khi gửi đánh giá phòng trọ.',
+        [{ text: 'Đã hiểu' }]
+      );
+      return;
+    }
+
+    const eligibility = canUserReviewListing(listing);
+    if (!eligibility.canReview) {
+      Alert.alert(
+        'Quy định đánh giá Trọ Việt',
+        eligibility.reason ||
+          'Chỉ người thuê đã từng liên hệ nhắn tin trao đổi với chủ trọ mới được gửi đánh giá phòng. Quy định này nhằm chống đánh giá ảo.',
+        [{ text: 'Đã hiểu' }]
+      );
+      return;
+    }
+
+    setIsWriteReviewOpen(true);
+  };
+
+  const handleSubmitReview = () => {
+    if (!reviewComment.trim()) {
+      Alert.alert('Chưa nhập nội dung', 'Vui lòng chia sẻ cảm nhận thực tế về phòng trọ.');
+      return;
+    }
+
+    const res = submitReview(listing.id, reviewRating, reviewComment);
+    if (res.success) {
+      setIsWriteReviewOpen(false);
+      setReviewComment('');
+      Alert.alert('Thành công', 'Đánh giá của bạn đã được ghi nhận và hiển thị công khai.');
+    } else {
+      Alert.alert('Không thể gửi đánh giá', res.reason || 'Có lỗi xảy ra.');
+    }
   };
 
   return (
@@ -49,17 +133,37 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
         <Text style={[styles.topBarTitle, { color: colors.textPrimary }]} numberOfLines={1}>
           Chi tiết phòng
         </Text>
-        <View style={{ width: 50 }} />
+        <TouchableOpacity
+          style={styles.reportTopBtn}
+          onPress={() => setIsReportOpen(true)}
+        >
+          <Text style={{ fontSize: 13, color: colors.error }}>🚩 Báo cáo</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Visual Cover Header */}
         <View style={[styles.coverBox, { backgroundColor: colors.border }]}>
-          <Text style={{ fontSize: 32 }}>🏡</Text>
+          <Text style={{ fontSize: 36 }}>🏡</Text>
           <Text style={[styles.coverSub, { color: colors.textSecondary }]}>
             Hình ảnh thực tế căn phòng [MẪU - DEV]
           </Text>
         </View>
+
+        {/* Anti-Scam Alert if pricing anomaly detected */}
+        {priceSignals.length > 0 && (
+          <View style={[styles.scamBanner, { backgroundColor: isDark ? '#3d1414' : '#fff5f5', borderColor: colors.error }]}>
+            <Text style={{ fontSize: 18, marginRight: 8 }}>⚠️</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.scamTitle, { color: colors.error }]}>
+                {priceSignals[0].title}
+              </Text>
+              <Text style={[styles.scamDesc, { color: isDark ? '#ffc9c9' : '#c92a2a' }]}>
+                {priceSignals[0].description}
+              </Text>
+            </View>
+          </View>
+        )}
 
         <View style={styles.contentBody}>
           {/* Header & Badges */}
@@ -124,10 +228,78 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
                   {listing.landlordName}
                 </Text>
                 <Text style={[styles.landlordSub, { color: colors.textSecondary }]}>
-                  Trạng thái: {listing.landlordVerificationLevel === 'L2' ? 'Đã xác minh danh tính' : 'Đã xác thực số điện thoại'}
+                  Trạng thái: {listing.landlordVerificationLevel === 'L2' ? 'Đã xác minh danh tính CCCD' : 'Đã xác thực số điện thoại'}
                 </Text>
               </View>
             </View>
+          </View>
+
+          {/* Controlled Reviews Section (Phase 3) */}
+          <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.reviewHeaderRow}>
+              <View>
+                <Text style={[styles.sectionHeading, { color: colors.textPrimary, marginBottom: 2 }]}>
+                  Đánh giá từ người thuê
+                </Text>
+                <Text style={[styles.reviewSub, { color: colors.textSecondary }]}>
+                  {avgRating
+                    ? `⭐ ${avgRating} / 5 (${listingReviews.length} đánh giá đã kiểm thực)`
+                    : 'Chưa có đánh giá nào'}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={[styles.writeReviewBtn, { borderColor: colors.primary }]}
+                onPress={handleOpenWriteReview}
+              >
+                <Text style={[styles.writeReviewBtnText, { color: colors.primary }]}>
+                  ⭐ Viết đánh giá
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {listingReviews.length === 0 ? (
+              <View style={styles.emptyReviews}>
+                <Text style={[styles.emptyReviewsText, { color: colors.textSecondary }]}>
+                  Chỉ người thuê từng nhắn tin trao đổi với chủ trọ mới có quyền đánh giá phòng này.
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.reviewsList}>
+                {listingReviews.map((rev: Review) => (
+                  <View
+                    key={rev.id}
+                    style={[styles.reviewItem, { borderBottomColor: colors.border }]}
+                  >
+                    <View style={styles.reviewTopRow}>
+                      <Text style={[styles.reviewerName, { color: colors.textPrimary }]}>
+                        {rev.tenantName}
+                      </Text>
+                      <Text style={styles.starText}>
+                        {'★'.repeat(rev.rating)}{'☆'.repeat(5 - rev.rating)}
+                      </Text>
+                    </View>
+                    <Text style={[styles.reviewBody, { color: colors.textPrimary }]}>
+                      {rev.content}
+                    </Text>
+                    <Text style={[styles.reviewDate, { color: colors.textSecondary }]}>
+                      {new Date(rev.createdAt).toLocaleDateString('vi-VN')}
+                    </Text>
+
+                    {/* Landlord reply */}
+                    {rev.landlordResponse && (
+                      <View style={[styles.landlordReplyBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                        <Text style={[styles.landlordReplyTitle, { color: colors.primary }]}>
+                          💬 Phản hồi từ chủ trọ:
+                        </Text>
+                        <Text style={[styles.landlordReplyBody, { color: colors.textPrimary }]}>
+                          {rev.landlordResponse}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
         </View>
       </ScrollView>
@@ -140,14 +312,127 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
             {formatVND(listing.monthlyRent)}
           </Text>
         </View>
-        <View style={{ flex: 1, marginLeft: 16 }}>
-          <Button
-            title={showPhone ? '📞 0905 123 456' : '💬 Liên hệ chủ trọ'}
-            variant="primary"
-            onPress={handleContactPress}
-          />
+
+        <View style={styles.bottomActionsCol}>
+          <TouchableOpacity
+            style={[styles.chatActionBtn, { backgroundColor: colors.primary }]}
+            onPress={handleStartChat}
+          >
+            <Text style={styles.chatActionText}>💬 Nhắn tin</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.callActionBtn,
+              {
+                borderColor: colors.border,
+                backgroundColor: showPhone ? colors.primary : colors.background,
+              },
+            ]}
+            onPress={() => {
+              if (!isLoggedIn) {
+                Alert.alert(
+                  'Đăng nhập để xem SĐT',
+                  'Vui lòng đăng nhập để xem số điện thoại liên hệ trực tiếp.'
+                );
+                return;
+              }
+              setShowPhone(!showPhone);
+            }}
+          >
+            <Text
+              style={[
+                styles.callActionText,
+                { color: showPhone ? '#ffffff' : colors.textPrimary },
+              ]}
+            >
+              {showPhone ? '0905 123 456' : '📞 Gọi điện'}
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
+
+      {/* Realtime Chat Modal */}
+      <ChatRoomModal
+        visible={activeChatConvId !== null}
+        onClose={() => setActiveChatConvId(null)}
+        conversationId={activeChatConvId}
+        onOpenReportModal={(type, id, title) => {
+          setIsReportOpen(true);
+        }}
+      />
+
+      {/* Report Modal */}
+      <ReportModal
+        visible={isReportOpen}
+        onClose={() => setIsReportOpen(false)}
+        targetType="listing"
+        targetId={listing.id}
+        targetTitle={listing.title}
+      />
+
+      {/* Write Review Modal */}
+      <Modal visible={isWriteReviewOpen} animationType="slide" transparent>
+        <View style={styles.writeReviewOverlay}>
+          <View style={[styles.writeReviewCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.writeReviewTitle, { color: colors.textPrimary }]}>
+              Viết đánh giá phòng trọ
+            </Text>
+            <Text style={[styles.writeReviewSub, { color: colors.textSecondary }]}>
+              {listing.title}
+            </Text>
+
+            {/* Star selector */}
+            <View style={styles.starsRow}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <TouchableOpacity key={star} onPress={() => setReviewRating(star)}>
+                  <Text style={{ fontSize: 32, marginHorizontal: 4 }}>
+                    {star <= reviewRating ? '★' : '☆'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <TextInput
+              style={[
+                styles.reviewInput,
+                {
+                  backgroundColor: colors.background,
+                  borderColor: colors.border,
+                  color: colors.textPrimary,
+                },
+              ]}
+              placeholder="Chia sẻ trải nghiệm thực tế của bạn về phòng trọ, điện nước, an ninh và chủ nhà..."
+              placeholderTextColor={colors.textSecondary}
+              value={reviewComment}
+              onChangeText={setReviewComment}
+              multiline
+              numberOfLines={4}
+            />
+
+            <View style={styles.reviewBtnsRow}>
+              <TouchableOpacity
+                style={[styles.cancelBtn, { borderColor: colors.border }]}
+                onPress={() => setIsWriteReviewOpen(false)}
+              >
+                <Text style={{ color: colors.textPrimary, fontWeight: '600' }}>Hủy</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.confirmBtn,
+                  {
+                    backgroundColor: reviewComment.trim() ? colors.primary : colors.border,
+                  },
+                ]}
+                onPress={handleSubmitReview}
+                disabled={!reviewComment.trim()}
+              >
+                <Text style={styles.confirmBtnText}>Gửi đánh giá</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -175,9 +460,15 @@ const styles = StyleSheet.create({
   topBarTitle: {
     fontSize: 16,
     fontWeight: '700',
+    flex: 1,
+    textAlign: 'center',
+  },
+  reportTopBtn: {
+    paddingVertical: 6,
+    paddingLeft: 8,
   },
   scrollContent: {
-    paddingBottom: 100,
+    paddingBottom: 110,
   },
   coverBox: {
     height: 180,
@@ -187,6 +478,21 @@ const styles = StyleSheet.create({
   coverSub: {
     marginTop: 8,
     fontSize: 13,
+  },
+  scamBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderBottomWidth: 1,
+  },
+  scamTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    marginBottom: 2,
+  },
+  scamDesc: {
+    fontSize: 12,
+    lineHeight: 16,
   },
   contentBody: {
     padding: 16,
@@ -232,7 +538,7 @@ const styles = StyleSheet.create({
   sectionHeading: {
     fontSize: 15,
     fontWeight: '700',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   amenitiesGrid: {
     flexDirection: 'row',
@@ -248,11 +554,11 @@ const styles = StyleSheet.create({
   },
   amenityText: {
     fontSize: 13,
-    fontWeight: '500',
   },
   landlordRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 12,
   },
   avatarCircle: {
     width: 44,
@@ -260,12 +566,11 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
   },
   avatarText: {
-    color: '#FFFFFF',
-    fontWeight: '800',
+    color: '#ffffff',
     fontSize: 18,
+    fontWeight: '700',
   },
   landlordName: {
     fontSize: 15,
@@ -275,16 +580,86 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 2,
   },
+  reviewHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  reviewSub: {
+    fontSize: 12,
+  },
+  writeReviewBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  writeReviewBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  emptyReviews: {
+    paddingVertical: 12,
+  },
+  emptyReviewsText: {
+    fontSize: 13,
+    fontStyle: 'italic',
+    lineHeight: 18,
+  },
+  reviewsList: {
+    gap: 12,
+  },
+  reviewItem: {
+    paddingBottom: 10,
+    borderBottomWidth: 0.5,
+  },
+  reviewTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  reviewerName: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  starText: {
+    color: '#f59f00',
+    fontSize: 14,
+  },
+  reviewBody: {
+    fontSize: 13,
+    lineHeight: 18,
+    marginBottom: 4,
+  },
+  reviewDate: {
+    fontSize: 11,
+  },
+  landlordReplyBox: {
+    marginTop: 6,
+    padding: 8,
+    borderRadius: 6,
+    borderWidth: 0.5,
+  },
+  landlordReplyTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  landlordReplyBody: {
+    fontSize: 12,
+  },
   bottomBar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
+    height: 72,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
     borderTopWidth: 1,
   },
   bottomPriceCol: {
@@ -296,5 +671,88 @@ const styles = StyleSheet.create({
   bottomRentValue: {
     fontSize: 18,
     fontWeight: '800',
+  },
+  bottomActionsCol: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  chatActionBtn: {
+    paddingHorizontal: 14,
+    height: 42,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  chatActionText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  callActionBtn: {
+    paddingHorizontal: 12,
+    height: 42,
+    borderRadius: 8,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  callActionText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  writeReviewOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  writeReviewCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 20,
+  },
+  writeReviewTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  writeReviewSub: {
+    fontSize: 12,
+    marginBottom: 16,
+  },
+  starsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  reviewInput: {
+    borderRadius: 10,
+    borderWidth: 1,
+    padding: 12,
+    minHeight: 90,
+    fontSize: 13,
+    textAlignVertical: 'top',
+    marginBottom: 16,
+  },
+  reviewBtnsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    justifyContent: 'flex-end',
+  },
+  cancelBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  confirmBtn: {
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  confirmBtnText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '700',
   },
 });

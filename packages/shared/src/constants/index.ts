@@ -38,6 +38,8 @@ export const COLORS = {
     badgeL2Text: '#065F46',
     warning: '#F59E0B',
     danger: '#EF4444',
+    error: '#EF4444',
+    success: '#10B981',
   },
   dark: {
     primary: '#10B981',
@@ -53,5 +55,7 @@ export const COLORS = {
     badgeL2Text: '#6EE7B7',
     warning: '#FBBF24',
     danger: '#F87171',
+    error: '#F87171',
+    success: '#10B981',
   },
 };

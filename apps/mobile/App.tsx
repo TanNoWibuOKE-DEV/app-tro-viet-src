@@ -14,15 +14,18 @@ import { AppProvider, useApp } from './src/context/AppContext';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { SearchScreen } from './src/screens/SearchScreen';
 import { MapScreen } from './src/screens/MapScreen';
+import { ChatListScreen } from './src/screens/ChatListScreen';
 import { FavoritesScreen } from './src/screens/FavoritesScreen';
 import { LandlordPostScreen } from './src/screens/LandlordPostScreen';
 import { AdminModerationScreen } from './src/screens/AdminModerationScreen';
 import { AuthOnboardingScreen } from './src/screens/AuthOnboardingScreen';
 import { PropertyDetailModal } from './src/screens/PropertyDetailModal';
 import { PropertyComparisonModal } from './src/screens/PropertyComparisonModal';
+import { ChatRoomModal } from './src/screens/ChatRoomModal';
+import { NotificationsModal } from './src/screens/NotificationsModal';
 import { APP_NAME, APP_TAGLINE } from '@troviet/shared';
 
-type TabKey = 'home' | 'search' | 'map' | 'favorites' | 'post' | 'admin' | 'profile';
+type TabKey = 'home' | 'search' | 'map' | 'messages' | 'favorites' | 'post' | 'admin' | 'profile';
 
 const MainApp: React.FC = () => {
   const { colors, isDark, toggleTheme } = useTheme();
@@ -34,15 +37,21 @@ const MainApp: React.FC = () => {
     favoriteIds,
     comparisonIds,
     verificationRequests,
+    reports,
+    activeConversationId,
+    setActiveConversationId,
+    unreadNotificationsCount,
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<TabKey>('home');
   const [searchInitialQuery, setSearchInitialQuery] = useState('');
   const [isComparisonOpen, setIsComparisonOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
   const pendingListingsCount = listings.filter((l) => l.status === 'pending_review').length;
   const pendingVerificationsCount = verificationRequests.filter((v) => v.status === 'pending').length;
-  const totalAdminTasks = pendingListingsCount + pendingVerificationsCount;
+  const pendingReportsCount = reports.filter((r) => r.status === 'pending').length;
+  const totalAdminTasks = pendingListingsCount + pendingVerificationsCount + pendingReportsCount;
 
   const navigateToSearchWithQuery = (query?: string) => {
     setSearchInitialQuery(query || '');
@@ -72,6 +81,21 @@ const MainApp: React.FC = () => {
             onPress={() => setActiveTab('post')}
           >
             <Text style={{ fontSize: 13 }}>➕ Đăng tin</Text>
+          </TouchableOpacity>
+
+          {/* Notifications Bell */}
+          <TouchableOpacity
+            style={[styles.headerActionBtn, { borderColor: colors.border, backgroundColor: colors.background }]}
+            onPress={() => setIsNotificationsOpen(true)}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={{ fontSize: 14 }}>🔔</Text>
+              {unreadNotificationsCount > 0 && (
+                <View style={[styles.notifBadge, { backgroundColor: colors.error }]}>
+                  <Text style={styles.notifBadgeText}>{unreadNotificationsCount}</Text>
+                </View>
+              )}
+            </View>
           </TouchableOpacity>
 
           {/* Admin Moderation Button if admin */}
@@ -112,6 +136,9 @@ const MainApp: React.FC = () => {
           <SearchScreen initialQuery={searchInitialQuery} />
         )}
         {activeTab === 'map' && <MapScreen />}
+        {activeTab === 'messages' && (
+          <ChatListScreen onOpenConversation={(id) => setActiveConversationId(id)} />
+        )}
         {activeTab === 'favorites' && (
           <FavoritesScreen onOpenComparison={() => setIsComparisonOpen(true)} />
         )}
@@ -122,7 +149,7 @@ const MainApp: React.FC = () => {
         {activeTab === 'profile' && <AuthOnboardingScreen />}
       </View>
 
-      {/* Bottom Navigation Bar (Following SPEC Section 9) */}
+      {/* Bottom Navigation Bar */}
       <View style={[styles.bottomNav, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
         <TouchableOpacity
           style={styles.navItem}
@@ -172,6 +199,22 @@ const MainApp: React.FC = () => {
             ]}
           >
             Bản đồ
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => setActiveTab('messages')}
+          accessibilityRole="button"
+        >
+          <Text style={{ fontSize: 17 }}>💬</Text>
+          <Text
+            style={[
+              styles.navText,
+              { color: activeTab === 'messages' ? colors.primary : colors.textSecondary },
+            ]}
+          >
+            Tin nhắn
           </Text>
         </TouchableOpacity>
 
@@ -243,6 +286,19 @@ const MainApp: React.FC = () => {
         visible={isComparisonOpen}
         onClose={() => setIsComparisonOpen(false)}
       />
+
+      {/* Chat Room Modal */}
+      <ChatRoomModal
+        visible={activeConversationId !== null}
+        onClose={() => setActiveConversationId(null)}
+        conversationId={activeConversationId}
+      />
+
+      {/* Notifications Modal */}
+      <NotificationsModal
+        visible={isNotificationsOpen}
+        onClose={() => setIsNotificationsOpen(false)}
+      />
     </SafeAreaView>
   );
 };
@@ -260,71 +316,80 @@ export default function App() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    paddingTop: StatusBar.currentHeight || 0,
   },
   header: {
+    height: 56,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
     borderBottomWidth: 1,
   },
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
   },
   logoIcon: {
-    width: 36,
-    height: 36,
+    width: 32,
+    height: 32,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 10,
   },
   logoText: {
-    color: '#FFFFFF',
+    color: '#ffffff',
     fontWeight: '900',
-    fontSize: 16,
+    fontSize: 14,
+    letterSpacing: -0.5,
   },
   brandTitle: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: '800',
-    letterSpacing: 0.3,
+    letterSpacing: -0.3,
   },
   brandTagline: {
-    fontSize: 11,
+    fontSize: 10,
+    fontWeight: '500',
   },
   headerActionBtn: {
     paddingHorizontal: 8,
     paddingVertical: 5,
-    borderRadius: 6,
+    borderRadius: 8,
     borderWidth: 1,
   },
-  themeBtn: {
-    padding: 6,
+  notifBadge: {
+    marginLeft: 3,
+    paddingHorizontal: 4,
+    paddingVertical: 1,
     borderRadius: 6,
+  },
+  notifBadgeText: {
+    color: '#ffffff',
+    fontSize: 9,
+    fontWeight: '800',
+  },
+  themeBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 8,
     borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   screenContainer: {
     flex: 1,
   },
   bottomNav: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 58,
+    height: 60,
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
     borderTopWidth: 1,
   },
   navItem: {
-    alignItems: 'center',
-    justifyContent: 'center',
     flex: 1,
-    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 6,
   },
   navText: {
     fontSize: 11,
@@ -338,33 +403,34 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -4,
     right: -8,
-    width: 16,
+    minWidth: 16,
     height: 16,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 2,
   },
   badgeDotText: {
-    color: '#FFFFFF',
+    color: '#ffffff',
     fontSize: 9,
     fontWeight: '800',
   },
   floatingCompareBtn: {
     position: 'absolute',
-    bottom: 68,
+    bottom: 70,
     alignSelf: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 24,
+    elevation: 6,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOpacity: 0.3,
+    shadowRadius: 4.65,
   },
   floatingCompareText: {
-    color: '#FFFFFF',
+    color: '#ffffff',
+    fontSize: 13,
     fontWeight: '800',
-    fontSize: 12,
   },
 });

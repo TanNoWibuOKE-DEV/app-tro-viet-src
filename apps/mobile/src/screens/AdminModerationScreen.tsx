@@ -11,7 +11,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { useApp } from '../context/AppContext';
 import { Button } from '../components/Button';
 import { Badge } from '../components/Badge';
-import { ListingSummary, formatVND, formatArea } from '@troviet/shared';
+import { ListingSummary, formatVND, formatArea, Report } from '@troviet/shared';
 
 export const AdminModerationScreen: React.FC = () => {
   const { colors } = useTheme();
@@ -21,15 +21,18 @@ export const AdminModerationScreen: React.FC = () => {
     setSelectedListing,
     verificationRequests,
     moderateL2Verification,
+    reports,
+    resolveReport,
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState<'listings' | 'verifications'>('listings');
+  const [activeTab, setActiveTab] = useState<'listings' | 'verifications' | 'reports'>('listings');
   const [auditLogs, setAuditLogs] = useState<string[]>([
     'Hệ thống khởi tạo kiểm soát bảo mật RLS và Audit Log',
   ]);
 
   const pendingListings = listings.filter((l) => l.status === 'pending_review');
   const pendingVerifications = verificationRequests.filter((v) => v.status === 'pending');
+  const pendingReports = reports.filter((r) => r.status === 'pending');
 
   const addAuditLog = (msg: string) => {
     const time = new Date().toLocaleTimeString('vi-VN');
@@ -60,6 +63,33 @@ export const AdminModerationScreen: React.FC = () => {
     );
   };
 
+  const handleResolveReport = (report: Report) => {
+    resolveReport(report.id, 'Đã xác minh vi phạm và áp dụng chế tài cảnh cáo/gỡ tin.', 'resolved');
+    addAuditLog(`Xử lý vi phạm báo cáo #${report.id} (${report.reasonCategory}): "${report.targetTitle}"`);
+    Alert.alert('Đã xử lý vi phạm', `Đã áp dụng chế tài xử lý cho đối tượng: ${report.targetTitle}`);
+  };
+
+  const handleDismissReport = (report: Report) => {
+    resolveReport(report.id, 'Báo cáo không đủ căn cứ sau khi thẩm định.', 'dismissed');
+    addAuditLog(`Bỏ qua báo cáo #${report.id} do không đủ căn cứ.`);
+    Alert.alert('Đã bỏ qua báo cáo', 'Báo cáo đã được đánh dấu là không vi phạm.');
+  };
+
+  const getReasonLabel = (cat: string) => {
+    switch (cat) {
+      case 'deposit_scam':
+        return '🚨 Lừa đảo tiền cọc';
+      case 'fake_listing':
+        return '⚠️ Phòng ảo / Ảnh giả';
+      case 'wrong_price':
+        return '💸 Báo giá sai lệch';
+      case 'inappropriate_behavior':
+        return '⛔ Hành vi bất lịch sự';
+      default:
+        return '❓ Vi phạm khác';
+    }
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.headerRow}>
@@ -83,7 +113,7 @@ export const AdminModerationScreen: React.FC = () => {
               { color: activeTab === 'listings' ? '#FFFFFF' : colors.textPrimary },
             ]}
           >
-            Tin đăng ({pendingListings.length})
+            Tin ({pendingListings.length})
           </Text>
         </TouchableOpacity>
 
@@ -100,7 +130,24 @@ export const AdminModerationScreen: React.FC = () => {
               { color: activeTab === 'verifications' ? '#FFFFFF' : colors.textPrimary },
             ]}
           >
-            Xác minh L2 ({pendingVerifications.length})
+            CCCD ({pendingVerifications.length})
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.tabItem,
+            activeTab === 'reports' && { backgroundColor: colors.primary },
+          ]}
+          onPress={() => setActiveTab('reports')}
+        >
+          <Text
+            style={[
+              styles.tabText,
+              { color: activeTab === 'reports' ? '#FFFFFF' : colors.textPrimary },
+            ]}
+          >
+            Báo cáo ({pendingReports.length})
           </Text>
         </TouchableOpacity>
       </View>
@@ -186,7 +233,8 @@ export const AdminModerationScreen: React.FC = () => {
             pendingVerifications.map((req) => (
               <View
                 key={req.id}
-                style={[styles.moderationCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                style={[styles.moderationCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+              >
                 <Text style={[styles.title, { color: colors.textPrimary }]}>
                   Yêu cầu cấp L2: {req.userName}
                 </Text>
@@ -225,12 +273,72 @@ export const AdminModerationScreen: React.FC = () => {
         </View>
       )}
 
+      {/* Tab 3: Reports Queue (Phase 3) */}
+      {activeTab === 'reports' && (
+        <View>
+          {pendingReports.length === 0 ? (
+            <View style={[styles.emptyBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={{ fontSize: 32, marginBottom: 8 }}>⚖️</Text>
+              <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
+                Không có báo cáo vi phạm nào tồn đọng
+              </Text>
+            </View>
+          ) : (
+            pendingReports.map((rep) => (
+              <View
+                key={rep.id}
+                style={[styles.moderationCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+              >
+                <View style={styles.cardTop}>
+                  <View style={[styles.reasonBadge, { backgroundColor: colors.error }]}>
+                    <Text style={styles.reasonBadgeText}>{getReasonLabel(rep.reasonCategory)}</Text>
+                  </View>
+                  <Text style={[styles.dateText, { color: colors.textSecondary }]}>
+                    {new Date(rep.createdAt).toLocaleTimeString('vi-VN')}
+                  </Text>
+                </View>
+
+                <Text style={[styles.title, { color: colors.textPrimary }]}>
+                  Mục bị báo cáo: {rep.targetTitle}
+                </Text>
+
+                <View style={[styles.detailsBox, { backgroundColor: colors.background }]}>
+                  <Text style={[styles.detailLine, { color: colors.textPrimary }]}>
+                    👤 Người báo cáo: <Text style={{ fontWeight: '700' }}>{rep.reporterName}</Text>
+                  </Text>
+                  <Text style={[styles.detailLine, { color: colors.textPrimary }]}>
+                    📝 Nội dung phản ánh: {rep.details}
+                  </Text>
+                </View>
+
+                <View style={styles.actionRow}>
+                  <View style={{ flex: 1, marginRight: 8 }}>
+                    <Button
+                      title="✕ Bỏ qua"
+                      variant="outline"
+                      onPress={() => handleDismissReport(rep)}
+                    />
+                  </View>
+                  <View style={{ flex: 1.5 }}>
+                    <Button
+                      title="✓ Xử lý vi phạm"
+                      variant="primary"
+                      onPress={() => handleResolveReport(rep)}
+                    />
+                  </View>
+                </View>
+              </View>
+            ))
+          )}
+        </View>
+      )}
+
       {/* Audit Log Box */}
       <View style={[styles.auditCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <Text style={[styles.auditTitle, { color: colors.textPrimary }]}>
           📝 Nhật ký kiểm duyệt (Audit Log)
         </Text>
-        {auditLogs.slice(0, 5).map((log, index) => (
+        {auditLogs.slice(0, 6).map((log, index) => (
           <Text key={index} style={[styles.logText, { color: colors.textSecondary }]}>
             • {log}
           </Text>
@@ -249,7 +357,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   heading: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: '800',
   },
   tabBar: {
@@ -262,19 +370,19 @@ const styles = StyleSheet.create({
   tabItem: {
     flex: 1,
     paddingVertical: 8,
-    borderRadius: 8,
     alignItems: 'center',
+    borderRadius: 8,
   },
   tabText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
   },
   emptyBox: {
+    padding: 32,
     borderRadius: 12,
     borderWidth: 1,
-    padding: 24,
     alignItems: 'center',
-    marginVertical: 12,
+    marginVertical: 16,
   },
   emptyTitle: {
     fontSize: 16,
@@ -284,7 +392,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     padding: 16,
-    marginBottom: 16,
+    marginBottom: 14,
   },
   cardTop: {
     flexDirection: 'row',
@@ -292,32 +400,43 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
+  reasonBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  reasonBadgeText: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '700',
+  },
   dateText: {
     fontSize: 11,
   },
   title: {
     fontSize: 16,
     fontWeight: '700',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   detailsBox: {
-    borderRadius: 8,
     padding: 10,
-    gap: 4,
+    borderRadius: 8,
     marginBottom: 12,
   },
   detailLine: {
     fontSize: 13,
+    lineHeight: 18,
+    marginBottom: 4,
   },
   actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   auditCard: {
+    marginTop: 20,
+    padding: 14,
     borderRadius: 12,
     borderWidth: 1,
-    padding: 14,
-    marginTop: 16,
   },
   auditTitle: {
     fontSize: 14,
@@ -327,5 +446,6 @@ const styles = StyleSheet.create({
   logText: {
     fontSize: 12,
     lineHeight: 18,
+    marginBottom: 2,
   },
 });
