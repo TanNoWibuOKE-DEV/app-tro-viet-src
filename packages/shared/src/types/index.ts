@@ -149,3 +149,55 @@ export interface CostCalculationResult {
   }>;
   isFullyTransparent: boolean;
 }
+
+// 4. Amenities & User Preferences
+export interface Amenity {
+  id: string;
+  code: string;
+  name: string;
+  category: 'general' | 'room_features' | 'building';
+  icon?: string;
+  sortOrder: number;
+}
+
+export interface UserPreferences {
+  userId: string;
+  preferredPropertyTypes: PropertyType[];
+  minPrice?: number;
+  maxPrice?: number;
+  preferredWardCodes?: string[];
+  preferredAmenityCodes?: string[];
+}
+
+export interface SearchFilterParams {
+  query?: string;
+  propertyType?: PropertyType;
+  minRent?: number;
+  maxRent?: number;
+  wardCode?: string;
+  amenityCodes?: string[];
+  sortBy?: 'newest' | 'price_asc' | 'price_desc' | 'area_desc';
+}
+
+export interface ListingSummary {
+  id: string;
+  title: string;
+  propertyType: PropertyType;
+  monthlyRent: number;
+  deposit: number;
+  areaSquareMeters: number;
+  provinceCode: string;
+  wardCode: string;
+  wardName: string;
+  street: string;
+  houseNumber: string;
+  coverImageUrl?: string;
+  landlordId: string;
+  landlordName: string;
+  landlordVerificationLevel: VerificationLevel;
+  amenities: Amenity[];
+  costs: ListingCosts;
+  status: ListingStatus;
+  createdAt: string;
+}
+

@@ -33,3 +33,22 @@ export const AdminUnitCreateSchema = z.object({
   validFrom: z.string(),
   validTo: z.string().nullable().optional(),
 });
+
+export const SearchFilterSchema = z.object({
+  query: z.string().optional(),
+  propertyType: z.enum(['room', 'apartment', 'house', 'shared']).optional(),
+  minRent: z.number().int().nonnegative().optional(),
+  maxRent: z.number().int().nonnegative().optional(),
+  wardCode: z.string().optional(),
+  amenityCodes: z.array(z.string()).optional(),
+  sortBy: z.enum(['newest', 'price_asc', 'price_desc', 'area_desc']).optional(),
+});
+
+export const UserPreferencesSchema = z.object({
+  preferredPropertyTypes: z.array(z.enum(['room', 'apartment', 'house', 'shared'])).min(1, 'Chọn ít nhất 1 loại phòng mong muốn'),
+  minPrice: z.number().int().nonnegative().optional(),
+  maxPrice: z.number().int().positive('Ngân sách tối đa phải lớn hơn 0'),
+  preferredWardCodes: z.array(z.string()).optional(),
+  preferredAmenityCodes: z.array(z.string()).optional(),
+});
+
