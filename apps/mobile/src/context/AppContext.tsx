@@ -139,6 +139,7 @@ interface AppContextType {
   toggleRoommateStatus: (profileId: string) => void;
   handovers: PropertyHandoverRecord[];
   createHandoverRecord: (record: Omit<PropertyHandoverRecord, 'id' | 'createdAt' | 'updatedAt'>) => PropertyHandoverRecord;
+  saveHandover: (record: PropertyHandoverRecord) => void;
   confirmHandover: (handoverId: string, role: 'tenant' | 'landlord') => void;
   tenancyReminders: TenancyReminder[];
 }
@@ -855,6 +856,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const saveHandover = (record: PropertyHandoverRecord) => {
+    const now = new Date().toISOString();
+    setHandovers((prev) => {
+      const idx = prev.findIndex((h) => h.id === record.id);
+      if (idx >= 0) {
+        const next = [...prev];
+        next[idx] = { ...record, updatedAt: now };
+        return next;
+      }
+      return [{ ...record, createdAt: record.createdAt || now, updatedAt: now }, ...prev];
+    });
+  };
+
   const value = useMemo(
     () => ({
       currentUser,
@@ -921,6 +935,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       toggleRoommateStatus,
       handovers,
       createHandoverRecord,
+      saveHandover,
       confirmHandover,
       tenancyReminders,
     }),
