@@ -38,3 +38,17 @@ Tài liệu này ghi lại các giả định thiết kế và vận hành khi c
 3. **Xử lý mất kết nối (Offline Resilience):**
    - Dữ liệu phòng đã lưu (Favorites) và thông tin cấu hình cá nhân được lưu trữ bền bỉ ở Local Storage để xem được ngay cả khi ngoại tuyến.
    - Các thao tác đòi hỏi kết nối mạng thời gian thực (gửi tin nhắn mới, gửi đánh giá, nộp báo cáo) sẽ hiển thị thông báo thân thiện "Yêu cầu kết nối mạng để tiếp tục".
+
+---
+
+## Phase 5 — Tin cậy nâng cao & AI
+
+1. **AI Natural Language Search (Cơ chế Hybrid):**
+   - AI Search phân tích câu truy vấn tự nhiên tiếng Việt (kể cả không dấu, viết tắt) thành bộ lọc có cấu trúc (khoảng giá, tiện nghi, khu vực/trường học), đồng thời hiển thị thẻ *"🤖 Trợ lý AI đã hiểu..."* cho người dùng xem và bấm chỉnh sửa/xóa nhanh.
+   - Nếu AI không phân tích được hoặc có lỗi, hệ thống tự động fallback về tìm kiếm từ khóa unaccent truyền thống để đảm bảo tính sẵn sàng cao.
+
+2. **Điểm tin cậy (Explainable Trust Score):**
+   - Áp dụng thang điểm 0–100 kèm phân loại rõ ràng (ví dụ: "95/100 • Rất tin cậy") và liệt kê các lý do giải thích minh bạch (cấp độ L1/L2/L3, chi phí minh bạch 100%, đánh giá tốt). Tuyệt đối không dùng mô hình hộp đen.
+
+3. **Hồ sơ xác minh Cấp L3 (Quyền cho thuê bất động sản):**
+   - Chấp nhận Giấy chứng nhận quyền sử dụng đất (Sổ hồng/Sổ đỏ) đối với chủ nhà sở hữu trực tiếp HOẶC Hợp đồng ủy quyền/cho thuê lại hợp pháp đối với đơn vị quản lý vận hành căn hộ mini.
