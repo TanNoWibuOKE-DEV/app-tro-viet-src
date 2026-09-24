@@ -22,3 +22,4 @@ export * from './checklist/viewing-items.js';
 export * from './contract/template.js';
 export * from './contract/analysis.js';
 export * from './payment/vietqr.js';
+export * from './insights/market.js';
