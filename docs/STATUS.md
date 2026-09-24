@@ -1,13 +1,14 @@
 # Trọ Việt — Tiến độ
 
-**Phase hiện tại:** Phase 1 — Tìm phòng & Nguồn tin
-**Trạng thái:** Đã hoàn thành (Chờ xác nhận để chuyển sang Phase 2)
+**Phase hiện tại:** Phase 2 — Bản đồ, chi phí, tin cậy
+**Trạng thái:** Đã hoàn thành (Chờ xác nhận để chuyển sang Phase 3)
 
-## Quyết định đã chốt (Sau Phase 1)
+## Quyết định đã chốt (Sau Phase 2)
 - **Tech Stack:** Monorepo (`apps/mobile`, `packages/shared`, `supabase/`), Expo (React Native + TypeScript + Expo Router) + Supabase (Postgres, PostGIS, Auth, Storage, Realtime). Chi tiết tại [001-stack.md](file:///d:/File_Website/web_tmđt/docs/adr/001-stack.md).
 - **Thị trường ra mắt đầu tiên:** TP. Đà Nẵng (áp dụng mô hình địa giới 2 cấp hiện hành và bảng `area_aliases`).
-- **Quy chuẩn chi phí:** Minh bạch 100%, không bao giờ coi chi phí chưa cung cấp là 0đ, tách biệt "Mỗi tháng" và "Cần chuẩn bị khi vào ở".
-- **Bảo mật & Kiểm duyệt:** Bật RLS 100% trên toàn bộ các bảng; tin đăng mới tạo chuyển vào trạng thái `pending_review` và chỉ hiển thị công khai khi được Admin phê duyệt.
+- **Bản đồ & Khoảng cách:** Tính toán khoảng cách địa lý theo công thức Haversine, hỗ trợ lọc phòng quanh mốc quen thuộc (ĐH Duy Tân, ĐH Bách Khoa, Mỹ Khê, Cầu Rồng); hiển thị khoảng cách định dạng Việt Nam (`2,5 km`, `800 m`).
+- **Máy tính chi phí cá nhân:** Cho phép người dùng tùy biến số người, số xe máy, mức điện (kWh) và nước (m³) để ra ước tính chính xác theo nhu cầu ở thực tế.
+- **Xác minh L2:** Quy trình nộp CCCD và phê duyệt trên Admin có ghi nhận Audit Log.
 
 ## Phase đã xong
 - **Phase 0 — Nền móng:**
@@ -24,9 +25,15 @@
   - Màn hình Chi tiết phòng (Property Detail): Địa chỉ chuẩn 2 cấp, bảng biểu phí minh bạch (`CostCard`), tiện nghi đầy đủ, bảo vệ SĐT chủ trọ cho người chưa đăng nhập.
   - Màn hình Đăng tin cho chủ trọ (Landlord Post): Nhập địa chỉ 2 cấp, bắt buộc nhập minh bạch chi phí điện nước, gửi duyệt tin an toàn.
   - Màn hình Quản trị duyệt tin (Admin Moderation Queue): Danh sách tin chờ duyệt, thao tác Duyệt (xuất bản ngay ra tìm kiếm) / Từ chối kèm lý do.
+- **Phase 2 — Bản đồ, chi phí, tin cậy:**
+  - Màn hình Bản đồ tìm trọ (Map Search Tab): Định vị ghim giá tiền (`2.5tr`, `4.8tr`), chọn mốc tiện ích tính tự động khoảng cách `2,5 km`, xem nhanh phòng trọ.
+  - Modal Máy tính tổng chi phí tương tác (Interactive Cost Calculator): Người dùng tự kéo chỉnh số người, số xe, kWh điện, m³ nước.
+  - Tính năng Lưu phòng (Favorites): Nút thả tim trên mọi thẻ phòng, danh sách phòng đã lưu ngoại tuyến (offline ready).
+  - Màn hình So sánh phòng (Property Comparison Modal): Đặt 2–3 phòng cạnh nhau đối chiếu giá thuê, cọc, tổng chi phí tháng, chi phí vào ở, diện tích, tiện nghi và cấp độ xác minh.
+  - Quy trình Xác minh danh tính chủ trọ L2: Form nộp CCCD tại tab Cá nhân, giao diện duyệt L2 trên Admin có ghi nhận Audit Log.
 
 ## Phase tiếp theo
-- **Phase 2 — Bản đồ, chi phí, tin cậy:** Map Search (Bản đồ tương tác), Total Cost Calculator nâng cao, Landlord Verification (L1–L2), Favorites (Lưu phòng trọ).
+- **Phase 3 — Liên hệ & cộng đồng:** Realtime Chat (theo từng tin đăng), Đánh giá có kiểm soát (Reviews), Báo cáo vi phạm (Reports), Cảnh báo chống lừa đảo cơ bản (Anti-Scam rule-based).
 
 ## Việc nợ
 Xem [BACKLOG.md](file:///d:/File_Website/web_tmđt/docs/BACKLOG.md).
