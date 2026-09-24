@@ -25,3 +25,4 @@ export * from './payment/vietqr.js';
 export * from './insights/market.js';
 export * from './seed/mock-phase6.js';
 export * from './roommate/matching.js';
+export * from './handover/checklist.js';
