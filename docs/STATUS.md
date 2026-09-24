@@ -1,16 +1,13 @@
 # Trọ Việt — Tiến độ
 
-**Phase hiện tại:** Phase 5 — Tin cậy nâng cao & AI (Sau MVP)
-**Trạng thái:** Đã hoàn thành (Chờ duyệt chuyển sang Phase 6)
+**Phase hiện tại:** Phase 6 — Thuê & Quản lý (Rent & Management)
+**Trạng thái:** Đã hoàn thành (Chờ duyệt chuyển sang Phase 7)
 
-## Quyết định đã chốt (Sau Phase 5)
-- **Tech Stack:** Monorepo (`apps/mobile`, `packages/shared`, `supabase/`), Expo (React Native + TypeScript + Expo Router) + Supabase (Postgres, PostGIS, Auth, Storage, Realtime). Chi tiết tại [001-stack.md](file:///d:/File_Website/web_tmđt/docs/adr/001-stack.md).
-- **Thị trường ra mắt đầu tiên:** TP. Đà Nẵng (áp dụng mô hình địa giới 2 cấp hiện hành và bảng `area_aliases`).
-- **Điểm tin cậy minh bạch (Explainable Trust Score):** Điểm số từ 0–100 tuyệt đối nói không với mô hình hộp đen; mọi điểm cộng/trừ đều hiển thị nguyên nhân rõ ràng (+35 điểm xác minh, +25 điểm minh bạch chi phí, +15 điểm kiểm duyệt, +15 điểm review, +10 điểm tiện nghi; trừ điểm nếu giá bất thường hoặc có report).
-- **AI có kỷ luật (Disciplined AI Search & Insights):** AI chỉ đọc và diễn giải các trường dữ liệu có thật trong CSDL; không bao giờ bịa thông tin; chuyển đổi ngôn ngữ tự nhiên/viết tắt/tiếng lóng ("2tr5", "gác lửng", "Hòa Khánh") thành cấu trúc JSON chuẩn Zod kèm giải thích minh bạch *"🤖 Trợ lý AI đã hiểu..."*.
-- **Sổ tay kiểm tra thực tế (Viewing Checklist):** 10 tiêu chí kiểm tra thực địa giúp người thuê phòng tự tin kiểm tra công tơ điện, áp lực nước sinh hoạt, trần tường ẩm mốc, khóa an ninh và đối chiếu CCCD chủ trọ trước khi chuyển cọc.
-- **Xác minh chính chủ cấp L3:** Kiểm duyệt giấy tờ pháp lý (Sổ đỏ / QSDĐ chính chủ hoặc Hợp đồng ủy quyền cho thuê) với hàng đợi duyệt riêng trên Admin và cấp huy hiệu L3.
-- **Lưu tìm kiếm (Saved Searches):** Cho phép người dùng lưu lại tiêu chí tìm kiếm ưa thích (có RLS bảo vệ) và kích hoạt lại nhanh chóng.
+## Quyết định đã chốt (Sau Phase 6)
+- **Hợp đồng thuê phòng mẫu chuẩn mực:** Mẫu hợp đồng chuẩn hóa cấu trúc pháp lý nhà ở Việt Nam, địa chỉ 2 cấp hành chính, tiền tệ số nguyên VNĐ, điều khoản minh bạch quyền và trách nhiệm hai bên.
+- **AI Phân tích hợp đồng có bảo vệ quyền riêng tư:** Che mờ tự động (redact) thông tin cá nhân CCCD, SĐT, STK ngân hàng theo Luật 91/2025/QH15 trước khi phân tích; phát hiện bẫy cọc, điều khoản đơn phương tăng giá, thời hạn báo trước không công bằng kèm tuyên bố miễn trừ pháp lý bắt buộc: *"Trợ lý Trọ Việt chỉ hỗ trợ phân tích và lưu ý các điều khoản quan trọng, không thay thế tư vấn pháp lý chuyên nghiệp."*
+- **Thanh toán VietQR NAPAS 24/7 trực tiếp P2P:** Tuyệt đối không giữ tiền người dùng hoặc hoạt động trung gian ví trái phép; hệ thống tự động sinh mã VietQR chuẩn NAPAS 24/7 chuyển thẳng vào tài khoản ngân hàng của chủ trọ với cú pháp chuẩn hóa `TROVIET <mã hóa đơn>`.
+- **Mặt bằng giá thị trường & Lịch sử biến động 6 tháng tại TP. Đà Nẵng:** Dữ liệu chuẩn xác theo từng phường (Hải Châu I, Phước Mỹ, Hòa Khánh Bắc, Hòa Cường Nam) cung cấp mức giá trung bình phòng trọ/căn hộ mini và khung giá điện nước tham chiếu thực tế.
 
 ## Phase đã xong
 - **Phase 0 — Nền móng:**
@@ -58,10 +55,20 @@
   - Thẻ điểm tin cậy kèm bảng phân tích tiêu chí chi tiết và mục Phân tích AI trên `PropertyDetailModal.tsx`.
   - Màn hình sổ tay đi xem phòng tương tác `ViewingChecklistModal.tsx` theo dõi tiến độ và ghi chú chỉ số thực tế.
   - Tab kiểm duyệt hồ sơ L3 (Sổ đỏ / Ủy quyền chính chủ BĐS) trên `AdminModerationScreen.tsx` với Audit Logging.
-  - Đạt 42/42 tests pass across 16 test suites, typecheck 100% sạch sẽ.
+- **Phase 6 — Thuê & Quản lý (Rent & Management):**
+  - Migration v5 (`20260924000005_phase6_contracts_invoices.sql` & rollback script): Bảng `contracts`, bảng `invoices`, enums `contract_status`, `invoice_status`, thiết lập toàn bộ RLS policies cho cả bên thuê và bên cho thuê.
+  - Bộ máy hợp đồng điện tử mẫu & Phân tích AI (`generateContractText`, `analyzeContractTerms`, `redactContractPII`): Bóc tách các điều khoản rủi ro, bẫy cọc, tăng giá đơn phương, chấm dứt bất công, tính điểm minh bạch (0-100), che mờ CCCD/SĐT/STK theo Luật 91/2025/QH15, hiển thị khuyến cáo pháp lý bắt buộc.
+  - Bộ máy tính toán hóa đơn & Thanh toán VietQR NAPAS 24/7 (`calculateMonthlyInvoice`, `generateVietQRLink`): Tính điện theo công tơ kWh (số cũ → số mới), nước sinh hoạt m³, internet, dịch vụ; sinh QR chuyển khoản ngân hàng trực tiếp không trung gian giữ tiền.
+  - Bộ dữ liệu mặt bằng giá thị trường & Lịch sử biến động 6 tháng tại TP. Đà Nẵng (`getWardAreaInsight`, `getAllAreaInsights`): Dữ liệu thực tế cho các phường trọng điểm (Hải Châu I, Phước Mỹ, Hòa Khánh Bắc, Hòa Cường Nam).
+  - Giao diện Chi tiết Hợp đồng & Phân tích AI (`ContractDetailModal.tsx`): Ký xác nhận điện tử hai bên, xem toàn văn hợp đồng có toggle ẩn danh PII.
+  - Giao diện Chi tiết Hóa đơn tiền phòng (`InvoiceDetailModal.tsx`): Bảng kê chi phí từng mục, mã VietQR quét thanh toán tức thì, nút xác nhận chuyển khoản.
+  - Màn hình Bảng điều khiển Chủ trọ (`LandlordDashboardScreen.tsx`): Đo lường tỷ lệ lấp đầy, theo dõi doanh thu dự kiến/chưa thu, quản lý hợp đồng, form xuất hóa đơn tháng tự động.
+  - Màn hình Mặt bằng giá thị trường (`AreaInsightsModal.tsx`): Xem so sánh giá phòng/căn hộ, xu hướng 6 tháng và khung giá điện nước tham chiếu Đà Nẵng; gắn lối vào từ cả Home Feed và Profile.
+  - Đạt 53/53 tests pass across 19 test suites, typecheck 100% sạch sẽ.
 
 ## Phase tiếp theo
-- **Phase 6 — Thuê & Quản lý:** Hợp đồng điện tử, thanh toán, quản lý cho thuê, phân tích biến động giá thị trường (Price History & Area Insights).
+- **Phase 7 — Tối ưu hóa, Mở rộng & Tự động hóa:** Hoàn thiện trải nghiệm vận hành tự động, thông báo đẩy (push notification) nhắc hạn thanh toán, nâng cấp công cụ phân tích thị trường mở rộng toàn quốc.
 
 ## Việc nợ
 Xem [BACKLOG.md](file:///d:/File_Website/web_tmđt/docs/BACKLOG.md).
+
