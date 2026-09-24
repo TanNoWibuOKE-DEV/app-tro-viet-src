@@ -1,0 +1,151 @@
+/**
+ * Trọ Việt - Shared Types
+ * Strictly following TroViet SPEC & Core Invariants
+ */
+
+// 1. Administrative Units & Geography (2-tier system: Province/City -> Ward/Commune/Special Zone)
+export type AdminUnitLevel = 1 | 2;
+
+export type AdminUnitType = 
+  | 'province'         // Tỉnh
+  | 'centrally_run_city' // Thành phố trực thuộc Trung ương
+  | 'ward'             // Phường
+  | 'commune'          // Xã
+  | 'special_zone';    // Đặc khu
+
+export interface AdminUnit {
+  id: string;
+  code: string;
+  name: string;
+  type: AdminUnitType;
+  level: AdminUnitLevel;
+  parentId: string | null;
+  validFrom: string; // ISO Date
+  validTo: string | null; // ISO Date
+  successorIds?: string[];
+  createdAt: string;
+}
+
+export interface AdminUnitMapping {
+  id: string;
+  legacyCode: string;
+  legacyName: string;
+  newUnitId: string;
+  notes?: string;
+}
+
+export interface AreaAlias {
+  id: string;
+  adminUnitId: string;
+  aliasName: string;      // e.g. "quận Hải Châu cũ", "khu Mỹ Khê", "gần ĐH Duy Tân"
+  normalizedName: string;  // unaccented lowercase for search
+  marketId: string;
+  category: 'legacy_district' | 'neighborhood' | 'landmark' | 'university';
+}
+
+export interface Market {
+  id: string;
+  code: string;           // e.g. 'DN', 'HCM', 'HN'
+  name: string;           // e.g. 'Đà Nẵng', 'Hồ Chí Minh'
+  provinceCodes: string[];
+  isActive: boolean;
+}
+
+// 2. Users & Roles (RBAC)
+export type UserRole = 'tenant' | 'landlord' | 'moderator' | 'admin';
+
+export type VerificationLevel = 'none' | 'L1' | 'L2' | 'L3';
+
+export interface UserProfile {
+  id: string;
+  phoneNumber: string | null;
+  email: string | null;
+  fullName: string;
+  avatarUrl: string | null;
+  role: UserRole;
+  verificationLevel: VerificationLevel;
+  createdAt: string;
+}
+
+export interface LandlordProfile {
+  id: string;
+  userId: string;
+  businessName?: string;
+  identityVerified: boolean;
+  totalListingsCount: number;
+  activeListingsCount: number;
+  averageRating: number;
+  reviewCount: number;
+  createdAt: string;
+}
+
+// 3. Properties & Listings
+export type PropertyType = 'room' | 'apartment' | 'house' | 'shared';
+
+export type ListingStatus = 'draft' | 'pending_review' | 'published' | 'rejected' | 'hidden';
+
+export interface Property {
+  id: string;
+  landlordId: string;
+  title: string;
+  description: string;
+  propertyType: PropertyType;
+  provinceCode: string;
+  wardCode: string;
+  street: string;
+  houseNumber: string;
+  legacyDistrict?: string;
+  latitude: number;
+  longitude: number;
+  areaSquareMeters: number;
+  createdAt: string;
+}
+
+// Utility billing method
+export type UtilityBillingType = 'meter' | 'fixed_monthly' | 'tiered' | 'unprovided';
+
+export interface ListingCosts {
+  // Integer VND amounts
+  monthlyRent: number; // Tiền phòng cố định hàng tháng (VND)
+  deposit: number;     // Tiền cọc (VND)
+  
+  // Electricity
+  electricityBillingType: UtilityBillingType;
+  electricityCostPerUnit?: number; // VND / kWh (nếu theo đồng hồ hoặc khoán)
+
+  // Water
+  waterBillingType: UtilityBillingType;
+  waterCostPerUnit?: number; // VND / m³ hoặc VND / người / tháng
+
+  // Internet / Wifi
+  internetBillingType: UtilityBillingType;
+  internetCost?: number; // VND / tháng hoặc VND / phòng
+
+  // Parking
+  parkingBillingType: UtilityBillingType;
+  parkingCost?: number; // VND / xe / tháng
+
+  // Service / Cleaning fees
+  serviceFeeBillingType: UtilityBillingType;
+  serviceCost?: number;
+
+  otherFeesNotes?: string;
+}
+
+export interface CostCalculationResult {
+  monthlyEstimatedTotal: number;
+  initialMoveInTotal: number;
+  knownMonthlyCosts: {
+    rent: number;
+    electricity?: number;
+    water?: number;
+    internet?: number;
+    parking?: number;
+    service?: number;
+  };
+  unprovidedCostFields: Array<{
+    field: string;
+    label: string;
+  }>;
+  isFullyTransparent: boolean;
+}

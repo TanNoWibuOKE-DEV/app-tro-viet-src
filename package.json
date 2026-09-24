@@ -1,0 +1,30 @@
+{
+  "name": "troviet-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Trọ Việt Monorepo - Smart & Safe Rental Finder for Vietnamese",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "dev:mobile": "npm run start --workspace=apps/mobile",
+    "dev:web": "npm run web --workspace=apps/mobile"
+  },
+  "keywords": [
+    "troviet",
+    "rental",
+    "vietnam",
+    "expo",
+    "react-native",
+    "supabase"
+  ],
+  "author": "Trọ Việt Team",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "tsx": "^4.23.15"
+  }
+}
