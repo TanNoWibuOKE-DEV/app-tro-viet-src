@@ -203,3 +203,90 @@ export interface ListingSummary {
   createdAt: string;
 }
 
+// 5. Phase 3: Chat, Reviews, Reports, and Notifications
+export interface Conversation {
+  id: string;
+  listingId: string | null;
+  listingTitle?: string;
+  tenantId: string;
+  tenantName: string;
+  landlordId: string;
+  landlordName: string;
+  lastMessagePreview: string | null;
+  lastMessageAt: string | null;
+  createdAt: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  senderName: string;
+  content: string;
+  isRead: boolean;
+  createdAt: string;
+  detectedRisks?: string[];
+}
+
+export interface Review {
+  id: string;
+  listingId: string;
+  tenantId: string;
+  tenantName: string;
+  rating: number; // 1-5
+  content: string;
+  status: 'pending' | 'approved' | 'rejected';
+  landlordResponse?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ReportCategory =
+  | 'deposit_scam'
+  | 'fake_listing'
+  | 'wrong_price'
+  | 'inappropriate_behavior'
+  | 'other';
+
+export type ReportTargetType = 'listing' | 'user' | 'review' | 'message';
+
+export type ReportStatus = 'pending' | 'investigating' | 'resolved' | 'dismissed';
+
+export interface Report {
+  id: string;
+  reporterId: string;
+  reporterName: string;
+  targetType: ReportTargetType;
+  targetId: string;
+  targetTitle?: string;
+  reasonCategory: ReportCategory;
+  details: string;
+  status: ReportStatus;
+  resolutionNotes?: string | null;
+  resolvedBy?: string | null;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export type NotificationType =
+  | 'chat_message'
+  | 'review_received'
+  | 'review_approved'
+  | 'listing_approved'
+  | 'listing_rejected'
+  | 'verification_approved'
+  | 'verification_rejected'
+  | 'report_resolved'
+  | 'anti_scam_warning';
+
+export interface AppNotification {
+  id: string;
+  userId: string;
+  title: string;
+  body: string;
+  type: NotificationType;
+  data?: Record<string, unknown>;
+  isRead: boolean;
+  createdAt: string;
+}
+
