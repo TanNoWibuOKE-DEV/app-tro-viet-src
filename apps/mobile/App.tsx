@@ -1,175 +1,184 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   SafeAreaView,
-  ScrollView,
   View,
   Text,
+  TouchableOpacity,
   StyleSheet,
   StatusBar,
+  Modal,
 } from 'react-native';
 import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
 import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
-import { Button } from './src/components/Button';
-import { Badge } from './src/components/Badge';
-import { CostCard } from './src/components/CostCard';
-import { checkSupabaseHealth, SupabaseHealth } from './src/lib/supabase';
-import {
-  APP_NAME,
-  APP_TAGLINE,
-  ListingCosts,
-  formatVND,
-  formatArea,
-  formatDistance,
-} from '@troviet/shared';
+import { AppProvider, useApp } from './src/context/AppContext';
+import { HomeScreen } from './src/screens/HomeScreen';
+import { SearchScreen } from './src/screens/SearchScreen';
+import { LandlordPostScreen } from './src/screens/LandlordPostScreen';
+import { AdminModerationScreen } from './src/screens/AdminModerationScreen';
+import { AuthOnboardingScreen } from './src/screens/AuthOnboardingScreen';
+import { PropertyDetailModal } from './src/screens/PropertyDetailModal';
+import { APP_NAME, APP_TAGLINE } from '@troviet/shared';
 
-// Sample Dev Listing Costs demonstrating transparent pricing
-const SAMPLE_DEV_COSTS: ListingCosts = {
-  monthlyRent: 2800000,
-  deposit: 2800000,
-  electricityBillingType: 'meter',
-  electricityCostPerUnit: 3500,
-  waterBillingType: 'meter',
-  waterCostPerUnit: 15000,
-  internetBillingType: 'fixed_monthly',
-  internetCost: 80000,
-  parkingBillingType: 'unprovided', // Landlord hasn't provided parking fee
-  serviceFeeBillingType: 'unprovided', // Cleaning fee unprovided
-};
+type TabKey = 'home' | 'search' | 'post' | 'admin' | 'profile';
 
-const MainScreen: React.FC = () => {
+const MainApp: React.FC = () => {
   const { colors, isDark, toggleTheme } = useTheme();
-  const [health, setHealth] = useState<SupabaseHealth | null>(null);
-  const [isChecking, setIsChecking] = useState(false);
+  const { currentUser, listings, selectedListing, setSelectedListing } = useApp();
 
-  const runHealthCheck = async () => {
-    setIsChecking(true);
-    const result = await checkSupabaseHealth();
-    setHealth(result);
-    setIsChecking(false);
+  const [activeTab, setActiveTab] = useState<TabKey>('home');
+  const [searchInitialQuery, setSearchInitialQuery] = useState('');
+
+  const pendingCount = listings.filter((l) => l.status === 'pending_review').length;
+
+  const navigateToSearchWithQuery = (query?: string) => {
+    setSearchInitialQuery(query || '');
+    setActiveTab('search');
   };
 
-  useEffect(() => {
-    runHealthCheck();
-  }, []);
-
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]}>
       <ExpoStatusBar style={isDark ? 'light' : 'dark'} />
-      <ScrollView contentContainerStyle={styles.container}>
-        {/* Brand Header */}
-        <View style={styles.header}>
-          <View style={styles.brandRow}>
-            <View style={[styles.logoIcon, { backgroundColor: colors.primary }]}>
-              <Text style={styles.logoText}>TV</Text>
-            </View>
-            <View>
-              <Text style={[styles.brandTitle, { color: colors.textPrimary }]}>
-                {APP_NAME}
-              </Text>
-              <Text style={[styles.brandTagline, { color: colors.textSecondary }]}>
-                {APP_TAGLINE}
-              </Text>
-            </View>
+
+      {/* Persistent Brand Header */}
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <View style={styles.brandRow}>
+          <View style={[styles.logoIcon, { backgroundColor: colors.primary }]}>
+            <Text style={styles.logoText}>TV</Text>
           </View>
-          <View style={styles.themeToggleContainer}>
-            <Button
-              title={isDark ? '☀️ Giao diện sáng' : '🌙 Giao diện tối'}
-              variant="outline"
-              onPress={toggleTheme}
-            />
+          <View>
+            <Text style={[styles.brandTitle, { color: colors.textPrimary }]}>{APP_NAME}</Text>
+            <Text style={[styles.brandTagline, { color: colors.textSecondary }]}>{APP_TAGLINE}</Text>
           </View>
         </View>
 
-        {/* System & DB Status Card */}
-        <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Trạng thái hệ thống (Phase 0 Healthcheck)
-          </Text>
-          <View style={styles.statusIndicatorRow}>
-            <View
-              style={[
-                styles.statusDot,
-                { backgroundColor: health?.connected ? colors.primary : colors.warning },
-              ]}
-            />
-            <Text style={[styles.statusText, { color: colors.textPrimary }]}>
-              {health ? health.message : 'Đang kiểm tra kết nối...'}
-            </Text>
-          </View>
-          <Text style={[styles.statusMeta, { color: colors.textSecondary }]}>
-            Supabase URL: {health?.url || 'http://127.0.0.1:54321'}
-          </Text>
-          <View style={{ marginTop: 10 }}>
-            <Button
-              title="Kiểm tra lại kết nối CSDL"
-              variant="secondary"
-              loading={isChecking}
-              onPress={runHealthCheck}
-            />
-          </View>
-        </View>
+        <TouchableOpacity
+          style={[styles.themeBtn, { borderColor: colors.border }]}
+          onPress={toggleTheme}
+          accessibilityRole="button"
+        >
+          <Text style={{ fontSize: 16 }}>{isDark ? '☀️' : '🌙'}</Text>
+        </TouchableOpacity>
+      </View>
 
-        {/* 2-Tier Administrative Boundary & Aliases Showcase */}
-        <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Mô hình địa giới 2 cấp (Từ 01/07/2025)
+      {/* Screen Content */}
+      <View style={styles.screenContainer}>
+        {activeTab === 'home' && (
+          <HomeScreen onNavigateToSearch={navigateToSearchWithQuery} />
+        )}
+        {activeTab === 'search' && (
+          <SearchScreen initialQuery={searchInitialQuery} />
+        )}
+        {activeTab === 'post' && (
+          <LandlordPostScreen onSuccess={() => setActiveTab('home')} />
+        )}
+        {activeTab === 'admin' && <AdminModerationScreen />}
+        {activeTab === 'profile' && <AuthOnboardingScreen />}
+      </View>
+
+      {/* Bottom Navigation Bar */}
+      <View style={[styles.bottomNav, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => setActiveTab('home')}
+          accessibilityRole="button"
+        >
+          <Text style={{ fontSize: 18 }}>🏠</Text>
+          <Text
+            style={[
+              styles.navText,
+              { color: activeTab === 'home' ? colors.primary : colors.textSecondary },
+            ]}
+          >
+            Trang chủ
           </Text>
-          <Text style={[styles.descriptionText, { color: colors.textSecondary }]}>
-            Tuân thủ cấu trúc Tỉnh/Thành phố → Xã/Phường/Đặc khu và hỗ trợ tên quen thuộc theo thói quen:
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => {
+            setSearchInitialQuery('');
+            setActiveTab('search');
+          }}
+          accessibilityRole="button"
+        >
+          <Text style={{ fontSize: 18 }}>🔍</Text>
+          <Text
+            style={[
+              styles.navText,
+              { color: activeTab === 'search' ? colors.primary : colors.textSecondary },
+            ]}
+          >
+            Tìm kiếm
           </Text>
-          <View style={styles.adminUnitList}>
-            <View style={[styles.unitPill, { backgroundColor: colors.background }]}>
-              <Text style={{ color: colors.textPrimary, fontWeight: '600' }}>
-                📍 Cấp 1: TP. Đà Nẵng
-              </Text>
-            </View>
-            <View style={[styles.unitPill, { backgroundColor: colors.background, marginLeft: 16 }]}>
-              <Text style={{ color: colors.textSecondary }}>
-                ↳ Cấp 2: Phường Hải Châu I · Phường Phước Mỹ · Phường Hòa Khánh Bắc
-              </Text>
-            </View>
-            <View style={[styles.unitPill, { backgroundColor: colors.background, marginLeft: 16 }]}>
-              <Text style={{ color: colors.textSecondary }}>
-                🏷 Bí danh tìm kiếm: "Khu Mỹ Khê" · "Gần ĐH Duy Tân" · "Quận Hải Châu cũ"
-              </Text>
-            </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => setActiveTab('post')}
+          accessibilityRole="button"
+        >
+          <Text style={{ fontSize: 18 }}>➕</Text>
+          <Text
+            style={[
+              styles.navText,
+              { color: activeTab === 'post' ? colors.primary : colors.textSecondary },
+            ]}
+          >
+            Đăng tin
+          </Text>
+        </TouchableOpacity>
+
+        {/* Admin Moderation Tab */}
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => setActiveTab('admin')}
+          accessibilityRole="button"
+        >
+          <View style={styles.iconWithBadge}>
+            <Text style={{ fontSize: 18 }}>🛡️</Text>
+            {pendingCount > 0 && (
+              <View style={[styles.badgeDot, { backgroundColor: colors.warning }]}>
+                <Text style={styles.badgeDotText}>{pendingCount}</Text>
+              </View>
+            )}
           </View>
-        </View>
-
-        {/* Verification Badges Showcase */}
-        <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Cấp độ xác minh an toàn (SPEC Mục 8)
+          <Text
+            style={[
+              styles.navText,
+              { color: activeTab === 'admin' ? colors.primary : colors.textSecondary },
+            ]}
+          >
+            Quản trị
           </Text>
-          <View style={styles.badgeRow}>
-            <Badge level="L1" />
-            <Badge level="L2" />
-            <Badge level="L3" />
-          </View>
-        </View>
+        </TouchableOpacity>
 
-        {/* Transparent Cost Calculation Demonstration */}
-        <CostCard costs={SAMPLE_DEV_COSTS} />
-
-        {/* Formatters Showcase */}
-        <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Quy chuẩn hiển thị tiếng Việt
+        <TouchableOpacity
+          style={styles.navItem}
+          onPress={() => setActiveTab('profile')}
+          accessibilityRole="button"
+        >
+          <Text style={{ fontSize: 18 }}>👤</Text>
+          <Text
+            style={[
+              styles.navText,
+              { color: activeTab === 'profile' ? colors.primary : colors.textSecondary },
+            ]}
+          >
+            Cá nhân
           </Text>
-          <View style={styles.formattersGrid}>
-            <Text style={{ color: colors.textSecondary }}>Tiền tệ VNĐ: <Text style={{ color: colors.textPrimary, fontWeight: '700' }}>{formatVND(3500000)}</Text></Text>
-            <Text style={{ color: colors.textSecondary }}>Diện tích: <Text style={{ color: colors.textPrimary, fontWeight: '700' }}>{formatArea(28.5)}</Text></Text>
-            <Text style={{ color: colors.textSecondary }}>Khoảng cách: <Text style={{ color: colors.textPrimary, fontWeight: '700' }}>{formatDistance(1.8)}</Text></Text>
-          </View>
-        </View>
+        </TouchableOpacity>
+      </View>
 
-        {/* Footer */}
-        <View style={styles.footer}>
-          <Text style={[styles.footerText, { color: colors.textSecondary }]}>
-            Trọ Việt · Bản khởi động Phase 0 Nền móng · Sẵn sàng cho Phase 1
-          </Text>
-        </View>
-      </ScrollView>
+      {/* Property Detail Modal */}
+      <Modal visible={selectedListing !== null} animationType="slide">
+        {selectedListing && (
+          <PropertyDetailModal
+            listing={selectedListing}
+            onClose={() => setSelectedListing(null)}
+            isLoggedIn={currentUser !== null}
+          />
+        )}
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -177,110 +186,97 @@ const MainScreen: React.FC = () => {
 export default function App() {
   return (
     <ThemeProvider>
-      <MainScreen />
+      <AppProvider>
+        <MainApp />
+      </AppProvider>
     </ThemeProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  root: {
     flex: 1,
     paddingTop: StatusBar.currentHeight || 0,
   },
-  container: {
-    padding: 16,
-    paddingBottom: 40,
-  },
   header: {
-    marginBottom: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
   },
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
   },
   logoIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 10,
   },
   logoText: {
     color: '#FFFFFF',
     fontWeight: '900',
-    fontSize: 20,
+    fontSize: 16,
   },
   brandTitle: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: '800',
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
   brandTagline: {
-    fontSize: 13,
+    fontSize: 11,
+  },
+  themeBtn: {
+    padding: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  screenContainer: {
+    flex: 1,
+  },
+  bottomNav: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 60,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    borderTopWidth: 1,
+  },
+  navItem: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
+    height: '100%',
+  },
+  navText: {
+    fontSize: 11,
+    fontWeight: '600',
     marginTop: 2,
   },
-  themeToggleContainer: {
-    marginTop: 4,
+  iconWithBadge: {
+    position: 'relative',
   },
-  sectionCard: {
-    borderRadius: 12,
-    borderWidth: 1,
-    padding: 16,
-    marginVertical: 8,
-  },
-  sectionTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  descriptionText: {
-    fontSize: 13,
-    lineHeight: 18,
-    marginBottom: 8,
-  },
-  statusIndicatorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  statusDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginRight: 8,
-  },
-  statusText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  statusMeta: {
-    fontSize: 12,
-  },
-  adminUnitList: {
-    marginTop: 6,
-    gap: 6,
-  },
-  unitPill: {
-    padding: 8,
-    borderRadius: 6,
-  },
-  badgeRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 4,
-  },
-  formattersGrid: {
-    gap: 6,
-    marginTop: 4,
-  },
-  footer: {
-    marginTop: 24,
+  badgeDot: {
+    position: 'absolute',
+    top: -4,
+    right: -8,
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  footerText: {
-    fontSize: 12,
+  badgeDotText: {
+    color: '#000000',
+    fontSize: 9,
+    fontWeight: '800',
   },
 });
