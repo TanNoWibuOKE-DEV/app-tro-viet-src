@@ -277,7 +277,8 @@ export type NotificationType =
   | 'verification_approved'
   | 'verification_rejected'
   | 'report_resolved'
-  | 'anti_scam_warning';
+  | 'anti_scam_warning'
+  | 'saved_search_match';
 
 export interface AppNotification {
   id: string;
@@ -287,6 +288,35 @@ export interface AppNotification {
   type: NotificationType;
   data?: Record<string, unknown>;
   isRead: boolean;
+  createdAt: string;
+}
+
+// 6. Phase 5: Saved Searches & L3 Verifications
+export interface SavedSearch {
+  id: string;
+  userId: string;
+  name: string;
+  criteria: SearchFilterParams;
+  notifyNewMatches: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LandlordVerification {
+  id: string;
+  userId: string;
+  userName?: string;
+  userPhone?: string;
+  level: VerificationLevel;
+  status: 'pending' | 'approved' | 'rejected';
+  documentType: 'id_card' | 'business_license' | 'land_ownership_certificate' | 'lease_authorization';
+  documentUrl?: string;
+  propertyId?: string | null;
+  propertyTitle?: string;
+  notes?: string;
+  verifiedAt?: string | null;
+  reviewedBy?: string | null;
+  rejectionReason?: string | null;
   createdAt: string;
 }
 
