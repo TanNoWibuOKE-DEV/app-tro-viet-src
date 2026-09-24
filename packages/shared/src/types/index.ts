@@ -278,7 +278,11 @@ export type NotificationType =
   | 'verification_rejected'
   | 'report_resolved'
   | 'anti_scam_warning'
-  | 'saved_search_match';
+  | 'saved_search_match'
+  | 'contract_pending'
+  | 'contract_signed'
+  | 'invoice_issued'
+  | 'invoice_paid';
 
 export interface AppNotification {
   id: string;
@@ -318,5 +322,55 @@ export interface LandlordVerification {
   reviewedBy?: string | null;
   rejectionReason?: string | null;
   createdAt: string;
+}
+
+// 7. Phase 6: Contracts & Rent Invoicing
+export type ContractStatus = 'draft' | 'pending_signature' | 'active' | 'terminated' | 'expired';
+
+export interface RentalContract {
+  id: string;
+  listingId: string;
+  listingTitle: string;
+  landlordId: string;
+  landlordName: string;
+  tenantId: string;
+  tenantName: string;
+  status: ContractStatus;
+  monthlyRent: number;
+  depositAmount: number;
+  startDate: string;
+  endDate: string;
+  landlordSignedAt?: string;
+  tenantSignedAt?: string;
+  contractText: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export type InvoiceStatus = 'pending' | 'paid' | 'overdue';
+
+export interface RentInvoice {
+  id: string;
+  contractId: string;
+  listingId: string;
+  listingTitle: string;
+  landlordId: string;
+  landlordName: string;
+  tenantId: string;
+  tenantName: string;
+  monthYear: string; // e.g. "10/2026"
+  rentAmount: number;
+  electricityAmount: number;
+  electricityKwh?: number;
+  waterAmount: number;
+  waterM3?: number;
+  internetAmount: number;
+  serviceAmount: number;
+  totalAmount: number;
+  status: InvoiceStatus;
+  vietqrUrl?: string;
+  paidAt?: string;
+  createdAt: string;
+  updatedAt?: string;
 }
 

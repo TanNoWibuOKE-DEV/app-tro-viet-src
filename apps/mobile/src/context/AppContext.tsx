@@ -15,11 +15,15 @@ import {
   AppNotification,
   SavedSearch,
   LandlordVerification,
+  RentalContract,
+  RentInvoice,
   MOCK_CONVERSATIONS,
   MOCK_MESSAGES,
   MOCK_REVIEWS,
   MOCK_REPORTS,
   MOCK_NOTIFICATIONS,
+  MOCK_CONTRACTS,
+  MOCK_INVOICES,
   analyzeChatMessageForRisks,
   checkReviewEligibility,
 } from '@troviet/shared';
@@ -111,6 +115,15 @@ interface AppContextType {
     notes?: string
   ) => void;
   moderateL3Verification: (requestId: string, status: 'approved' | 'rejected', reason?: string) => void;
+
+  // Phase 6: Contracts & Rent Invoicing
+  contracts: RentalContract[];
+  invoices: RentInvoice[];
+  signContract: (contractId: string, role: 'tenant' | 'landlord') => void;
+  terminateContract: (contractId: string) => void;
+  createContract: (contract: Omit<RentalContract, 'id' | 'createdAt'>) => RentalContract;
+  createInvoice: (invoiceData: Omit<RentInvoice, 'id' | 'createdAt'>) => RentInvoice;
+  markInvoicePaid: (invoiceId: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -201,6 +214,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       createdAt: '2026-09-24T08:30:00Z',
     },
   ]);
+
+  // Phase 6: Contracts & Invoices State
+  const [contracts, setContracts] = useState<RentalContract[]>(MOCK_CONTRACTS);
+  const [invoices, setInvoices] = useState<RentInvoice[]>(MOCK_INVOICES);
 
   const toggleFavorite = (id: string) => {
     setFavoriteIds((prev) =>
@@ -627,6 +644,117 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  // Phase 6: Contracts & Invoices Handlers
+  const signContract = (contractId: string, role: 'tenant' | 'landlord') => {
+    setContracts((prev) =>
+      prev.map((c) => {
+        if (c.id !== contractId) return c;
+        const now = new Date().toISOString();
+        const updated = { ...c };
+        if (role === 'tenant') {
+          updated.tenantSignedAt = now;
+        } else {
+          updated.landlordSignedAt = now;
+        }
+        if (updated.tenantSignedAt && updated.landlordSignedAt) {
+          updated.status = 'active';
+        } else {
+          updated.status = 'pending_signature';
+        }
+        return updated;
+      })
+    );
+
+    const target = contracts.find((c) => c.id === contractId);
+    if (target) {
+      const recipientId = role === 'tenant' ? target.landlordId : target.tenantId;
+      const notif: AppNotification = {
+        id: `notif-${Date.now()}`,
+        userId: recipientId,
+        title: 'Hợp đồng điện tử đã được ký ✍️',
+        body: `${role === 'tenant' ? 'Khách thuê' : 'Chủ trọ'} đã ký xác nhận hợp đồng thuê "${target.listingTitle}".`,
+        type: 'contract_signed',
+        isRead: false,
+        createdAt: new Date().toISOString(),
+      };
+      setNotifications((prev) => [notif, ...prev]);
+    }
+  };
+
+  const terminateContract = (contractId: string) => {
+    setContracts((prev) =>
+      prev.map((c) => (c.id === contractId ? { ...c, status: 'terminated' } : c))
+    );
+  };
+
+  const createContract = (newContract: Omit<RentalContract, 'id' | 'createdAt'>): RentalContract => {
+    const created: RentalContract = {
+      ...newContract,
+      id: `contract-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    setContracts((prev) => [created, ...prev]);
+
+    const notif: AppNotification = {
+      id: `notif-${Date.now()}`,
+      userId: created.tenantId,
+      title: 'Hợp đồng thuê mới đang chờ ký 📋',
+      body: `Chủ trọ đã khởi tạo hợp đồng cho căn phòng "${created.listingTitle}". Vui lòng kiểm tra và ký xác nhận.`,
+      type: 'contract_pending',
+      isRead: false,
+      createdAt: new Date().toISOString(),
+    };
+    setNotifications((prev) => [notif, ...prev]);
+
+    return created;
+  };
+
+  const createInvoice = (newInvoice: Omit<RentInvoice, 'id' | 'createdAt'>): RentInvoice => {
+    const created: RentInvoice = {
+      ...newInvoice,
+      id: `inv-${Date.now()}`,
+      createdAt: new Date().toISOString(),
+    };
+    setInvoices((prev) => [created, ...prev]);
+
+    const notif: AppNotification = {
+      id: `notif-${Date.now()}`,
+      userId: created.tenantId,
+      title: `Hóa đơn tiền phòng tháng ${created.monthYear} 💳`,
+      body: `Hóa đơn mới số tiền ${created.totalAmount.toLocaleString('vi-VN')} đ đã được gửi. Bạn có thể quét mã VietQR để thanh toán trực tiếp.`,
+      type: 'invoice_issued',
+      isRead: false,
+      createdAt: new Date().toISOString(),
+    };
+    setNotifications((prev) => [notif, ...prev]);
+
+    return created;
+  };
+
+  const markInvoicePaid = (invoiceId: string) => {
+    setInvoices((prev) =>
+      prev.map((inv) =>
+        inv.id === invoiceId
+          ? { ...inv, status: 'paid', paidAt: new Date().toISOString() }
+          : inv
+      )
+    );
+
+    const target = invoices.find((inv) => inv.id === invoiceId);
+    if (target) {
+      const notif: AppNotification = {
+        id: `notif-${Date.now()}`,
+        userId: target.landlordId,
+        title: 'Hóa đơn đã được thanh toán! 🎉',
+        body: `Người thuê đã xác nhận thanh toán hóa đơn tháng ${target.monthYear} (${target.totalAmount.toLocaleString('vi-VN')} đ) qua VietQR.`,
+        type: 'invoice_paid',
+        isRead: false,
+        createdAt: new Date().toISOString(),
+      };
+      setNotifications((prev) => [notif, ...prev]);
+    }
+  };
+
   const value = useMemo(
     () => ({
       currentUser,
@@ -678,6 +806,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       l3VerificationRequests,
       submitL3Verification,
       moderateL3Verification,
+      // Phase 6
+      contracts,
+      invoices,
+      signContract,
+      terminateContract,
+      createContract,
+      createInvoice,
+      markInvoicePaid,
     }),
     [
       currentUser,
@@ -698,6 +834,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       unreadNotificationsCount,
       savedSearches,
       l3VerificationRequests,
+      contracts,
+      invoices,
     ]
   );
 
