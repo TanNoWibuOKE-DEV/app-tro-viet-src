@@ -52,3 +52,26 @@ Tài liệu này ghi lại các giả định thiết kế và vận hành khi c
 
 3. **Hồ sơ xác minh Cấp L3 (Quyền cho thuê bất động sản):**
    - Chấp nhận Giấy chứng nhận quyền sử dụng đất (Sổ hồng/Sổ đỏ) đối với chủ nhà sở hữu trực tiếp HOẶC Hợp đồng ủy quyền/cho thuê lại hợp pháp đối với đơn vị quản lý vận hành căn hộ mini.
+
+---
+
+## Phase 6 — Thuê & Quản lý
+
+1. **Tuân thủ pháp lý thanh toán P2P VietQR:**
+   - Trọ Việt tuyệt đối không nắm giữ tiền của khách thuê hoặc làm đơn vị trung gian thanh toán thu hộ. Tiền được chuyển khoản trực tiếp 24/7 từ tài khoản người thuê đến tài khoản ngân hàng chủ trọ thông qua chuẩn VietQR NAPAS 24/7.
+
+2. **Bảo vệ quyền riêng tư trong Hợp đồng (Luật 91/2025/QH15):**
+   - Trước khi gửi nội dung hợp đồng qua các mô hình phân tích tự động, toàn bộ thông tin định danh cá nhân nhạy cảm (số CCCD, SĐT cá nhân, số tài khoản ngân hàng) bắt buộc phải được che mờ tự động.
+   - Mọi phân tích điều khoản hợp đồng đều hiển thị rõ ràng khuyến cáo pháp lý rằng ứng dụng không cung cấp dịch vụ tư vấn pháp luật chuyên nghiệp.
+
+---
+
+## Phase 7 — Ở ghép, Chế độ thực địa & Vận hành tự động
+
+1. **Thuật toán ghép người ở ghép (Roommate Matching):**
+   - Đánh giá độ tương thích dựa trên các tiêu chí sinh hoạt cốt lõi: thói quen giờ giấc (ngủ sớm/thức khuya), lối sống (hút thuốc/không), thú cưng, ngân sách chia tiền phòng và trường học/nơi làm việc.
+   - Điểm số hòa hợp (Compatibility Score 0–100%) luôn giải thích rõ các điểm tương đồng lớn và các điểm cần người dùng tự trao đổi thêm.
+
+2. **Chế độ đi xem phòng thực địa & Bàn giao phòng (Viewing Mode):**
+   - Hỗ trợ lưu trữ ngoại tuyến chỉ số công tơ điện và nước ban đầu làm căn cứ pháp lý minh bạch cho các kỳ tính hóa đơn tiền phòng sau này.
+
