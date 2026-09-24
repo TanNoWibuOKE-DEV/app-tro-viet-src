@@ -1,7 +1,8 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { ListingCosts, calculateTotalCosts, formatVND } from '@troviet/shared';
+import { InteractiveCostCalculatorModal } from './InteractiveCostCalculatorModal';
 
 interface CostCardProps {
   costs: ListingCosts;
@@ -9,11 +10,22 @@ interface CostCardProps {
 
 export const CostCard: React.FC<CostCardProps> = ({ costs }) => {
   const { colors } = useTheme();
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   const result = calculateTotalCosts(costs);
 
   return (
     <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-      <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Minh bạch chi phí</Text>
+      <View style={styles.cardHeaderRow}>
+        <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>Minh bạch chi phí</Text>
+        <TouchableOpacity
+          style={[styles.calcBtn, { backgroundColor: colors.background, borderColor: colors.border }]}
+          onPress={() => setIsCalculatorOpen(true)}
+        >
+          <Text style={{ color: colors.primary, fontSize: 12, fontWeight: '700' }}>
+            🧮 Tùy chỉnh mức dùng
+          </Text>
+        </TouchableOpacity>
+      </View>
       
       {/* 2 Main Figures */}
       <View style={styles.summaryRow}>
@@ -33,6 +45,12 @@ export const CostCard: React.FC<CostCardProps> = ({ costs }) => {
           </Text>
         </View>
       </View>
+
+      <InteractiveCostCalculatorModal
+        visible={isCalculatorOpen}
+        onClose={() => setIsCalculatorOpen(false)}
+        costs={costs}
+      />
 
       <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
@@ -120,10 +138,21 @@ const styles = StyleSheet.create({
     padding: 16,
     marginVertical: 10,
   },
+  cardHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   cardTitle: {
     fontSize: 16,
     fontWeight: '700',
-    marginBottom: 12,
+  },
+  calcBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
   },
   summaryRow: {
     flexDirection: 'row',

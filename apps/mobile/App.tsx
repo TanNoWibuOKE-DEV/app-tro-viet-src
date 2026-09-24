@@ -13,22 +13,36 @@ import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
 import { AppProvider, useApp } from './src/context/AppContext';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { SearchScreen } from './src/screens/SearchScreen';
+import { MapScreen } from './src/screens/MapScreen';
+import { FavoritesScreen } from './src/screens/FavoritesScreen';
 import { LandlordPostScreen } from './src/screens/LandlordPostScreen';
 import { AdminModerationScreen } from './src/screens/AdminModerationScreen';
 import { AuthOnboardingScreen } from './src/screens/AuthOnboardingScreen';
 import { PropertyDetailModal } from './src/screens/PropertyDetailModal';
+import { PropertyComparisonModal } from './src/screens/PropertyComparisonModal';
 import { APP_NAME, APP_TAGLINE } from '@troviet/shared';
 
-type TabKey = 'home' | 'search' | 'post' | 'admin' | 'profile';
+type TabKey = 'home' | 'search' | 'map' | 'favorites' | 'post' | 'admin' | 'profile';
 
 const MainApp: React.FC = () => {
   const { colors, isDark, toggleTheme } = useTheme();
-  const { currentUser, listings, selectedListing, setSelectedListing } = useApp();
+  const {
+    currentUser,
+    listings,
+    selectedListing,
+    setSelectedListing,
+    favoriteIds,
+    comparisonIds,
+    verificationRequests,
+  } = useApp();
 
   const [activeTab, setActiveTab] = useState<TabKey>('home');
   const [searchInitialQuery, setSearchInitialQuery] = useState('');
+  const [isComparisonOpen, setIsComparisonOpen] = useState(false);
 
-  const pendingCount = listings.filter((l) => l.status === 'pending_review').length;
+  const pendingListingsCount = listings.filter((l) => l.status === 'pending_review').length;
+  const pendingVerificationsCount = verificationRequests.filter((v) => v.status === 'pending').length;
+  const totalAdminTasks = pendingListingsCount + pendingVerificationsCount;
 
   const navigateToSearchWithQuery = (query?: string) => {
     setSearchInitialQuery(query || '');
@@ -51,13 +65,42 @@ const MainApp: React.FC = () => {
           </View>
         </View>
 
-        <TouchableOpacity
-          style={[styles.themeBtn, { borderColor: colors.border }]}
-          onPress={toggleTheme}
-          accessibilityRole="button"
-        >
-          <Text style={{ fontSize: 16 }}>{isDark ? '☀️' : '🌙'}</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          {/* Quick Post button */}
+          <TouchableOpacity
+            style={[styles.headerActionBtn, { borderColor: colors.border, backgroundColor: colors.background }]}
+            onPress={() => setActiveTab('post')}
+          >
+            <Text style={{ fontSize: 13 }}>➕ Đăng tin</Text>
+          </TouchableOpacity>
+
+          {/* Admin Moderation Button if admin */}
+          {currentUser?.role === 'admin' && (
+            <TouchableOpacity
+              style={[
+                styles.headerActionBtn,
+                {
+                  backgroundColor: totalAdminTasks > 0 ? colors.warning : colors.background,
+                  borderColor: colors.border,
+                },
+              ]}
+              onPress={() => setActiveTab('admin')}
+            >
+              <Text style={{ fontSize: 12, fontWeight: '800', color: totalAdminTasks > 0 ? '#000000' : colors.textPrimary }}>
+                🛡️ {totalAdminTasks > 0 ? `${totalAdminTasks}` : 'Admin'}
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Theme switcher */}
+          <TouchableOpacity
+            style={[styles.themeBtn, { borderColor: colors.border }]}
+            onPress={toggleTheme}
+            accessibilityRole="button"
+          >
+            <Text style={{ fontSize: 15 }}>{isDark ? '☀️' : '🌙'}</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {/* Screen Content */}
@@ -68,6 +111,10 @@ const MainApp: React.FC = () => {
         {activeTab === 'search' && (
           <SearchScreen initialQuery={searchInitialQuery} />
         )}
+        {activeTab === 'map' && <MapScreen />}
+        {activeTab === 'favorites' && (
+          <FavoritesScreen onOpenComparison={() => setIsComparisonOpen(true)} />
+        )}
         {activeTab === 'post' && (
           <LandlordPostScreen onSuccess={() => setActiveTab('home')} />
         )}
@@ -75,14 +122,14 @@ const MainApp: React.FC = () => {
         {activeTab === 'profile' && <AuthOnboardingScreen />}
       </View>
 
-      {/* Bottom Navigation Bar */}
+      {/* Bottom Navigation Bar (Following SPEC Section 9) */}
       <View style={[styles.bottomNav, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => setActiveTab('home')}
           accessibilityRole="button"
         >
-          <Text style={{ fontSize: 18 }}>🏠</Text>
+          <Text style={{ fontSize: 17 }}>🏠</Text>
           <Text
             style={[
               styles.navText,
@@ -101,7 +148,7 @@ const MainApp: React.FC = () => {
           }}
           accessibilityRole="button"
         >
-          <Text style={{ fontSize: 18 }}>🔍</Text>
+          <Text style={{ fontSize: 17 }}>🔍</Text>
           <Text
             style={[
               styles.navText,
@@ -114,41 +161,40 @@ const MainApp: React.FC = () => {
 
         <TouchableOpacity
           style={styles.navItem}
-          onPress={() => setActiveTab('post')}
+          onPress={() => setActiveTab('map')}
           accessibilityRole="button"
         >
-          <Text style={{ fontSize: 18 }}>➕</Text>
+          <Text style={{ fontSize: 17 }}>🗺️</Text>
           <Text
             style={[
               styles.navText,
-              { color: activeTab === 'post' ? colors.primary : colors.textSecondary },
+              { color: activeTab === 'map' ? colors.primary : colors.textSecondary },
             ]}
           >
-            Đăng tin
+            Bản đồ
           </Text>
         </TouchableOpacity>
 
-        {/* Admin Moderation Tab */}
         <TouchableOpacity
           style={styles.navItem}
-          onPress={() => setActiveTab('admin')}
+          onPress={() => setActiveTab('favorites')}
           accessibilityRole="button"
         >
           <View style={styles.iconWithBadge}>
-            <Text style={{ fontSize: 18 }}>🛡️</Text>
-            {pendingCount > 0 && (
-              <View style={[styles.badgeDot, { backgroundColor: colors.warning }]}>
-                <Text style={styles.badgeDotText}>{pendingCount}</Text>
+            <Text style={{ fontSize: 17 }}>❤️</Text>
+            {favoriteIds.length > 0 && (
+              <View style={[styles.badgeDot, { backgroundColor: colors.primary }]}>
+                <Text style={styles.badgeDotText}>{favoriteIds.length}</Text>
               </View>
             )}
           </View>
           <Text
             style={[
               styles.navText,
-              { color: activeTab === 'admin' ? colors.primary : colors.textSecondary },
+              { color: activeTab === 'favorites' ? colors.primary : colors.textSecondary },
             ]}
           >
-            Quản trị
+            Đã lưu
           </Text>
         </TouchableOpacity>
 
@@ -157,7 +203,7 @@ const MainApp: React.FC = () => {
           onPress={() => setActiveTab('profile')}
           accessibilityRole="button"
         >
-          <Text style={{ fontSize: 18 }}>👤</Text>
+          <Text style={{ fontSize: 17 }}>👤</Text>
           <Text
             style={[
               styles.navText,
@@ -169,6 +215,18 @@ const MainApp: React.FC = () => {
         </TouchableOpacity>
       </View>
 
+      {/* Floating Compare Pill if 2-3 items selected */}
+      {comparisonIds.length >= 2 && activeTab !== 'favorites' && (
+        <TouchableOpacity
+          style={[styles.floatingCompareBtn, { backgroundColor: colors.primary }]}
+          onPress={() => setIsComparisonOpen(true)}
+        >
+          <Text style={styles.floatingCompareText}>
+            ⚖️ So sánh {comparisonIds.length} phòng đã chọn
+          </Text>
+        </TouchableOpacity>
+      )}
+
       {/* Property Detail Modal */}
       <Modal visible={selectedListing !== null} animationType="slide">
         {selectedListing && (
@@ -179,6 +237,12 @@ const MainApp: React.FC = () => {
           />
         )}
       </Modal>
+
+      {/* Property Comparison Modal */}
+      <PropertyComparisonModal
+        visible={isComparisonOpen}
+        onClose={() => setIsComparisonOpen(false)}
+      />
     </SafeAreaView>
   );
 };
@@ -231,9 +295,15 @@ const styles = StyleSheet.create({
   brandTagline: {
     fontSize: 11,
   },
+  headerActionBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 6,
+    borderWidth: 1,
+  },
   themeBtn: {
-    padding: 8,
-    borderRadius: 8,
+    padding: 6,
+    borderRadius: 6,
     borderWidth: 1,
   },
   screenContainer: {
@@ -244,7 +314,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 60,
+    height: 58,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-around',
@@ -275,8 +345,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   badgeDotText: {
-    color: '#000000',
+    color: '#FFFFFF',
     fontSize: 9,
     fontWeight: '800',
+  },
+  floatingCompareBtn: {
+    position: 'absolute',
+    bottom: 68,
+    alignSelf: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  floatingCompareText: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 12,
   },
 });

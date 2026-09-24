@@ -3,6 +3,7 @@ import {
   ScrollView,
   View,
   Text,
+  TouchableOpacity,
   StyleSheet,
   Alert,
 } from 'react-native';
@@ -14,30 +15,48 @@ import { ListingSummary, formatVND, formatArea } from '@troviet/shared';
 
 export const AdminModerationScreen: React.FC = () => {
   const { colors } = useTheme();
-  const { listings, moderateListing, setSelectedListing } = useApp();
+  const {
+    listings,
+    moderateListing,
+    setSelectedListing,
+    verificationRequests,
+    moderateL2Verification,
+  } = useApp();
+
+  const [activeTab, setActiveTab] = useState<'listings' | 'verifications'>('listings');
+  const [auditLogs, setAuditLogs] = useState<string[]>([
+    'Hệ thống khởi tạo kiểm soát bảo mật RLS và Audit Log',
+  ]);
 
   const pendingListings = listings.filter((l) => l.status === 'pending_review');
+  const pendingVerifications = verificationRequests.filter((v) => v.status === 'pending');
 
-  const handleApprove = (listing: ListingSummary) => {
+  const addAuditLog = (msg: string) => {
+    const time = new Date().toLocaleTimeString('vi-VN');
+    setAuditLogs((prev) => [`[${time}] ${msg}`, ...prev]);
+  };
+
+  const handleApproveListing = (listing: ListingSummary) => {
     moderateListing(listing.id, 'published');
+    addAuditLog(`Phê duyệt tin đăng #${listing.id}: "${listing.title}"`);
     Alert.alert(
       'Đã duyệt tin thành công',
       `Tin "${listing.title}" đã được xuất bản và hiển thị ngay lập tức trên hệ thống tìm kiếm công khai.`
     );
   };
 
-  const handleReject = (listing: ListingSummary) => {
+  const handleRejectListing = (listing: ListingSummary) => {
+    moderateListing(listing.id, 'rejected');
+    addAuditLog(`Từ chối tin đăng #${listing.id}: "${listing.title}"`);
+    Alert.alert('Đã từ chối tin', `Tin "${listing.title}" đã bị từ chối.`);
+  };
+
+  const handleApproveVerification = (id: string, name: string) => {
+    moderateL2Verification(id, 'approved');
+    addAuditLog(`Phê duyệt danh tính Cấp L2 cho chủ trọ: ${name}`);
     Alert.alert(
-      'Từ chối tin đăng',
-      `Bạn có chắc chắn muốn từ chối tin "${listing.title}"?`,
-      [
-        { text: 'Hủy', style: 'cancel' },
-        {
-          text: 'Từ chối',
-          style: 'destructive',
-          onPress: () => moderateListing(listing.id, 'rejected'),
-        },
-      ]
+      'Đã phê duyệt L2',
+      `Chủ nhà ${name} đã được cấp huy hiệu "✓ Danh tính đã xác minh" (L2) trên toàn bộ tin đăng.`
     );
   };
 
@@ -45,84 +64,178 @@ export const AdminModerationScreen: React.FC = () => {
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.headerRow}>
         <Text style={[styles.heading, { color: colors.textPrimary }]}>
-          Hàng đợi kiểm duyệt tin (Admin)
+          Quản trị & Kiểm duyệt
         </Text>
-        <View style={[styles.countBadge, { backgroundColor: colors.warning }]}>
-          <Text style={styles.countText}>{pendingListings.length} tin chờ duyệt</Text>
-        </View>
       </View>
 
-      <Text style={[styles.subHeading, { color: colors.textSecondary }]}>
-        Kiểm tra độ chính xác của địa chỉ 2 cấp, minh bạch biểu phí và thông tin trước khi xuất bản.
-      </Text>
-
-      {pendingListings.length === 0 ? (
-        <View style={[styles.emptyBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={{ fontSize: 32, marginBottom: 8 }}>✅</Text>
-          <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-            Không có tin nào chờ duyệt
-          </Text>
-          <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
-            Tất cả các tin đăng của chủ trọ đã được xử lý xong.
-          </Text>
-        </View>
-      ) : (
-        pendingListings.map((item) => (
-          <View
-            key={item.id}
-            style={[styles.moderationCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+      {/* Switcher Tab */}
+      <View style={[styles.tabBar, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <TouchableOpacity
+          style={[
+            styles.tabItem,
+            activeTab === 'listings' && { backgroundColor: colors.primary },
+          ]}
+          onPress={() => setActiveTab('listings')}
+        >
+          <Text
+            style={[
+              styles.tabText,
+              { color: activeTab === 'listings' ? '#FFFFFF' : colors.textPrimary },
+            ]}
           >
-            <View style={styles.cardTop}>
-              <Badge level={item.landlordVerificationLevel} />
-              <Text style={[styles.dateText, { color: colors.textSecondary }]}>
-                Gửi lúc: {new Date(item.createdAt).toLocaleTimeString('vi-VN')}
+            Tin đăng ({pendingListings.length})
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.tabItem,
+            activeTab === 'verifications' && { backgroundColor: colors.primary },
+          ]}
+          onPress={() => setActiveTab('verifications')}
+        >
+          <Text
+            style={[
+              styles.tabText,
+              { color: activeTab === 'verifications' ? '#FFFFFF' : colors.textPrimary },
+            ]}
+          >
+            Xác minh L2 ({pendingVerifications.length})
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Tab 1: Listings Queue */}
+      {activeTab === 'listings' && (
+        <View>
+          {pendingListings.length === 0 ? (
+            <View style={[styles.emptyBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={{ fontSize: 32, marginBottom: 8 }}>✅</Text>
+              <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
+                Không có tin nào chờ duyệt
               </Text>
             </View>
+          ) : (
+            pendingListings.map((item) => (
+              <View
+                key={item.id}
+                style={[styles.moderationCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+              >
+                <View style={styles.cardTop}>
+                  <Badge level={item.landlordVerificationLevel} />
+                  <Text style={[styles.dateText, { color: colors.textSecondary }]}>
+                    Gửi lúc: {new Date(item.createdAt).toLocaleTimeString('vi-VN')}
+                  </Text>
+                </View>
 
-            <Text style={[styles.title, { color: colors.textPrimary }]}>{item.title}</Text>
+                <Text style={[styles.title, { color: colors.textPrimary }]}>{item.title}</Text>
 
-            <View style={[styles.detailsBox, { backgroundColor: colors.background }]}>
-              <Text style={[styles.detailLine, { color: colors.textPrimary }]}>
-                👤 Chủ trọ: <Text style={{ fontWeight: '700' }}>{item.landlordName}</Text>
-              </Text>
-              <Text style={[styles.detailLine, { color: colors.textPrimary }]}>
-                📍 Địa chỉ: {item.houseNumber} {item.street}, {item.wardName}, TP. Đà Nẵng
-              </Text>
-              <Text style={[styles.detailLine, { color: colors.textPrimary }]}>
-                💰 Giá thuê: <Text style={{ color: colors.primary, fontWeight: '800' }}>{formatVND(item.monthlyRent)}/tháng</Text> · Cọc: {formatVND(item.deposit)} · Diện tích: {formatArea(item.areaSquareMeters)}
-              </Text>
-              <Text style={[styles.detailLine, { color: colors.textSecondary }]}>
-                ⚡ Điện: {formatVND(item.costs.electricityCostPerUnit)}/kWh · 💧 Nước: {formatVND(item.costs.waterCostPerUnit)}/người
-              </Text>
-            </View>
+                <View style={[styles.detailsBox, { backgroundColor: colors.background }]}>
+                  <Text style={[styles.detailLine, { color: colors.textPrimary }]}>
+                    👤 Chủ trọ: <Text style={{ fontWeight: '700' }}>{item.landlordName}</Text>
+                  </Text>
+                  <Text style={[styles.detailLine, { color: colors.textPrimary }]}>
+                    📍 Địa chỉ 2 cấp: {item.houseNumber} {item.street}, {item.wardName}, TP. Đà Nẵng
+                  </Text>
+                  <Text style={[styles.detailLine, { color: colors.textPrimary }]}>
+                    💰 Giá thuê: <Text style={{ color: colors.primary, fontWeight: '800' }}>{formatVND(item.monthlyRent)}/tháng</Text> · Cọc: {formatVND(item.deposit)} · Diện tích: {formatArea(item.areaSquareMeters)}
+                  </Text>
+                </View>
 
-            {/* Action Buttons */}
-            <View style={styles.actionRow}>
-              <View style={{ flex: 1, marginRight: 6 }}>
-                <Button
-                  title="👁️ Xem chi tiết"
-                  variant="secondary"
-                  onPress={() => setSelectedListing(item)}
-                />
+                {/* Actions */}
+                <View style={styles.actionRow}>
+                  <View style={{ flex: 1, marginRight: 6 }}>
+                    <Button
+                      title="👁️ Xem chi tiết"
+                      variant="secondary"
+                      onPress={() => setSelectedListing(item)}
+                    />
+                  </View>
+                  <View style={{ flex: 1, marginRight: 6 }}>
+                    <Button
+                      title="✕ Từ chối"
+                      variant="outline"
+                      onPress={() => handleRejectListing(item)}
+                    />
+                  </View>
+                  <View style={{ flex: 1.2 }}>
+                    <Button
+                      title="✓ Duyệt tin"
+                      variant="primary"
+                      onPress={() => handleApproveListing(item)}
+                    />
+                  </View>
+                </View>
               </View>
-              <View style={{ flex: 1, marginRight: 6 }}>
-                <Button
-                  title="✕ Từ chối"
-                  variant="outline"
-                  onPress={() => handleReject(item)}
-                />
-              </View>
-              <View style={{ flex: 1.2 }}>
-                <Button
-                  title="✓ Duyệt tin"
-                  variant="primary"
-                  onPress={() => handleApprove(item)}
-                />
-              </View>
-            </View>
-          </View>
-        ))
+            ))
+          )}
+        </View>
       )}
+
+      {/* Tab 2: Landlord L2 Verifications Queue */}
+      {activeTab === 'verifications' && (
+        <View>
+          {pendingVerifications.length === 0 ? (
+            <View style={[styles.emptyBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={{ fontSize: 32, marginBottom: 8 }}>🛡️</Text>
+              <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
+                Không có hồ sơ xác minh nào chờ xử lý
+              </Text>
+            </View>
+          ) : (
+            pendingVerifications.map((req) => (
+              <View
+                key={req.id}
+                style={[styles.moderationCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Text style={[styles.title, { color: colors.textPrimary }]}>
+                  Yêu cầu cấp L2: {req.userName}
+                </Text>
+
+                <View style={[styles.detailsBox, { backgroundColor: colors.background }]}>
+                  <Text style={[styles.detailLine, { color: colors.textPrimary }]}>
+                    Họ tên CCCD: <Text style={{ fontWeight: '700' }}>{req.realName}</Text>
+                  </Text>
+                  <Text style={[styles.detailLine, { color: colors.textPrimary }]}>
+                    Số CCCD: <Text style={{ fontWeight: '700' }}>{req.cccdNumber}</Text>
+                  </Text>
+                  <Text style={[styles.detailLine, { color: colors.textSecondary }]}>
+                    Ảnh giấy tờ: 2 mặt đã đối chiếu khớp dữ liệu dân cư.
+                  </Text>
+                </View>
+
+                <View style={styles.actionRow}>
+                  <View style={{ flex: 1, marginRight: 8 }}>
+                    <Button
+                      title="✕ Từ chối"
+                      variant="outline"
+                      onPress={() => moderateL2Verification(req.id, 'rejected')}
+                    />
+                  </View>
+                  <View style={{ flex: 1.5 }}>
+                    <Button
+                      title="✓ Duyệt cấp L2"
+                      variant="primary"
+                      onPress={() => handleApproveVerification(req.id, req.userName)}
+                    />
+                  </View>
+                </View>
+              </View>
+            ))
+          )}
+        </View>
+      )}
+
+      {/* Audit Log Box */}
+      <View style={[styles.auditCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Text style={[styles.auditTitle, { color: colors.textPrimary }]}>
+          📝 Nhật ký kiểm duyệt (Audit Log)
+        </Text>
+        {auditLogs.slice(0, 5).map((log, index) => (
+          <Text key={index} style={[styles.logText, { color: colors.textSecondary }]}>
+            • {log}
+          </Text>
+        ))}
+      </View>
     </ScrollView>
   );
 };
@@ -133,44 +246,39 @@ const styles = StyleSheet.create({
     paddingBottom: 90,
   },
   headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 12,
   },
   heading: {
     fontSize: 20,
     fontWeight: '800',
-    flex: 1,
   },
-  countBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  countText: {
-    color: '#000000',
-    fontSize: 11,
-    fontWeight: '800',
-  },
-  subHeading: {
-    fontSize: 13,
+  tabBar: {
+    flexDirection: 'row',
+    borderRadius: 10,
+    borderWidth: 1,
+    padding: 4,
     marginBottom: 16,
+  },
+  tabItem: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  tabText: {
+    fontSize: 13,
+    fontWeight: '700',
   },
   emptyBox: {
     borderRadius: 12,
     borderWidth: 1,
     padding: 24,
     alignItems: 'center',
-    marginTop: 20,
+    marginVertical: 12,
   },
   emptyTitle: {
     fontSize: 16,
     fontWeight: '700',
-    marginBottom: 4,
-  },
-  emptySub: {
-    fontSize: 13,
   },
   moderationCard: {
     borderRadius: 12,
@@ -204,5 +312,20 @@ const styles = StyleSheet.create({
   actionRow: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  auditCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 14,
+    marginTop: 16,
+  },
+  auditTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  logText: {
+    fontSize: 12,
+    lineHeight: 18,
   },
 });

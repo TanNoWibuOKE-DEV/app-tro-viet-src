@@ -86,6 +86,8 @@ export const LandlordPostScreen: React.FC<{ onSuccess: () => void }> = ({ onSucc
       wardName: wardObj.name,
       street: street.trim(),
       houseNumber: houseNumber.trim(),
+      latitude: 16.060,
+      longitude: 108.220,
       landlordId: currentUser?.id || 'u-landlord-anon',
       landlordName: currentUser?.fullName || 'Chủ nhà mới',
       landlordVerificationLevel: currentUser?.verificationLevel || 'L1',

@@ -1,6 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
+import { useApp } from '../context/AppContext';
 import { Badge } from './Badge';
 import { ListingSummary, formatVND, formatArea } from '@troviet/shared';
 
@@ -18,6 +19,9 @@ const PROPERTY_TYPE_NAMES: Record<string, string> = {
 
 export const ListingCard: React.FC<ListingCardProps> = ({ listing, onPress }) => {
   const { colors } = useTheme();
+  const { isFavorite, toggleFavorite, isComparing, toggleComparison } = useApp();
+  const favorited = isFavorite(listing.id);
+  const comparing = isComparing(listing.id);
 
   return (
     <TouchableOpacity
@@ -37,6 +41,19 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, onPress }) =>
         <Text style={[styles.imageText, { color: colors.textSecondary }]}>
           🏠 {PROPERTY_TYPE_NAMES[listing.propertyType] || 'Phòng'}
         </Text>
+
+        {/* Favorite Heart Button */}
+        <TouchableOpacity
+          style={styles.favoriteBtn}
+          onPress={(e) => {
+            e.stopPropagation?.();
+            toggleFavorite(listing.id);
+          }}
+          accessibilityRole="button"
+        >
+          <Text style={{ fontSize: 18 }}>{favorited ? '❤️' : '🤍'}</Text>
+        </TouchableOpacity>
+
         {listing.status === 'pending_review' && (
           <View style={[styles.pendingBadge, { backgroundColor: colors.warning }]}>
             <Text style={styles.pendingText}>⏳ Chờ kiểm duyệt</Text>
@@ -72,10 +89,29 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, onPress }) =>
             </Text>
             <Text style={[styles.periodText, { color: colors.textSecondary }]}>/tháng</Text>
           </View>
-          <View style={[styles.areaPill, { backgroundColor: colors.background }]}>
-            <Text style={[styles.areaText, { color: colors.textSecondary }]}>
-              📐 {formatArea(listing.areaSquareMeters)}
-            </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <View style={[styles.areaPill, { backgroundColor: colors.background }]}>
+              <Text style={[styles.areaText, { color: colors.textSecondary }]}>
+                📐 {formatArea(listing.areaSquareMeters)}
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={[
+                styles.comparePill,
+                {
+                  backgroundColor: comparing ? colors.primary : colors.background,
+                  borderColor: comparing ? colors.primary : colors.border,
+                },
+              ]}
+              onPress={(e) => {
+                e.stopPropagation?.();
+                toggleComparison(listing.id);
+              }}
+            >
+              <Text style={{ color: comparing ? '#FFFFFF' : colors.textSecondary, fontSize: 11, fontWeight: '700' }}>
+                {comparing ? '✓ Đang so sánh' : '+ So sánh'}
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
@@ -89,6 +125,23 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     overflow: 'hidden',
     marginVertical: 8,
+  },
+  favoriteBtn: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    backgroundColor: 'rgba(0,0,0,0.25)',
+    borderRadius: 16,
+    width: 32,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  comparePill: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
   },
   imagePlaceholder: {
     height: 120,

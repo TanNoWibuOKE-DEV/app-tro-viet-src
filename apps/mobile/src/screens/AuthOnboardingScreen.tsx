@@ -222,6 +222,54 @@ export const AuthOnboardingScreen: React.FC = () => {
           <Button title="Lưu nhu cầu & Xem phòng phù hợp" variant="primary" onPress={handleSavePreferences} />
         </View>
       </View>
+
+      {/* L2 Landlord Verification Application */}
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Text style={[styles.sectionHeading, { color: colors.textPrimary }]}>
+          🛡️ Xác minh danh tính chủ nhà (Cấp L2)
+        </Text>
+        <Text style={[styles.sectionSub, { color: colors.textSecondary }]}>
+          Tăng độ tin cậy của tin đăng và nhận huy hiệu xanh xác thực danh tính.
+        </Text>
+
+        {currentUser?.verificationLevel === 'L2' || currentUser?.verificationLevel === 'L3' ? (
+          <View style={[styles.l2SuccessBox, { backgroundColor: colors.badgeL2 }]}>
+            <Text style={{ color: colors.badgeL2Text, fontWeight: '800', fontSize: 14 }}>
+              ✓ Bạn đã đạt cấp L2 — Danh tính chủ trọ đã xác minh thành công!
+            </Text>
+          </View>
+        ) : (
+          <View style={{ gap: 10 }}>
+            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Họ và tên theo CCCD:</Text>
+            <View style={[styles.inputBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
+              <Text style={{ color: colors.textPrimary }}>{currentUser?.fullName}</Text>
+            </View>
+
+            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Số căn cước công dân (12 số):</Text>
+            <View style={[styles.inputBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
+              <Text style={{ color: colors.textPrimary }}>048185001234</Text>
+            </View>
+
+            <View style={[styles.docPreview, { backgroundColor: colors.background, borderColor: colors.border }]}>
+              <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
+                📄 Đã tải lên ảnh mặt trước & sau CCCD [MẪU - DEV]
+              </Text>
+            </View>
+
+            <Button
+              title="Gửi hồ sơ kiểm duyệt L2"
+              variant="primary"
+              onPress={() => {
+                Alert.alert(
+                  'Gửi yêu cầu xác minh L2',
+                  'Hồ sơ định danh của bạn đã được chuyển đến Ban quản trị Trọ Việt để đối soát.',
+                  [{ text: 'Đã hiểu' }]
+                );
+              }}
+            />
+          </View>
+        )}
+      </View>
     </ScrollView>
   );
 };
@@ -306,6 +354,27 @@ const styles = StyleSheet.create({
   optionPill: {
     paddingHorizontal: 12,
     paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  l2SuccessBox: {
+    padding: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  inputLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  inputBox: {
+    height: 40,
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    justifyContent: 'center',
+  },
+  docPreview: {
+    padding: 10,
     borderRadius: 8,
     borderWidth: 1,
   },
