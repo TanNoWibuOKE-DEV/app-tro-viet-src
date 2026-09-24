@@ -50,6 +50,8 @@ interface AppContextType {
   favoriteIds: string[];
   toggleFavorite: (listingId: string) => void;
   isFavorite: (listingId: string) => boolean;
+  isOnline: boolean;
+  setIsOnline: (online: boolean) => void;
 
   // Comparison
   comparisonIds: string[];
@@ -114,8 +116,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [searchFilter, setSearchFilter] = useState<SearchFilterParams>({ sortBy: 'newest' });
   const [selectedListing, setSelectedListing] = useState<ListingSummary | null>(null);
 
-  // Favorites
+  // Favorites & Network Status
   const [favoriteIds, setFavoriteIds] = useState<string[]>(['l-001']);
+  const [isOnline, setIsOnline] = useState<boolean>(true);
 
   // Comparison
   const [comparisonIds, setComparisonIds] = useState<string[]>(['l-001', 'l-002']);
@@ -508,6 +511,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       favoriteIds,
       toggleFavorite,
       isFavorite,
+      isOnline,
+      setIsOnline,
       comparisonIds,
       toggleComparison,
       isComparing,
@@ -541,6 +546,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       searchFilter,
       selectedListing,
       favoriteIds,
+      isOnline,
       comparisonIds,
       verificationRequests,
       conversations,

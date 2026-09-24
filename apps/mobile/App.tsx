@@ -23,6 +23,7 @@ import { PropertyDetailModal } from './src/screens/PropertyDetailModal';
 import { PropertyComparisonModal } from './src/screens/PropertyComparisonModal';
 import { ChatRoomModal } from './src/screens/ChatRoomModal';
 import { NotificationsModal } from './src/screens/NotificationsModal';
+import { NetworkStatusBanner } from './src/components/NetworkStatusBanner';
 import { APP_NAME, APP_TAGLINE } from '@troviet/shared';
 
 type TabKey = 'home' | 'search' | 'map' | 'messages' | 'favorites' | 'post' | 'admin' | 'profile';
@@ -126,6 +127,9 @@ const MainApp: React.FC = () => {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Offline Resilience Banner */}
+      <NetworkStatusBanner />
 
       {/* Screen Content */}
       <View style={styles.screenContainer}>
