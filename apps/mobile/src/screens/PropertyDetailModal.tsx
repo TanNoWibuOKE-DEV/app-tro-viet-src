@@ -21,8 +21,11 @@ import {
   formatArea,
   formatVND,
   checkListingPricingAnomaly,
+  calculateListingTrustScore,
+  analyzeRoomListing,
   Review,
 } from '@troviet/shared';
+import { ViewingChecklistModal } from './ViewingChecklistModal';
 
 interface PropertyDetailModalProps {
   listing: ListingSummary;
@@ -47,6 +50,8 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
   const [activeChatConvId, setActiveChatConvId] = useState<string | null>(null);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isWriteReviewOpen, setIsWriteReviewOpen] = useState(false);
+  const [isChecklistOpen, setIsChecklistOpen] = useState(false);
+  const [isTrustDetailsOpen, setIsTrustDetailsOpen] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
 
@@ -61,6 +66,10 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
   const listingReviews = reviews.filter(
     (r) => r.listingId === listing.id && r.status === 'approved'
   );
+
+  // Phase 5 Trust Score and AI Room Analysis
+  const trustScore = calculateListingTrustScore(listing, { reviews: listingReviews });
+  const roomAnalysis = analyzeRoomListing(listing);
 
   const avgRating =
     listingReviews.length > 0
@@ -191,6 +200,180 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
 
           {/* Transparent Cost Card (Strict Core Rule) */}
           <CostCard costs={listing.costs} />
+
+          {/* Explainable Trust Score Card (Phase 5) */}
+          <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.trustScoreHeader}>
+              <View style={{ flex: 1, marginRight: 8 }}>
+                <Text style={[styles.sectionHeading, { color: colors.textPrimary, marginBottom: 2 }]}>
+                  🛡️ Điểm tin cậy Trọ Việt
+                </Text>
+                <Text style={[styles.trustSub, { color: colors.textSecondary }]}>
+                  Đánh giá minh bạch đa chiều dựa trên quy tắc khách quan
+                </Text>
+              </View>
+              <View
+                style={[
+                  styles.trustScorePill,
+                  {
+                    backgroundColor:
+                      trustScore.level === 'very_high' || trustScore.level === 'high'
+                        ? '#e6fcf5'
+                        : trustScore.level === 'medium'
+                        ? '#fff9db'
+                        : '#ffe3e3',
+                    borderColor:
+                      trustScore.level === 'very_high' || trustScore.level === 'high'
+                        ? '#0ca678'
+                        : trustScore.level === 'medium'
+                        ? '#f59f00'
+                        : '#fa5252',
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.trustScoreValue,
+                    {
+                      color:
+                        trustScore.level === 'very_high' || trustScore.level === 'high'
+                          ? '#087f5b'
+                          : trustScore.level === 'medium'
+                          ? '#d9480f'
+                          : '#c92a2a',
+                    },
+                  ]}
+                >
+                  {trustScore.score}/100
+                </Text>
+                <Text
+                  style={[
+                    styles.trustLevelText,
+                    {
+                      color:
+                        trustScore.level === 'very_high' || trustScore.level === 'high'
+                          ? '#087f5b'
+                          : trustScore.level === 'medium'
+                          ? '#d9480f'
+                          : '#c92a2a',
+                    },
+                  ]}
+                >
+                  {trustScore.levelLabel}
+                </Text>
+              </View>
+            </View>
+
+            {/* Toggle breakdown */}
+            <TouchableOpacity
+              style={styles.trustToggleRow}
+              onPress={() => setIsTrustDetailsOpen(!isTrustDetailsOpen)}
+            >
+              <Text style={[styles.trustToggleText, { color: colors.primary }]}>
+                {isTrustDetailsOpen
+                  ? '▲ Thu gọn tiêu chí chấm điểm'
+                  : `▼ Xem chi tiết ${trustScore.factors.length} yếu tố chấm điểm`}
+              </Text>
+            </TouchableOpacity>
+
+            {isTrustDetailsOpen && (
+              <View style={styles.trustFactorsList}>
+                {trustScore.factors.map((f, idx) => (
+                  <View key={idx} style={[styles.factorRow, { borderBottomColor: colors.border }]}>
+                    <Text
+                      style={[
+                        styles.factorPoints,
+                        { color: f.points >= 0 ? colors.success : colors.error },
+                      ]}
+                    >
+                      {f.points >= 0 ? `+${f.points}` : `${f.points}`}
+                    </Text>
+                    <Text style={[styles.factorDesc, { color: colors.textPrimary }]}>
+                      {f.description}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+
+          {/* AI Room Insights (Grounded Fact-based) */}
+          <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.aiInsightsHeader}>
+              <Text style={[styles.sectionHeading, { color: colors.textPrimary, marginBottom: 2 }]}>
+                🤖 Phân tích phòng AI (Dữ liệu thực tế)
+              </Text>
+              <Text style={[styles.aiBadgeDisclaimer, { color: colors.textSecondary }]}>
+                So sánh với mặt bằng giá & dữ liệu thực tế tại {listing.wardName}
+              </Text>
+            </View>
+
+            {/* Price comparison */}
+            <View style={[styles.aiInsightRow, { backgroundColor: colors.background }]}>
+              <Text style={{ fontSize: 20, marginRight: 10 }}>📊</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.aiInsightTitle, { color: colors.textPrimary }]}>
+                  {roomAnalysis.priceAssessment.label}
+                </Text>
+                <Text style={[styles.aiInsightDetails, { color: colors.textSecondary }]}>
+                  {roomAnalysis.priceAssessment.details}
+                </Text>
+              </View>
+            </View>
+
+            {/* Transparency check */}
+            <View style={[styles.aiInsightRow, { backgroundColor: colors.background, marginTop: 8 }]}>
+              <Text style={{ fontSize: 20, marginRight: 10 }}>
+                {roomAnalysis.transparencyAssessment.isFullyTransparent ? '✅' : '⚠️'}
+              </Text>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.aiInsightTitle, { color: colors.textPrimary }]}>
+                  Tính minh bạch chi phí
+                </Text>
+                <Text style={[styles.aiInsightDetails, { color: colors.textSecondary }]}>
+                  {roomAnalysis.transparencyAssessment.label}
+                </Text>
+              </View>
+            </View>
+
+            {/* Key advantages */}
+            {roomAnalysis.keyAdvantages.length > 0 && (
+              <View style={{ marginTop: 10 }}>
+                <Text style={[styles.aiSubHeading, { color: colors.textPrimary }]}>
+                  ✨ Điểm nổi bật đã xác thực:
+                </Text>
+                {roomAnalysis.keyAdvantages.map((adv, idx) => (
+                  <Text key={idx} style={[styles.aiBullet, { color: colors.textSecondary }]}>
+                    • {adv}
+                  </Text>
+                ))}
+              </View>
+            )}
+
+            {/* Practical viewing advice */}
+            {roomAnalysis.viewingAdvice.length > 0 && (
+              <View style={{ marginTop: 10 }}>
+                <Text style={[styles.aiSubHeading, { color: colors.textPrimary }]}>
+                  💡 Lời khuyên của Trọ Việt khi đi xem:
+                </Text>
+                {roomAnalysis.viewingAdvice.map((adv, idx) => (
+                  <Text key={idx} style={[styles.aiBullet, { color: colors.textSecondary }]}>
+                    • {adv}
+                  </Text>
+                ))}
+              </View>
+            )}
+
+            {/* Viewing Checklist Button */}
+            <TouchableOpacity
+              style={[styles.checklistTriggerBtn, { backgroundColor: colors.primary }]}
+              onPress={() => setIsChecklistOpen(true)}
+            >
+              <Text style={styles.checklistTriggerText}>
+                📋 Mở sổ tay đi xem phòng (10 điểm kiểm tra)
+              </Text>
+            </TouchableOpacity>
+          </View>
 
           {/* Amenities Section */}
           <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -433,6 +616,13 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
           </View>
         </View>
       </Modal>
+
+      {/* Phase 5 Viewing Checklist Modal */}
+      <ViewingChecklistModal
+        visible={isChecklistOpen}
+        listing={listing}
+        onClose={() => setIsChecklistOpen(false)}
+      />
     </View>
   );
 };
@@ -751,6 +941,109 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   confirmBtnText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  // Phase 5 Trust Score & AI Insights Styles
+  trustScoreHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  trustSub: {
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  trustScorePill: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    minWidth: 84,
+  },
+  trustScoreValue: {
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  trustLevelText: {
+    fontSize: 10,
+    fontWeight: '700',
+    marginTop: 1,
+  },
+  trustToggleRow: {
+    paddingVertical: 4,
+    marginTop: 4,
+  },
+  trustToggleText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  trustFactorsList: {
+    marginTop: 8,
+    paddingTop: 4,
+  },
+  factorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    gap: 8,
+  },
+  factorPoints: {
+    fontSize: 12,
+    fontWeight: '800',
+    width: 32,
+    textAlign: 'right',
+  },
+  factorDesc: {
+    fontSize: 12,
+    flex: 1,
+    lineHeight: 16,
+  },
+  aiInsightsHeader: {
+    marginBottom: 10,
+  },
+  aiBadgeDisclaimer: {
+    fontSize: 11,
+    fontStyle: 'italic',
+  },
+  aiInsightRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    padding: 10,
+    borderRadius: 8,
+  },
+  aiInsightTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  aiInsightDetails: {
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  aiSubHeading: {
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  aiBullet: {
+    fontSize: 12,
+    lineHeight: 18,
+    marginBottom: 2,
+  },
+  checklistTriggerBtn: {
+    marginTop: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checklistTriggerText: {
     color: '#ffffff',
     fontSize: 13,
     fontWeight: '700',
