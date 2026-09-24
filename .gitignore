@@ -3,6 +3,7 @@
 .env.local
 .env.*.local
 *.pem
+*.zip
 service_role.key
 
 # Dependencies
