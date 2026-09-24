@@ -11,6 +11,8 @@ import { useTheme } from '../theme/ThemeContext';
 import { useApp } from '../context/AppContext';
 import { Button } from '../components/Button';
 import { Badge } from '../components/Badge';
+import { PrivacyPolicyModal } from './PrivacyPolicyModal';
+import { DataManagementModal } from './DataManagementModal';
 import { PropertyType, UserRole } from '@troviet/shared';
 
 const PREFERRED_TYPES: Array<{ type: PropertyType; label: string }> = [
@@ -46,6 +48,8 @@ export const AuthOnboardingScreen: React.FC = () => {
   const [selectedWardCodes, setSelectedWardCodes] = useState<string[]>(
     userPreferences?.preferredWardCodes || ['48_HAICHAU1']
   );
+  const [isPrivacyPolicyOpen, setIsPrivacyPolicyOpen] = useState(false);
+  const [isDataManagementOpen, setIsDataManagementOpen] = useState(false);
 
   const toggleType = (t: PropertyType) => {
     setSelectedTypes((prev) =>
@@ -270,6 +274,41 @@ export const AuthOnboardingScreen: React.FC = () => {
           </View>
         )}
       </View>
+
+      {/* Privacy and Data Rights Section (Law 91/2025/QH15) */}
+      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <Text style={[styles.sectionHeading, { color: colors.textPrimary }]}>
+          ⚖️ Bảo mật & Quyền riêng tư (Luật 91/2025/QH15)
+        </Text>
+        <Text style={[styles.sectionSub, { color: colors.textSecondary }]}>
+          Minh bạch dữ liệu thu thập, quyền xuất bản sao dữ liệu và quyền yêu cầu xóa tài khoản.
+        </Text>
+
+        <View style={{ gap: 10 }}>
+          <Button
+            title="🛡️ Chính sách quyền riêng tư & Điều khoản"
+            variant="outline"
+            onPress={() => setIsPrivacyPolicyOpen(true)}
+          />
+
+          <Button
+            title="🔒 Quyền dữ liệu của tôi (Xuất JSON / Xóa tài khoản)"
+            variant="secondary"
+            onPress={() => setIsDataManagementOpen(true)}
+          />
+        </View>
+      </View>
+
+      {/* Modals */}
+      <PrivacyPolicyModal
+        visible={isPrivacyPolicyOpen}
+        onClose={() => setIsPrivacyPolicyOpen(false)}
+      />
+
+      <DataManagementModal
+        visible={isDataManagementOpen}
+        onClose={() => setIsDataManagementOpen(false)}
+      />
     </ScrollView>
   );
 };
