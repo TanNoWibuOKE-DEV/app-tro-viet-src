@@ -14,3 +14,4 @@ export * from './anti-scam/rules.js';
 export * from './seed/mock-phase3.js';
 export * from './privacy/consent.js';
 export * from './privacy/data-rights.js';
+export * from './trust-score/calculator.js';
