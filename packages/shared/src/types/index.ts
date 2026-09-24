@@ -191,6 +191,8 @@ export interface ListingSummary {
   wardName: string;
   street: string;
   houseNumber: string;
+  latitude: number;
+  longitude: number;
   coverImageUrl?: string;
   landlordId: string;
   landlordName: string;
