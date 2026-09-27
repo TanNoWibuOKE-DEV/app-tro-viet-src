@@ -1,13 +1,12 @@
 # Trọ Việt — Tiến độ
 
-**Phase hiện tại:** Phase 6 — Thuê & Quản lý (Rent & Management)
-**Trạng thái:** Đã hoàn thành (Chờ duyệt chuyển sang Phase 7)
+**Phase hiện tại:** Phase 7 — Ở ghép, Bàn giao thực địa & Tự động hóa (Roommates, Property Handovers & Automation)
+**Trạng thái:** Đã hoàn thành toàn diện (Toàn bộ 37 modules theo SPEC.md đã hoàn tất)
 
-## Quyết định đã chốt (Sau Phase 6)
-- **Hợp đồng thuê phòng mẫu chuẩn mực:** Mẫu hợp đồng chuẩn hóa cấu trúc pháp lý nhà ở Việt Nam, địa chỉ 2 cấp hành chính, tiền tệ số nguyên VNĐ, điều khoản minh bạch quyền và trách nhiệm hai bên.
-- **AI Phân tích hợp đồng có bảo vệ quyền riêng tư:** Che mờ tự động (redact) thông tin cá nhân CCCD, SĐT, STK ngân hàng theo Luật 91/2025/QH15 trước khi phân tích; phát hiện bẫy cọc, điều khoản đơn phương tăng giá, thời hạn báo trước không công bằng kèm tuyên bố miễn trừ pháp lý bắt buộc: *"Trợ lý Trọ Việt chỉ hỗ trợ phân tích và lưu ý các điều khoản quan trọng, không thay thế tư vấn pháp lý chuyên nghiệp."*
-- **Thanh toán VietQR NAPAS 24/7 trực tiếp P2P:** Tuyệt đối không giữ tiền người dùng hoặc hoạt động trung gian ví trái phép; hệ thống tự động sinh mã VietQR chuẩn NAPAS 24/7 chuyển thẳng vào tài khoản ngân hàng của chủ trọ với cú pháp chuẩn hóa `TROVIET <mã hóa đơn>`.
-- **Mặt bằng giá thị trường & Lịch sử biến động 6 tháng tại TP. Đà Nẵng:** Dữ liệu chuẩn xác theo từng phường (Hải Châu I, Phước Mỹ, Hòa Khánh Bắc, Hòa Cường Nam) cung cấp mức giá trung bình phòng trọ/căn hộ mini và khung giá điện nước tham chiếu thực tế.
+## Quyết định đã chốt (Sau Phase 7)
+- **Ghép người ở ghép minh bạch & bảo vệ quyền riêng tư (Roommate Matching):** Chấm điểm tương thích minh bạch (`CompatibilityScore` 0–100%) dựa trên thói quen sinh hoạt (giờ giấc, hút thuốc, thú cưng, mức độ sạch sẽ, giới tính, ngân sách); bảo vệ quyền riêng tư bằng cách chỉ hiển thị tên thân mật và kết nối ban đầu hoàn toàn qua In-App Chat.
+- **Biên bản Bàn giao phòng thực địa điện tử (Property Handover):** Lưu trữ chính xác chỉ số công tơ điện và nước ban đầu (kWh, m³) làm căn cứ mốc tính hóa đơn tháng đầu tiên; checklist 10 hạng mục trang thiết bị cơ sở vật chất; cả chủ trọ và người thuê cùng ký xác nhận điện tử.
+- **Tự động hóa lịch nhắc thuê & hóa đơn (Automated Reminders Scheduler):** Tự động phát hiện hóa đơn tiền phòng sắp đến hạn (trước 3 ngày, đúng ngày, quá hạn) kèm liên kết VietQR thanh toán nhanh; tự động nhắc hợp đồng sắp hết hạn trước 30 ngày để hai bên chủ động tái ký hoặc bàn giao phòng.
 
 ## Phase đã xong
 - **Phase 0 — Nền móng:**
@@ -42,7 +41,7 @@
   - Bộ module Quyền riêng tư & Quản lý dữ liệu người dùng (`packages/shared/src/privacy/`): Quản lý sự đồng ý, Xuất dữ liệu JSON (Data Portability), Ẩn danh hóa / Xóa tài khoản (Right to Erasure) theo Luật 91/2025/QH15.
   - Giao diện Chính sách quyền riêng tư (`PrivacyPolicyModal.tsx`) & Quản lý dữ liệu cá nhân (`DataManagementModal.tsx`) tích hợp vào tab Cá nhân.
   - Thanh cảnh báo trạng thái mạng & Chống chịu ngoại tuyến (`NetworkStatusBanner.tsx`).
-  - Bộ kiểm thử luồng trọn vẹn E2E (`packages/shared/test/e2e-journey.test.ts`): Kiểm tra 4 hành trình người dùng toàn diện; 100% test pass (31/31 unit & e2e tests).
+  - Bộ kiểm thử luồng trọn vẹn E2E (`packages/shared/test/e2e-journey.test.ts`): Kiểm tra 4 hành trình người dùng toàn diện; 100% test pass.
   - Rà soát an ninh bảo mật theo chuẩn OWASP MASVS / ASVS: 100% các tiêu chí đạt chuẩn; RLS bảo vệ toàn diện.
   - Runbook vận hành, sao lưu và ứng phó sự cố ([docs/RUNBOOK.md](file:///d:/File_Website/web_tmđt/docs/RUNBOOK.md)).
   - Hồ sơ niêm yết Store & Metadata Beta tại TP. Đà Nẵng ([docs/STORE_METADATA.md](file:///d:/File_Website/web_tmđt/docs/STORE_METADATA.md)).
@@ -64,11 +63,20 @@
   - Giao diện Chi tiết Hóa đơn tiền phòng (`InvoiceDetailModal.tsx`): Bảng kê chi phí từng mục, mã VietQR quét thanh toán tức thì, nút xác nhận chuyển khoản.
   - Màn hình Bảng điều khiển Chủ trọ (`LandlordDashboardScreen.tsx`): Đo lường tỷ lệ lấp đầy, theo dõi doanh thu dự kiến/chưa thu, quản lý hợp đồng, form xuất hóa đơn tháng tự động.
   - Màn hình Mặt bằng giá thị trường (`AreaInsightsModal.tsx`): Xem so sánh giá phòng/căn hộ, xu hướng 6 tháng và khung giá điện nước tham chiếu Đà Nẵng; gắn lối vào từ cả Home Feed và Profile.
-  - Đạt 53/53 tests pass across 19 test suites, typecheck 100% sạch sẽ.
+- **Phase 7 — Ở ghép, Bàn giao thực địa & Tự động hóa vận hành:**
+  - Migration v6 (`20260924000006_phase7_roommates_handovers.sql` & rollback script): Bảng `roommate_profiles`, bảng `property_handovers`, các enum thói quen sinh hoạt và trạng thái bàn giao kèm đầy đủ RLS policies.
+  - Bộ máy Ghép người ở ghép AI (`calculateRoommateCompatibility`): Đánh giá tương thích theo 5 tiêu chí thói quen sinh hoạt cốt lõi, ngân sách chia sẻ, giới tính và cảnh báo xung đột lối sống.
+  - Bộ máy Biên bản bàn giao thực địa (`validateHandoverRecord`, `STANDARD_HANDOVER_ITEMS`): Ghi nhận chỉ số điện/nước đầu kỳ, 10 hạng mục cơ sở vật chất và xác nhận ký điện tử hai bên.
+  - Bộ máy Lịch nhắc tự động (`checkRentInvoiceReminders`, `checkContractExpiryReminders`): Tự động phát hiện hóa đơn sắp đến hạn (trước 3 ngày) và hợp đồng sắp hết hạn (trước 30 ngày) sinh thông báo In-App Notifications kèm liên kết VietQR thanh toán nhanh.
+  - Giao diện Ghép bạn cùng phòng (`RoommateMatchingScreen.tsx`, `RoommateProfileModal.tsx`): Bộ lọc đa chiều, danh sách ứng viên có điểm hòa hợp %, đối chiếu thói quen sinh hoạt trực quan.
+  - Giao diện Biên bản bàn giao phòng thực địa (`ViewingHandoverModal.tsx`): Giao diện ký biên bản bàn giao, nhập chỉ số công tơ điện nước đầu vào, checklist thiết bị, tích hợp vào luồng hợp đồng.
+  - Tích hợp điểm chạm và thông báo: Nút "Tìm bạn ở ghép" tại `HomeScreen.tsx` và `Profile`, hiển thị thông báo nhắc hạn tự động trên `NotificationsModal.tsx`.
+  - Bộ kiểm thử trọn vẹn: Đạt **63/63 tests pass across 22 test suites**, typecheck TypeScript và lint 100% sạch sẽ.
 
-## Phase tiếp theo
-- **Phase 7 — Tối ưu hóa, Mở rộng & Tự động hóa:** Hoàn thiện trải nghiệm vận hành tự động, thông báo đẩy (push notification) nhắc hạn thanh toán, nâng cấp công cụ phân tích thị trường mở rộng toàn quốc.
+## Trạng thái dự án
+Toàn bộ **37/37 modules** trong kế hoạch đặc tả [docs/SPEC.md](file:///d:/File_Website/web_tmđt/docs/SPEC.md) đã được hoàn thành đầy đủ, đạt chuẩn kiến trúc sản phẩm thương mại cho người dùng Việt Nam.
 
-## Việc nợ
+## Việc nợ & Đề xuất tương lai
 Xem [BACKLOG.md](file:///d:/File_Website/web_tmđt/docs/BACKLOG.md).
+
 
