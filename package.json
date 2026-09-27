@@ -12,7 +12,11 @@
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "dev:mobile": "npm run start --workspace=apps/mobile",
-    "dev:web": "npm run web --workspace=apps/mobile"
+    "dev:web": "npm run web --workspace=apps/mobile",
+    "build": "npm run build --workspace=apps/mobile",
+    "build:web": "npm run build:web --workspace=apps/mobile",
+    "build:android": "npm run build:android --workspace=apps/mobile",
+    "build:ios": "npm run build:ios --workspace=apps/mobile"
   },
   "keywords": [
     "troviet",
