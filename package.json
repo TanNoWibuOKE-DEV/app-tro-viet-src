@@ -17,7 +17,8 @@
     "build:web": "npm run build:web --workspace=apps/mobile",
     "build:android": "npm run build:android --workspace=apps/mobile",
     "build:ios": "npm run build:ios --workspace=apps/mobile",
-    "build:apk": "cd apps/mobile && npx eas-cli build -p android --profile preview"
+    "build:apk": "cd apps/mobile && npx eas-cli build -p android --profile preview",
+    "postinstall": "npm run build --workspace=@troviet/shared"
   },
   "keywords": [
     "troviet",

@@ -12,7 +12,8 @@
     "build": "expo export -p web",
     "build:web": "expo export -p web",
     "build:android": "expo export -p android",
-    "build:ios": "expo export -p ios"
+    "build:ios": "expo export -p ios",
+    "postinstall": "cd ../.. && npm run build --workspace=@troviet/shared"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",

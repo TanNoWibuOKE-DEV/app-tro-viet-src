@@ -13,7 +13,8 @@ node_modules/
 
 # Expo & React Native
 .expo/
-dist/
+apps/mobile/dist/
+!packages/shared/dist/
 web-build/
 *.jks
 *.p8
