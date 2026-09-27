@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  DimensionValue,
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { useApp } from '../context/AppContext';
@@ -13,28 +12,26 @@ import {
   ListingSummary,
   formatVND,
   formatArea,
-  formatDistance,
   calculateHaversineDistance,
 } from '@troviet/shared';
 
 interface Landmark {
   id: string;
   name: string;
-  icon: string;
   latitude: number;
   longitude: number;
 }
 
 const DA_NANG_LANDMARKS: Landmark[] = [
-  { id: 'all', name: 'Toàn Đà Nẵng', icon: '📍', latitude: 16.060, longitude: 108.210 },
-  { id: 'duytan', name: 'ĐH Duy Tân', icon: '🎓', latitude: 16.0728, longitude: 108.2215 },
-  { id: 'bachkhoa', name: 'ĐH Bách Khoa', icon: '📚', latitude: 16.0760, longitude: 108.1510 },
-  { id: 'mykhe', name: 'Biển Mỹ Khê', icon: '🏖️', latitude: 16.0601, longitude: 108.2464 },
-  { id: 'caurong', name: 'Cầu Rồng', icon: '🌉', latitude: 16.0611, longitude: 108.2272 },
+  { id: 'all', name: '📍 Toàn Đà Nẵng', latitude: 16.060, longitude: 108.210 },
+  { id: 'duytan', name: '🎓 ĐH Duy Tân', latitude: 16.0728, longitude: 108.2215 },
+  { id: 'bachkhoa', name: '📚 ĐH Bách Khoa', latitude: 16.0760, longitude: 108.1510 },
+  { id: 'mykhe', name: '🏖️ Biển Mỹ Khê', latitude: 16.0601, longitude: 108.2464 },
+  { id: 'caurong', name: '🌉 Cầu Rồng', latitude: 16.0611, longitude: 108.2272 },
 ];
 
 export const MapScreen: React.FC = () => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { listings, setSelectedListing } = useApp();
 
   const [selectedLandmark, setSelectedLandmark] = useState<Landmark>(DA_NANG_LANDMARKS[0]);
@@ -47,24 +44,28 @@ export const MapScreen: React.FC = () => {
 
   // Compute distance of each listing to current active landmark
   const listingsWithDistance = useMemo(() => {
-    return publishedListings.map((item) => {
-      const distanceKm = calculateHaversineDistance(
-        { latitude: selectedLandmark.latitude, longitude: selectedLandmark.longitude },
-        { latitude: item.latitude, longitude: item.longitude }
-      );
-      return {
-        ...item,
-        distanceKm,
-      };
-    }).sort((a, b) => a.distanceKm - b.distanceKm);
+    return publishedListings
+      .map((item) => {
+        const distanceKm = calculateHaversineDistance(
+          { latitude: selectedLandmark.latitude, longitude: selectedLandmark.longitude },
+          { latitude: item.latitude, longitude: item.longitude }
+        );
+        return {
+          ...item,
+          distanceKm,
+        };
+      })
+      .sort((a, b) => a.distanceKm - b.distanceKm);
   }, [publishedListings, selectedLandmark]);
+
+  const activeListing = activePinListing || listingsWithDistance[0] || null;
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
-      {/* Top Landmark Selector */}
+      {/* Top Header / Landmark Selector */}
       <View style={[styles.topHeader, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-          🗺️ Bản đồ tìm trọ quanh địa điểm
+          Bản đồ phòng trọ Đà Nẵng
         </Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.landmarkScroll}>
           {DA_NANG_LANDMARKS.map((lm) => {
@@ -84,8 +85,14 @@ export const MapScreen: React.FC = () => {
                   setActivePinListing(null);
                 }}
               >
-                <Text style={{ color: active ? '#FFFFFF' : colors.textPrimary, fontWeight: '700', fontSize: 12 }}>
-                  {lm.icon} {lm.name}
+                <Text
+                  style={{
+                    color: active ? '#FFFFFF' : colors.textPrimary,
+                    fontWeight: '700',
+                    fontSize: 12,
+                  }}
+                >
+                  {lm.name}
                 </Text>
               </TouchableOpacity>
             );
@@ -93,135 +100,105 @@ export const MapScreen: React.FC = () => {
         </ScrollView>
       </View>
 
-      {/* Interactive Map Viewport Simulation */}
-      <View style={[styles.mapViewport, { backgroundColor: colors.border }]}>
+      {/* Map Viewport Simulation */}
+      <View style={[styles.mapViewport, { backgroundColor: isDark ? '#1E293B' : '#E2E8F0' }]}>
         {/* Map Grid Texture / Background */}
         <View style={styles.gridLayer}>
           <Text style={[styles.mapWatermark, { color: colors.textSecondary }]}>
-            Bản đồ khu vực TP. Đà Nẵng
-          </Text>
-          <Text style={[styles.mapCenterNotice, { color: colors.textSecondary }]}>
-            Tâm điểm: {selectedLandmark.icon} {selectedLandmark.name}
+            BẢN ĐỒ TỌA ĐỘ TRỌ VIỆT · TP. ĐÀ NẴNG
           </Text>
         </View>
 
-        {/* Central Landmark Marker */}
-        {selectedLandmark.id !== 'all' && (
-          <View style={styles.centerLandmarkMarker}>
-            <View style={[styles.landmarkMarkerBubble, { backgroundColor: colors.warning }]}>
-              <Text style={styles.landmarkMarkerText}>
-                {selectedLandmark.icon} {selectedLandmark.name}
-              </Text>
-            </View>
-            <View style={[styles.markerArrow, { borderTopColor: colors.warning }]} />
+        {/* Center Landmark Target Pin */}
+        <View style={styles.centerTarget}>
+          <View style={styles.landmarkIconBox}>
+            <Text style={{ fontSize: 24 }}>📍</Text>
           </View>
-        )}
+          <View style={[styles.landmarkLabel, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.landmarkLabelText, { color: colors.textPrimary }]}>
+              {selectedLandmark.name}
+            </Text>
+          </View>
+        </View>
 
-        {/* Listing Pins positioned across the map area */}
-        <View style={styles.pinsContainer}>
-          {listingsWithDistance.map((item, index) => {
-            const isSelected = activePinListing?.id === item.id;
-            // Spread pins realistically based on offsets
-            const topPositions: DimensionValue[] = ['20%', '35%', '50%', '65%'];
-            const leftPositions: DimensionValue[] = ['18%', '45%', '68%', '32%'];
-            const top = topPositions[index % topPositions.length];
-            const left = leftPositions[index % leftPositions.length];
+        {/* Interactive Floating Property Price Pins (Section 14) */}
+        {listingsWithDistance.slice(0, 6).map((item, index) => {
+          const isSelected = activeListing?.id === item.id;
+          const rentInMillions = (item.monthlyRent / 1000000).toFixed(1).replace('.0', '');
 
-            return (
-              <TouchableOpacity
-                key={item.id}
+          // Disperse pins mathematically around center for simulation
+          const angle = (index * 2 * Math.PI) / 6;
+          const radius = 90 + (index % 2) * 40;
+          const pinTop = 190 + Math.sin(angle) * radius;
+          const pinLeft = 140 + Math.cos(angle) * radius;
+
+          return (
+            <TouchableOpacity
+              key={item.id}
+              style={[
+                styles.pricePin,
+                {
+                  top: pinTop,
+                  left: pinLeft,
+                  backgroundColor: isSelected ? colors.primary : colors.card,
+                  borderColor: isSelected ? '#FFFFFF' : colors.primary,
+                  transform: [{ scale: isSelected ? 1.1 : 1.0 }],
+                  zIndex: isSelected ? 10 : 2,
+                },
+              ]}
+              onPress={() => setActivePinListing(item)}
+              activeOpacity={0.8}
+            >
+              <Text
                 style={[
-                  styles.pricePin,
-                  {
-                    top,
-                    left,
-                    backgroundColor: isSelected ? '#FFFFFF' : colors.primary,
-                    borderColor: isSelected ? colors.primary : '#FFFFFF',
-                    transform: [{ scale: isSelected ? 1.15 : 1.0 }],
-                  },
+                  styles.pricePinText,
+                  { color: isSelected ? '#FFFFFF' : colors.primary },
                 ]}
-                onPress={() => setActivePinListing(item)}
-                activeOpacity={0.8}
               >
-                <Text
-                  style={[
-                    styles.pricePinText,
-                    { color: isSelected ? colors.primary : '#FFFFFF' },
-                  ]}
-                >
-                  {(item.monthlyRent / 1000000).toFixed(1).replace('.', ',')} tr
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+                {rentInMillions}tr
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
 
-        {/* Floating Quick Preview Card when a pin is selected */}
-        {activePinListing && (
-          <View style={[styles.previewCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.previewTop}>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.previewTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                  {activePinListing.title}
+      {/* Property Preview Card at Bottom (Section 14) */}
+      {activeListing && (
+        <View style={[styles.bottomCardWrapper, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={styles.previewRow}>
+            {/* Thumbnail */}
+            <View style={[styles.previewThumb, { backgroundColor: colors.border }]}>
+              <Text style={{ fontSize: 26 }}>🏡</Text>
+            </View>
+
+            {/* Info */}
+            <View style={styles.previewInfo}>
+              <View style={styles.previewPriceRow}>
+                <Text style={[styles.previewPrice, { color: colors.primary }]}>
+                  {formatVND(activeListing.monthlyRent)}
                 </Text>
-                <Text style={[styles.previewAddress, { color: colors.textSecondary }]}>
-                  📍 {activePinListing.street}, {activePinListing.wardName}
-                </Text>
+                <Text style={[styles.previewPeriod, { color: colors.textSecondary }]}>/tháng</Text>
               </View>
-              <TouchableOpacity onPress={() => setActivePinListing(null)} style={styles.previewCloseBtn}>
-                <Text style={{ color: colors.textSecondary, fontSize: 16 }}>✕</Text>
-              </TouchableOpacity>
-            </View>
 
-            <View style={styles.previewStatsRow}>
-              <Text style={[styles.previewPrice, { color: colors.primary }]}>
-                {formatVND(activePinListing.monthlyRent)}/tháng
+              <Text style={[styles.previewTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                {activeListing.title}
               </Text>
+
               <Text style={[styles.previewMeta, { color: colors.textSecondary }]}>
-                📐 {formatArea(activePinListing.areaSquareMeters)}
+                {formatArea(activeListing.areaSquareMeters)} · {activeListing.wardName}
               </Text>
-              {selectedLandmark.id !== 'all' && (
-                <Text style={[styles.previewDistance, { color: colors.textPrimary, backgroundColor: colors.background }]}>
-                  Cách {selectedLandmark.name}: <Text style={{ fontWeight: '800' }}>{formatDistance(calculateHaversineDistance({ latitude: selectedLandmark.latitude, longitude: selectedLandmark.longitude }, { latitude: activePinListing.latitude, longitude: activePinListing.longitude }))}</Text>
-                </Text>
-              )}
             </View>
-
-            <TouchableOpacity
-              style={[styles.viewDetailBtn, { backgroundColor: colors.primary }]}
-              onPress={() => setSelectedListing(activePinListing)}
-            >
-              <Text style={styles.viewDetailBtnText}>Xem chi tiết phòng & Chi phí →</Text>
-            </TouchableOpacity>
           </View>
-        )}
-      </View>
 
-      {/* Bottom Listings list sorted by distance to landmark */}
-      <View style={[styles.bottomListSection, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
-        <Text style={[styles.bottomListHeading, { color: colors.textPrimary }]}>
-          Phòng trọ gần {selectedLandmark.name} nhất:
-        </Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.bottomListScroll}>
-          {listingsWithDistance.map((item) => (
-            <TouchableOpacity
-              key={`h-${item.id}`}
-              style={[styles.miniListingCard, { backgroundColor: colors.background, borderColor: colors.border }]}
-              onPress={() => setSelectedListing(item)}
-            >
-              <Text style={[styles.miniTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                {item.title}
-              </Text>
-              <Text style={[styles.miniPrice, { color: colors.primary }]}>
-                {formatVND(item.monthlyRent)}
-              </Text>
-              <Text style={[styles.miniDist, { color: colors.textSecondary }]}>
-                Cách {formatDistance(item.distanceKm)}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
+          {/* Action button */}
+          <TouchableOpacity
+            style={[styles.detailActionBtn, { backgroundColor: colors.primary }]}
+            onPress={() => setSelectedListing(activeListing)}
+          >
+            <Text style={styles.detailActionBtnText}>Xem chi tiết phòng</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 };
@@ -231,11 +208,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   topHeader: {
-    padding: 12,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 10,
     borderBottomWidth: 1,
   },
   headerTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '800',
     marginBottom: 8,
   },
@@ -261,157 +240,108 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    opacity: 0.25,
+    opacity: 0.15,
   },
   mapWatermark: {
-    fontSize: 22,
-    fontWeight: '800',
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 2,
   },
-  mapCenterNotice: {
-    fontSize: 13,
-    marginTop: 4,
-  },
-  centerLandmarkMarker: {
+  centerTarget: {
     position: 'absolute',
-    top: '30%',
-    left: '42%',
+    top: 170,
+    left: '38%',
     alignItems: 'center',
-    zIndex: 10,
+    zIndex: 5,
   },
-  landmarkMarkerBubble: {
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+  landmarkIconBox: {
+    marginBottom: 2,
+  },
+  landmarkLabel: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
     borderRadius: 8,
+    borderWidth: 1,
   },
-  landmarkMarkerText: {
-    color: '#000000',
-    fontWeight: '800',
+  landmarkLabelText: {
     fontSize: 11,
-  },
-  markerArrow: {
-    width: 0,
-    height: 0,
-    borderLeftWidth: 6,
-    borderRightWidth: 6,
-    borderTopWidth: 6,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-  },
-  pinsContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    fontWeight: '700',
   },
   pricePin: {
     position: 'absolute',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 14,
-    borderWidth: 2,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1.5,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 3,
-    elevation: 4,
+    elevation: 3,
   },
   pricePinText: {
     fontSize: 12,
     fontWeight: '800',
   },
-  previewCard: {
+  bottomCardWrapper: {
     position: 'absolute',
-    bottom: 12,
-    left: 12,
-    right: 12,
-    borderRadius: 12,
+    bottom: 76,
+    left: 16,
+    right: 16,
+    borderRadius: 18,
     borderWidth: 1,
     padding: 14,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.15,
     shadowRadius: 6,
-    elevation: 6,
-    zIndex: 20,
+    elevation: 5,
   },
-  previewTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 6,
-  },
-  previewTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  previewAddress: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  previewCloseBtn: {
-    padding: 4,
-  },
-  previewStatsRow: {
+  previewRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 8,
     marginBottom: 10,
+  },
+  previewThumb: {
+    width: 60,
+    height: 60,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  previewInfo: {
+    flex: 1,
+  },
+  previewPriceRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginBottom: 2,
   },
   previewPrice: {
     fontSize: 16,
     fontWeight: '800',
   },
+  previewPeriod: {
+    fontSize: 11,
+    marginLeft: 3,
+  },
+  previewTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
   previewMeta: {
     fontSize: 12,
   },
-  previewDistance: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-    fontSize: 11,
-  },
-  viewDetailBtn: {
-    paddingVertical: 10,
-    borderRadius: 8,
+  detailActionBtn: {
+    borderRadius: 10,
+    paddingVertical: 9,
     alignItems: 'center',
   },
-  viewDetailBtnText: {
+  detailActionBtnText: {
     color: '#FFFFFF',
-    fontSize: 13,
     fontWeight: '700',
-  },
-  bottomListSection: {
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderTopWidth: 1,
-    height: 125,
-  },
-  bottomListHeading: {
-    fontSize: 12,
-    fontWeight: '700',
-    marginBottom: 6,
-  },
-  bottomListScroll: {
-    gap: 8,
-  },
-  miniListingCard: {
-    width: 170,
-    padding: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  miniTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  miniPrice: {
     fontSize: 13,
-    fontWeight: '800',
-  },
-  miniDist: {
-    fontSize: 11,
-    marginTop: 2,
   },
 });

@@ -5,7 +5,6 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  StatusBar,
   Modal,
 } from 'react-native';
 import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
@@ -14,45 +13,49 @@ import { AppProvider, useApp } from './src/context/AppContext';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { SearchScreen } from './src/screens/SearchScreen';
 import { MapScreen } from './src/screens/MapScreen';
-import { ChatListScreen } from './src/screens/ChatListScreen';
 import { FavoritesScreen } from './src/screens/FavoritesScreen';
-import { LandlordPostScreen } from './src/screens/LandlordPostScreen';
-import { AdminModerationScreen } from './src/screens/AdminModerationScreen';
 import { AuthOnboardingScreen } from './src/screens/AuthOnboardingScreen';
 import { PropertyDetailModal } from './src/screens/PropertyDetailModal';
 import { PropertyComparisonModal } from './src/screens/PropertyComparisonModal';
+import { ChatListScreen } from './src/screens/ChatListScreen';
 import { ChatRoomModal } from './src/screens/ChatRoomModal';
 import { NotificationsModal } from './src/screens/NotificationsModal';
 import { NetworkStatusBanner } from './src/components/NetworkStatusBanner';
-import { APP_NAME, APP_TAGLINE } from '@troviet/shared';
+import { APP_NAME } from '@troviet/shared';
 
-type TabKey = 'home' | 'search' | 'map' | 'messages' | 'favorites' | 'post' | 'admin' | 'profile';
+// Navigation: Strictly 5 core modules (Section 6, 30, 36)
+type TabKey = 'home' | 'search' | 'map' | 'saved' | 'profile';
+
+const SUPPORTED_CITIES = [
+  { code: 'danang', name: 'TP. Đà Nẵng', active: true },
+  { code: 'hanoi', name: 'TP. Hà Nội', active: false },
+  { code: 'hcm', name: 'TP. Hồ Chí Minh', active: false },
+];
 
 const MainApp: React.FC = () => {
   const { colors, isDark, toggleTheme } = useTheme();
   const {
     currentUser,
-    listings,
     selectedListing,
     setSelectedListing,
     favoriteIds,
     comparisonIds,
-    verificationRequests,
-    reports,
     activeConversationId,
     setActiveConversationId,
     unreadNotificationsCount,
+    conversations,
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<TabKey>('home');
+  const [selectedCity, setSelectedCity] = useState(SUPPORTED_CITIES[0]);
+  const [isCityModalOpen, setIsCityModalOpen] = useState(false);
   const [searchInitialQuery, setSearchInitialQuery] = useState('');
   const [isComparisonOpen, setIsComparisonOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isMessagesOpen, setIsMessagesOpen] = useState(false);
 
-  const pendingListingsCount = listings.filter((l) => l.status === 'pending_review').length;
-  const pendingVerificationsCount = verificationRequests.filter((v) => v.status === 'pending').length;
-  const pendingReportsCount = reports.filter((r) => r.status === 'pending').length;
-  const totalAdminTasks = pendingListingsCount + pendingVerificationsCount + pendingReportsCount;
+  // Unread messages count / active threads
+  const unreadMessagesCount = conversations.length;
 
   const navigateToSearchWithQuery = (query?: string) => {
     setSearchInitialQuery(query || '');
@@ -63,67 +66,58 @@ const MainApp: React.FC = () => {
     <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]}>
       <ExpoStatusBar style={isDark ? 'light' : 'dark'} />
 
-      {/* Persistent Brand Header */}
+      {/* Header: Location Selector (Left) + Messages, Notifications, Theme (Right) (Section 8) */}
       <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <View style={styles.brandRow}>
-          <View style={[styles.logoIcon, { backgroundColor: colors.primary }]}>
-            <Text style={styles.logoText}>TV</Text>
-          </View>
-          <View>
-            <Text style={[styles.brandTitle, { color: colors.textPrimary }]}>{APP_NAME}</Text>
-            <Text style={[styles.brandTagline, { color: colors.textSecondary }]}>{APP_TAGLINE}</Text>
-          </View>
-        </View>
+        {/* Location Selector (Left) */}
+        <TouchableOpacity
+          style={styles.locationSelector}
+          onPress={() => setIsCityModalOpen(true)}
+          activeOpacity={0.7}
+        >
+          <Text style={{ fontSize: 16, marginRight: 4 }}>📍</Text>
+          <Text style={[styles.locationCityName, { color: colors.textPrimary }]}>
+            {selectedCity.name.replace('TP. ', '')}
+          </Text>
+          <Text style={[styles.dropdownArrow, { color: colors.textSecondary }]}>▼</Text>
+        </TouchableOpacity>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          {/* Quick Post button */}
+        {/* Right Header Actions */}
+        <View style={styles.headerRightActions}>
+          {/* In-App Messages (Header → Messages) */}
           <TouchableOpacity
-            style={[styles.headerActionBtn, { borderColor: colors.border, backgroundColor: colors.background }]}
-            onPress={() => setActiveTab('post')}
+            style={[styles.headerIconBtn, { borderColor: colors.border, backgroundColor: colors.background }]}
+            onPress={() => setIsMessagesOpen(true)}
+            accessibilityRole="button"
           >
-            <Text style={{ fontSize: 13 }}>➕ Đăng tin</Text>
+            <Text style={{ fontSize: 15 }}>💬</Text>
+            {unreadMessagesCount > 0 && (
+              <View style={[styles.badgePill, { backgroundColor: colors.error }]}>
+                <Text style={styles.badgePillText}>{unreadMessagesCount}</Text>
+              </View>
+            )}
           </TouchableOpacity>
 
           {/* Notifications Bell */}
           <TouchableOpacity
-            style={[styles.headerActionBtn, { borderColor: colors.border, backgroundColor: colors.background }]}
+            style={[styles.headerIconBtn, { borderColor: colors.border, backgroundColor: colors.background }]}
             onPress={() => setIsNotificationsOpen(true)}
+            accessibilityRole="button"
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={{ fontSize: 14 }}>🔔</Text>
-              {unreadNotificationsCount > 0 && (
-                <View style={[styles.notifBadge, { backgroundColor: colors.error }]}>
-                  <Text style={styles.notifBadgeText}>{unreadNotificationsCount}</Text>
-                </View>
-              )}
-            </View>
+            <Text style={{ fontSize: 15 }}>🔔</Text>
+            {unreadNotificationsCount > 0 && (
+              <View style={[styles.badgePill, { backgroundColor: colors.error }]}>
+                <Text style={styles.badgePillText}>{unreadNotificationsCount}</Text>
+              </View>
+            )}
           </TouchableOpacity>
 
-          {/* Admin Moderation Button if admin */}
-          {currentUser?.role === 'admin' && (
-            <TouchableOpacity
-              style={[
-                styles.headerActionBtn,
-                {
-                  backgroundColor: totalAdminTasks > 0 ? colors.warning : colors.background,
-                  borderColor: colors.border,
-                },
-              ]}
-              onPress={() => setActiveTab('admin')}
-            >
-              <Text style={{ fontSize: 12, fontWeight: '800', color: totalAdminTasks > 0 ? '#000000' : colors.textPrimary }}>
-                🛡️ {totalAdminTasks > 0 ? `${totalAdminTasks}` : 'Admin'}
-              </Text>
-            </TouchableOpacity>
-          )}
-
-          {/* Theme switcher */}
+          {/* Light / Dark Mode Switcher */}
           <TouchableOpacity
-            style={[styles.themeBtn, { borderColor: colors.border }]}
+            style={[styles.headerIconBtn, { borderColor: colors.border, backgroundColor: colors.background }]}
             onPress={toggleTheme}
             accessibilityRole="button"
           >
-            <Text style={{ fontSize: 15 }}>{isDark ? '☀️' : '🌙'}</Text>
+            <Text style={{ fontSize: 14 }}>{isDark ? '☀️' : '🌙'}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -131,36 +125,33 @@ const MainApp: React.FC = () => {
       {/* Offline Resilience Banner */}
       <NetworkStatusBanner />
 
-      {/* Screen Content */}
+      {/* Screen Content: 5 Core Modules */}
       <View style={styles.screenContainer}>
         {activeTab === 'home' && (
-          <HomeScreen onNavigateToSearch={navigateToSearchWithQuery} />
+          <HomeScreen
+            onNavigateToSearch={navigateToSearchWithQuery}
+            selectedCity={selectedCity.name}
+            onOpenCitySelector={() => setIsCityModalOpen(true)}
+          />
         )}
         {activeTab === 'search' && (
           <SearchScreen initialQuery={searchInitialQuery} />
         )}
         {activeTab === 'map' && <MapScreen />}
-        {activeTab === 'messages' && (
-          <ChatListScreen onOpenConversation={(id) => setActiveConversationId(id)} />
-        )}
-        {activeTab === 'favorites' && (
+        {activeTab === 'saved' && (
           <FavoritesScreen onOpenComparison={() => setIsComparisonOpen(true)} />
         )}
-        {activeTab === 'post' && (
-          <LandlordPostScreen onSuccess={() => setActiveTab('home')} />
-        )}
-        {activeTab === 'admin' && <AdminModerationScreen />}
         {activeTab === 'profile' && <AuthOnboardingScreen />}
       </View>
 
-      {/* Bottom Navigation Bar */}
+      {/* Bottom Navigation: Strictly 5 items (Section 30 & 36) */}
       <View style={[styles.bottomNav, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => setActiveTab('home')}
           accessibilityRole="button"
         >
-          <Text style={{ fontSize: 17 }}>🏠</Text>
+          <Text style={{ fontSize: 18 }}>🏠</Text>
           <Text
             style={[
               styles.navText,
@@ -179,7 +170,7 @@ const MainApp: React.FC = () => {
           }}
           accessibilityRole="button"
         >
-          <Text style={{ fontSize: 17 }}>🔍</Text>
+          <Text style={{ fontSize: 18 }}>🔍</Text>
           <Text
             style={[
               styles.navText,
@@ -195,7 +186,7 @@ const MainApp: React.FC = () => {
           onPress={() => setActiveTab('map')}
           accessibilityRole="button"
         >
-          <Text style={{ fontSize: 17 }}>🗺️</Text>
+          <Text style={{ fontSize: 18 }}>🗺️</Text>
           <Text
             style={[
               styles.navText,
@@ -208,37 +199,21 @@ const MainApp: React.FC = () => {
 
         <TouchableOpacity
           style={styles.navItem}
-          onPress={() => setActiveTab('messages')}
-          accessibilityRole="button"
-        >
-          <Text style={{ fontSize: 17 }}>💬</Text>
-          <Text
-            style={[
-              styles.navText,
-              { color: activeTab === 'messages' ? colors.primary : colors.textSecondary },
-            ]}
-          >
-            Tin nhắn
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.navItem}
-          onPress={() => setActiveTab('favorites')}
+          onPress={() => setActiveTab('saved')}
           accessibilityRole="button"
         >
           <View style={styles.iconWithBadge}>
-            <Text style={{ fontSize: 17 }}>❤️</Text>
+            <Text style={{ fontSize: 18 }}>❤️</Text>
             {favoriteIds.length > 0 && (
-              <View style={[styles.badgeDot, { backgroundColor: colors.primary }]}>
-                <Text style={styles.badgeDotText}>{favoriteIds.length}</Text>
+              <View style={[styles.dotBadge, { backgroundColor: colors.primary }]}>
+                <Text style={styles.dotBadgeText}>{favoriteIds.length}</Text>
               </View>
             )}
           </View>
           <Text
             style={[
               styles.navText,
-              { color: activeTab === 'favorites' ? colors.primary : colors.textSecondary },
+              { color: activeTab === 'saved' ? colors.primary : colors.textSecondary },
             ]}
           >
             Đã lưu
@@ -250,7 +225,7 @@ const MainApp: React.FC = () => {
           onPress={() => setActiveTab('profile')}
           accessibilityRole="button"
         >
-          <Text style={{ fontSize: 17 }}>👤</Text>
+          <Text style={{ fontSize: 18 }}>👤</Text>
           <Text
             style={[
               styles.navText,
@@ -263,7 +238,7 @@ const MainApp: React.FC = () => {
       </View>
 
       {/* Floating Compare Pill if 2-3 items selected */}
-      {comparisonIds.length >= 2 && activeTab !== 'favorites' && (
+      {comparisonIds.length >= 2 && activeTab !== 'saved' && (
         <TouchableOpacity
           style={[styles.floatingCompareBtn, { backgroundColor: colors.primary }]}
           onPress={() => setIsComparisonOpen(true)}
@@ -273,6 +248,61 @@ const MainApp: React.FC = () => {
           </Text>
         </TouchableOpacity>
       )}
+
+      {/* City Location Selector Modal */}
+      <Modal visible={isCityModalOpen} transparent={true} animationType="fade">
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setIsCityModalOpen(false)}
+        >
+          <View style={[styles.cityPickerSheet, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.cityPickerTitle, { color: colors.textPrimary }]}>
+              Chọn Tỉnh / Thành phố
+            </Text>
+            {SUPPORTED_CITIES.map((city) => (
+              <TouchableOpacity
+                key={city.code}
+                style={[
+                  styles.cityOptionItem,
+                  { borderBottomColor: colors.border },
+                ]}
+                onPress={() => {
+                  setSelectedCity(city);
+                  setIsCityModalOpen(false);
+                }}
+              >
+                <Text style={[styles.cityNameText, { color: colors.textPrimary }]}>
+                  {city.name}
+                </Text>
+                {city.code === selectedCity.code ? (
+                  <Text style={{ color: colors.primary, fontWeight: '800' }}>✓ Đang chọn</Text>
+                ) : !city.active ? (
+                  <Text style={{ color: colors.textSecondary, fontSize: 12 }}>Sắp ra mắt</Text>
+                ) : null}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Messages Modal (Header → Messages) */}
+      <Modal visible={isMessagesOpen} animationType="slide">
+        <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
+          <View style={[styles.modalHeader, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+            <TouchableOpacity onPress={() => setIsMessagesOpen(false)} style={{ padding: 6 }}>
+              <Text style={{ color: colors.primary, fontSize: 15, fontWeight: '700' }}>← Trở lại</Text>
+            </TouchableOpacity>
+            <Text style={{ fontSize: 16, fontWeight: '800', color: colors.textPrimary }}>Tin nhắn</Text>
+            <View style={{ width: 60 }} />
+          </View>
+          <ChatListScreen
+            onOpenConversation={(id) => {
+              setActiveConversationId(id);
+            }}
+          />
+        </SafeAreaView>
+      </Modal>
 
       {/* Property Detail Modal */}
       <Modal visible={selectedListing !== null} animationType="slide">
@@ -322,70 +352,62 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    height: 56,
+    height: 54,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     borderBottomWidth: 1,
   },
-  brandRow: {
+  locationSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  locationCityName: {
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+  },
+  dropdownArrow: {
+    fontSize: 10,
+    marginLeft: 6,
+  },
+  headerRightActions: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  logoIcon: {
-    width: 32,
-    height: 32,
+  headerIconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  badgePill: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 16,
+    height: 16,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 3,
   },
-  logoText: {
-    color: '#ffffff',
-    fontWeight: '900',
-    fontSize: 14,
-    letterSpacing: -0.5,
-  },
-  brandTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-    letterSpacing: -0.3,
-  },
-  brandTagline: {
-    fontSize: 10,
-    fontWeight: '500',
-  },
-  headerActionBtn: {
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  notifBadge: {
-    marginLeft: 3,
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-    borderRadius: 6,
-  },
-  notifBadgeText: {
+  badgePillText: {
     color: '#ffffff',
     fontSize: 9,
     fontWeight: '800',
-  },
-  themeBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 8,
-    borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   screenContainer: {
     flex: 1,
   },
   bottomNav: {
-    height: 60,
+    height: 58,
     flexDirection: 'row',
     borderTopWidth: 1,
   },
@@ -393,7 +415,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 6,
+    paddingVertical: 4,
   },
   navText: {
     fontSize: 11,
@@ -403,38 +425,75 @@ const styles = StyleSheet.create({
   iconWithBadge: {
     position: 'relative',
   },
-  badgeDot: {
+  dotBadge: {
     position: 'absolute',
     top: -4,
-    right: -8,
+    right: -10,
     minWidth: 16,
     height: 16,
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 2,
+    paddingHorizontal: 3,
   },
-  badgeDotText: {
+  dotBadgeText: {
     color: '#ffffff',
     fontSize: 9,
     fontWeight: '800',
   },
   floatingCompareBtn: {
     position: 'absolute',
-    bottom: 70,
+    bottom: 68,
     alignSelf: 'center',
-    paddingHorizontal: 18,
+    paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 24,
     elevation: 6,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
   },
   floatingCompareText: {
     color: '#ffffff',
     fontSize: 13,
     fontWeight: '800',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  cityPickerSheet: {
+    width: '100%',
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 20,
+  },
+  cityPickerTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    marginBottom: 16,
+  },
+  cityOptionItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+  },
+  cityNameText: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  modalHeader: {
+    height: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
   },
 });

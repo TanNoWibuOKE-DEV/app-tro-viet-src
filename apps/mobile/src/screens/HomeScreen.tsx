@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   ScrollView,
   View,
@@ -6,21 +6,19 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Modal,
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { useApp } from '../context/AppContext';
 import { ListingCard } from '../components/ListingCard';
-import { AreaInsightsModal } from './AreaInsightsModal';
-import { RoommateMatchingScreen } from './RoommateMatchingScreen';
-import { ViewingHandoverModal } from './ViewingHandoverModal';
+import { AISearchModal } from './AISearchModal';
 import { PropertyType } from '@troviet/shared';
 
-const POPULAR_ALIASES = [
-  { label: '🏖️ Khu Mỹ Khê', query: 'khu my khe' },
-  { label: '🎓 Gần ĐH Duy Tân', query: 'gan dh duy tan' },
-  { label: '📚 Gần ĐH Bách Khoa', query: 'gan dh bach khoa' },
-  { label: '🏙️ Hải Châu cũ', query: 'hai chau' },
+const POPULAR_AREAS = [
+  { label: 'Hải Châu (Trung tâm)', query: 'hai chau' },
+  { label: 'Phước Mỹ (Gần biển)', query: 'phuoc my' },
+  { label: 'Hòa Khánh Bắc (ĐH Bách Khoa)', query: 'hoa khanh bac' },
+  { label: 'Hòa Cường Nam', query: 'hoa cuong nam' },
+  { label: 'ĐH Duy Tân', query: 'duy tan' },
 ];
 
 const PROPERTY_CATEGORIES: Array<{ type: PropertyType | 'all'; label: string }> = [
@@ -31,157 +29,117 @@ const PROPERTY_CATEGORIES: Array<{ type: PropertyType | 'all'; label: string }> 
   { type: 'shared', label: 'Ở ghép' },
 ];
 
-export const HomeScreen: React.FC<{ onNavigateToSearch: (query?: string) => void }> = ({
+interface HomeScreenProps {
+  onNavigateToSearch: (query?: string) => void;
+  selectedCity?: string;
+  onOpenCitySelector?: () => void;
+}
+
+export const HomeScreen: React.FC<HomeScreenProps> = ({
   onNavigateToSearch,
 }) => {
   const { colors } = useTheme();
-  const { listings, setSelectedListing } = useApp();
+  const { listings, setSelectedListing, userPreferences } = useApp();
+
   const [searchInput, setSearchInput] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<PropertyType | 'all'>('all');
-  const [showAreaInsights, setShowAreaInsights] = useState(false);
-  const [showRoommateMatching, setShowRoommateMatching] = useState(false);
-  const [showHandoverModal, setShowHandoverModal] = useState(false);
+  const [isAISearchModalOpen, setIsAISearchModalOpen] = useState(false);
 
-  const publishedListings = listings.filter((l) => l.status === 'published');
-
-  const filteredListings = publishedListings.filter((l) => {
-    if (selectedCategory !== 'all' && l.propertyType !== selectedCategory) {
-      return false;
-    }
-    return true;
-  });
-
-  const verifiedListings = publishedListings.filter(
-    (l) => l.landlordVerificationLevel === 'L2' || l.landlordVerificationLevel === 'L3'
+  const publishedListings = useMemo(
+    () => listings.filter((l) => l.status === 'published'),
+    [listings]
   );
 
+  // Filter by category
+  const filteredListings = useMemo(() => {
+    return publishedListings.filter((l) => {
+      if (selectedCategory !== 'all' && l.propertyType !== selectedCategory) {
+        return false;
+      }
+      return true;
+    });
+  }, [publishedListings, selectedCategory]);
+
+  // Verified listings
+  const verifiedListings = useMemo(
+    () =>
+      publishedListings.filter(
+        (l) => l.landlordVerificationLevel === 'L2' || l.landlordVerificationLevel === 'L3'
+      ),
+    [publishedListings]
+  );
+
+  // Recommended for user based on preferences
+  const recommendedListings = useMemo(() => {
+    if (!userPreferences) return publishedListings.slice(0, 3);
+    const prefs = userPreferences;
+    const scored = publishedListings.filter((l) => {
+      if (prefs.preferredPropertyTypes && !prefs.preferredPropertyTypes.includes(l.propertyType)) {
+        return false;
+      }
+      if (prefs.maxPrice && l.monthlyRent > prefs.maxPrice) {
+        return false;
+      }
+      return true;
+    });
+    return scored.length > 0 ? scored.slice(0, 3) : publishedListings.slice(0, 3);
+  }, [publishedListings, userPreferences]);
+
   const handleSearchSubmit = () => {
-    onNavigateToSearch(searchInput.trim());
+    if (searchInput.trim().length > 0) {
+      onNavigateToSearch(searchInput.trim());
+    } else {
+      onNavigateToSearch();
+    }
+  };
+
+  const handleAISearchPrompt = (prompt: string) => {
+    onNavigateToSearch(prompt);
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Search Header Banner */}
-      <View style={[styles.headerBanner, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <Text style={[styles.bannerQuestion, { color: colors.textPrimary }]}>
-          Bạn đang tìm phòng ở đâu?
-        </Text>
-        <Text style={[styles.bannerSub, { color: colors.textSecondary }]}>
-          Tìm đúng chỗ — Thuê an tâm tại TP. Đà Nẵng
-        </Text>
-
-        {/* Search Bar Input */}
-        <View style={[styles.searchBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
+      {/* Search Bar Entry */}
+      <View style={[styles.searchEntryCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={[styles.searchBar, { backgroundColor: colors.background, borderColor: colors.border }]}>
           <Text style={{ fontSize: 16, marginRight: 8 }}>🔍</Text>
           <TextInput
             style={[styles.searchInput, { color: colors.textPrimary }]}
-            placeholder="Tìm theo khu vực, trường ĐH, tên đường..."
+            placeholder="Bạn muốn tìm phòng như thế nào?"
             placeholderTextColor={colors.textSecondary}
             value={searchInput}
             onChangeText={setSearchInput}
             onSubmitEditing={handleSearchSubmit}
             returnKeyType="search"
           />
-          {searchInput.length > 0 && (
-            <TouchableOpacity onPress={handleSearchSubmit} style={[styles.searchGoBtn, { backgroundColor: colors.primary }]}>
-              <Text style={styles.searchGoText}>Tìm</Text>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity
+            style={[styles.searchBtn, { backgroundColor: colors.primary }]}
+            onPress={handleSearchSubmit}
+            accessibilityRole="button"
+          >
+            <Text style={styles.searchBtnText}>Tìm</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Popular Aliases (Habitual search pills) */}
-        <Text style={[styles.aliasLabel, { color: colors.textSecondary }]}>
-          Khu vực phổ biến theo thói quen:
-        </Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.aliasScroll}>
-          {POPULAR_ALIASES.map((item) => (
-            <TouchableOpacity
-              key={item.query}
-              style={[styles.aliasPill, { backgroundColor: colors.background, borderColor: colors.border }]}
-              onPress={() => onNavigateToSearch(item.query)}
-            >
-              <Text style={[styles.aliasPillText, { color: colors.textPrimary }]}>{item.label}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {/* Natural Language AI Search suggestions */}
-        <Text style={[styles.aliasLabel, { color: colors.textSecondary, marginTop: 10 }]}>
-          🤖 Trợ lý AI — Tìm bằng ngôn ngữ tự nhiên:
-        </Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.aliasScroll}>
-          {[
-            'Phòng trọ Hải Châu < 3tr có máy lạnh',
-            'Căn hộ Phước Mỹ gần biển < 5tr',
-            'Phòng Hòa Khánh Bắc có gác < 2tr5',
-          ].map((prompt) => (
-            <TouchableOpacity
-              key={prompt}
-              style={[styles.aliasPill, { backgroundColor: colors.background, borderColor: colors.primary }]}
-              onPress={() => onNavigateToSearch(prompt)}
-            >
-              <Text style={[styles.aliasPillText, { color: colors.primary, fontWeight: '600' }]}>
-                🤖 {prompt}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-
-        {/* Da Nang Ward Price Trend Quick Banner */}
+        {/* AI Search Prompt Entry (Section 9) */}
         <TouchableOpacity
-          onPress={() => setShowAreaInsights(true)}
-          style={[styles.marketBanner, { backgroundColor: colors.card, borderColor: colors.primary }]}
+          style={[styles.aiEntryBanner, { backgroundColor: colors.background, borderColor: colors.primary }]}
+          onPress={() => setIsAISearchModalOpen(true)}
+          activeOpacity={0.8}
         >
-          <View style={styles.marketBannerContent}>
-            <Text style={{ fontSize: 16, marginRight: 8 }}>📊</Text>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.marketBannerTitle, { color: colors.textPrimary }]}>
-                Mặt bằng giá thị trường Đà Nẵng
-              </Text>
-              <Text style={[styles.marketBannerSub, { color: colors.textSecondary }]}>
-                Xem xu hướng giá 6 tháng & biểu giá điện nước tham chiếu →
-              </Text>
-            </View>
+          <Text style={{ fontSize: 18, marginRight: 10 }}>✨</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.aiEntryTitle, { color: colors.primary }]}>
+              Tìm phòng thông minh bằng AI
+            </Text>
+            <Text style={[styles.aiEntrySub, { color: colors.textSecondary }]}>
+              "Phòng dưới 2 triệu gần ĐH Duy Tân có máy lạnh" →
+            </Text>
           </View>
         </TouchableOpacity>
-
-        {/* Phase 7 Quick Entry Banners */}
-        <View style={styles.quickFeaturesRow}>
-          <TouchableOpacity
-            onPress={() => setShowRoommateMatching(true)}
-            style={[
-              styles.quickFeatureCard,
-              { backgroundColor: colors.background, borderColor: colors.border },
-            ]}
-          >
-            <Text style={{ fontSize: 20, marginBottom: 4 }}>🤝</Text>
-            <Text style={[styles.quickFeatureTitle, { color: colors.textPrimary }]}>
-              Ở ghép thông minh
-            </Text>
-            <Text style={[styles.quickFeatureSub, { color: colors.textSecondary }]}>
-              AI tìm bạn hợp nếp sống & ngân sách
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={() => setShowHandoverModal(true)}
-            style={[
-              styles.quickFeatureCard,
-              { backgroundColor: colors.background, borderColor: colors.border },
-            ]}
-          >
-            <Text style={{ fontSize: 20, marginBottom: 4 }}>📋</Text>
-            <Text style={[styles.quickFeatureTitle, { color: colors.textPrimary }]}>
-              Bàn giao nhận phòng
-            </Text>
-            <Text style={[styles.quickFeatureSub, { color: colors.textSecondary }]}>
-              Chốt chỉ số điện nước & kiểm kê phòng
-            </Text>
-          </TouchableOpacity>
-        </View>
       </View>
 
-      {/* Category Pills */}
+      {/* Property Category Filter Pills */}
       <View style={styles.categoryRow}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryScroll}>
           {PROPERTY_CATEGORIES.map((cat) => {
@@ -212,13 +170,34 @@ export const HomeScreen: React.FC<{ onNavigateToSearch: (query?: string) => void
         </ScrollView>
       </View>
 
-      {/* Section 1: Mới đăng */}
+      {/* Section: Phòng dành cho bạn */}
+      {recommendedListings.length > 0 && (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+              Gợi ý dành riêng cho bạn
+            </Text>
+            <TouchableOpacity onPress={() => onNavigateToSearch()}>
+              <Text style={[styles.seeAllText, { color: colors.primary }]}>Xem tất cả</Text>
+            </TouchableOpacity>
+          </View>
+          {recommendedListings.map((listing) => (
+            <ListingCard
+              key={`rec-${listing.id}`}
+              listing={listing}
+              onPress={() => setSelectedListing(listing)}
+            />
+          ))}
+        </View>
+      )}
+
+      {/* Section: Phòng mới đăng */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            Phòng mới đăng hôm nay
+            Phòng mới đăng
           </Text>
-          <Text style={[styles.badgeCount, { color: colors.primary }]}>
+          <Text style={[styles.badgeCount, { color: colors.textSecondary }]}>
             {filteredListings.length} phòng
           </Text>
         </View>
@@ -232,15 +211,15 @@ export const HomeScreen: React.FC<{ onNavigateToSearch: (query?: string) => void
         ))}
       </View>
 
-      {/* Section 2: Đã xác minh uy tín */}
+      {/* Section: Phòng đã xác minh */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-            ⭐ Chủ trọ đã xác minh uy tín (L2/L3)
+            Phòng đã xác minh an toàn
           </Text>
         </View>
         <Text style={[styles.sectionSub, { color: colors.textSecondary }]}>
-          Chủ nhà đã được kiểm tra danh tính hoặc quyền cho thuê thực tế.
+          Chủ nhà đã được đối soát danh tính hoặc giấy tờ cho thuê.
         </Text>
 
         {verifiedListings.map((listing) => (
@@ -252,22 +231,35 @@ export const HomeScreen: React.FC<{ onNavigateToSearch: (query?: string) => void
         ))}
       </View>
 
-      {/* Area Insights Modal */}
-      <AreaInsightsModal
-        visible={showAreaInsights}
-        onClose={() => setShowAreaInsights(false)}
-      />
+      {/* Section: Khu vực phổ biến */}
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 12 }]}>
+          Khu vực phổ biến tại TP. Đà Nẵng
+        </Text>
+        <View style={styles.areasGrid}>
+          {POPULAR_AREAS.map((area) => (
+            <TouchableOpacity
+              key={area.query}
+              style={[styles.areaCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+              onPress={() => onNavigateToSearch(area.query)}
+            >
+              <Text style={{ fontSize: 18, marginBottom: 4 }}>📍</Text>
+              <Text style={[styles.areaTitle, { color: colors.textPrimary }]}>
+                {area.label}
+              </Text>
+              <Text style={[styles.areaSub, { color: colors.textSecondary }]}>
+                Khám phá phòng →
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
 
-      {/* Roommate Matching Modal */}
-      <RoommateMatchingScreen
-        visible={showRoommateMatching}
-        onClose={() => setShowRoommateMatching(false)}
-      />
-
-      {/* Property Handover Modal */}
-      <ViewingHandoverModal
-        visible={showHandoverModal}
-        onClose={() => setShowHandoverModal(false)}
+      {/* Dedicated AI Search Modal */}
+      <AISearchModal
+        visible={isAISearchModalOpen}
+        onClose={() => setIsAISearchModalOpen(false)}
+        onSearch={handleAISearchPrompt}
       />
     </ScrollView>
   );
@@ -278,90 +270,61 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 90,
   },
-  headerBanner: {
-    borderRadius: 16,
+  searchEntryCard: {
+    borderRadius: 18,
     borderWidth: 1,
     padding: 16,
     marginBottom: 16,
   },
-  bannerQuestion: {
-    fontSize: 22,
-    fontWeight: '800',
-    marginBottom: 4,
-  },
-  bannerSub: {
-    fontSize: 13,
-    marginBottom: 14,
-  },
-  searchBox: {
+  searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
     paddingHorizontal: 12,
     height: 48,
-    marginBottom: 14,
   },
   searchInput: {
     flex: 1,
     fontSize: 14,
     height: '100%',
   },
-  searchGoBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
+  searchBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 8,
   },
-  searchGoText: {
+  searchBtnText: {
     color: '#FFFFFF',
     fontWeight: '700',
-    fontSize: 12,
+    fontSize: 13,
   },
-  aliasLabel: {
-    fontSize: 12,
-    marginBottom: 8,
-  },
-  aliasScroll: {
-    gap: 8,
-  },
-  aliasPill: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  aliasPillText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  marketBanner: {
-    borderRadius: 10,
-    borderWidth: 1,
-    padding: 10,
-    marginTop: 12,
-  },
-  marketBannerContent: {
+  aiEntryBanner: {
     flexDirection: 'row',
     alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginTop: 12,
   },
-  marketBannerTitle: {
+  aiEntryTitle: {
     fontSize: 13,
     fontWeight: '700',
   },
-  marketBannerSub: {
-    fontSize: 11,
+  aiEntrySub: {
+    fontSize: 12,
     marginTop: 2,
   },
   categoryRow: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   categoryScroll: {
     gap: 8,
   },
   categoryPill: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 20,
     borderWidth: 1,
   },
   categoryText: {
@@ -375,38 +338,42 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
-  },
-  sectionTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-  },
-  sectionSub: {
-    fontSize: 12,
     marginBottom: 10,
   },
-  badgeCount: {
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+  },
+  sectionSub: {
+    fontSize: 13,
+    marginBottom: 12,
+  },
+  seeAllText: {
     fontSize: 13,
     fontWeight: '700',
   },
-  quickFeaturesRow: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 10,
+  badgeCount: {
+    fontSize: 13,
+    fontWeight: '600',
   },
-  quickFeatureCard: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 10,
+  areasGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  areaCard: {
+    width: '48%',
+    padding: 14,
+    borderRadius: 14,
     borderWidth: 1,
   },
-  quickFeatureTitle: {
+  areaTitle: {
     fontSize: 13,
     fontWeight: '700',
     marginBottom: 2,
   },
-  quickFeatureSub: {
+  areaSub: {
     fontSize: 11,
-    lineHeight: 15,
   },
 });

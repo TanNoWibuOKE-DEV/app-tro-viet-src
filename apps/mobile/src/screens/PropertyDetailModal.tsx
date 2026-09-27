@@ -7,31 +7,39 @@ import {
   TouchableOpacity,
   Alert,
   TextInput,
-  Modal,
+  SafeAreaView,
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { useApp } from '../context/AppContext';
-import { Badge } from '../components/Badge';
 import { Button } from '../components/Button';
-import { CostCard } from '../components/CostCard';
 import { ReportModal } from '../components/ReportModal';
 import { ChatRoomModal } from './ChatRoomModal';
+import { ViewingChecklistModal } from './ViewingChecklistModal';
+import { LandlordVerificationModal } from './LandlordVerificationModal';
+import { InteractiveCostCalculatorModal } from '../components/InteractiveCostCalculatorModal';
 import {
   ListingSummary,
   formatArea,
   formatVND,
+  calculateTotalCosts,
+  DEFAULT_CONSUMPTION,
   checkListingPricingAnomaly,
   calculateListingTrustScore,
-  analyzeRoomListing,
   Review,
 } from '@troviet/shared';
-import { ViewingChecklistModal } from './ViewingChecklistModal';
 
 interface PropertyDetailModalProps {
   listing: ListingSummary;
   onClose: () => void;
   isLoggedIn: boolean;
 }
+
+const PROPERTY_TYPE_NAMES: Record<string, string> = {
+  room: 'Phòng trọ',
+  apartment: 'Căn hộ mini',
+  house: 'Nhà nguyên căn',
+  shared: 'Ở ghép',
+};
 
 export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
   listing,
@@ -44,14 +52,21 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
     reviews,
     submitReview,
     canUserReviewListing,
+    isFavorite,
+    toggleFavorite,
   } = useApp();
 
-  const [showPhone, setShowPhone] = useState(false);
+  const favorited = isFavorite(listing.id);
+
+  // Modals state
   const [activeChatConvId, setActiveChatConvId] = useState<string | null>(null);
   const [isReportOpen, setIsReportOpen] = useState(false);
-  const [isWriteReviewOpen, setIsWriteReviewOpen] = useState(false);
   const [isChecklistOpen, setIsChecklistOpen] = useState(false);
-  const [isTrustDetailsOpen, setIsTrustDetailsOpen] = useState(false);
+  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
+  const [isCostCalculatorOpen, setIsCostCalculatorOpen] = useState(false);
+  const [isWriteReviewOpen, setIsWriteReviewOpen] = useState(false);
+  const [isTrustFactorsOpen, setIsTrustFactorsOpen] = useState(false);
+  const [showPhone, setShowPhone] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
 
@@ -67,9 +82,11 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
     (r) => r.listingId === listing.id && r.status === 'approved'
   );
 
-  // Phase 5 Trust Score and AI Room Analysis
+  // Trust Score
   const trustScore = calculateListingTrustScore(listing, { reviews: listingReviews });
-  const roomAnalysis = analyzeRoomListing(listing);
+
+  // Baseline cost breakdown
+  const baselineCost = calculateTotalCosts(listing.costs, DEFAULT_CONSUMPTION);
 
   const avgRating =
     listingReviews.length > 0
@@ -78,6 +95,10 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
           listingReviews.length
         ).toFixed(1)
       : null;
+
+  const isVerified =
+    listing.landlordVerificationLevel === 'L2' ||
+    listing.landlordVerificationLevel === 'L3';
 
   const handleStartChat = () => {
     if (!isLoggedIn) {
@@ -133,32 +154,47 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
   };
 
   return (
-    <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
-      {/* Top Bar */}
-      <View style={[styles.topBar, { borderBottomColor: colors.border, backgroundColor: colors.card }]}>
-        <TouchableOpacity style={styles.backButton} onPress={onClose}>
-          <Text style={[styles.backText, { color: colors.primary }]}>← Đóng</Text>
-        </TouchableOpacity>
-        <Text style={[styles.topBarTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-          Chi tiết phòng
-        </Text>
-        <TouchableOpacity
-          style={styles.reportTopBtn}
-          onPress={() => setIsReportOpen(true)}
-        >
-          <Text style={{ fontSize: 13, color: colors.error }}>🚩 Báo cáo</Text>
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Visual Cover Header */}
-        <View style={[styles.coverBox, { backgroundColor: colors.border }]}>
-          <Text style={{ fontSize: 36 }}>🏡</Text>
-          <Text style={[styles.coverSub, { color: colors.textSecondary }]}>
-            Hình ảnh thực tế căn phòng [MẪU - DEV]
+    <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]}>
+      {/* 1. Large Gallery Header with Back (←) and Heart (♡) Overlay (Section 16) */}
+      <View style={[styles.galleryBox, { backgroundColor: colors.border }]}>
+        <View style={styles.galleryInner}>
+          <Text style={{ fontSize: 48 }}>🏡</Text>
+          <Text style={[styles.galleryPlaceholderText, { color: colors.textSecondary }]}>
+            Hình ảnh thực tế căn phòng
           </Text>
         </View>
 
+        {/* Top Overlay Buttons */}
+        <View style={styles.topOverlayRow}>
+          <TouchableOpacity
+            style={styles.overlayIconBtn}
+            onPress={onClose}
+            accessibilityRole="button"
+          >
+            <Text style={{ fontSize: 18, color: '#111827' }}>←</Text>
+          </TouchableOpacity>
+
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <TouchableOpacity
+              style={styles.overlayIconBtn}
+              onPress={() => toggleFavorite(listing.id)}
+              accessibilityRole="button"
+            >
+              <Text style={{ fontSize: 18 }}>{favorited ? '❤️' : '🤍'}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.overlayIconBtn}
+              onPress={() => setIsReportOpen(true)}
+              accessibilityRole="button"
+            >
+              <Text style={{ fontSize: 14 }}>🚩</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Anti-Scam Alert if pricing anomaly detected */}
         {priceSignals.length > 0 && (
           <View style={[styles.scamBanner, { backgroundColor: isDark ? '#3d1414' : '#fff5f5', borderColor: colors.error }]}>
@@ -174,378 +210,350 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
           </View>
         )}
 
-        <View style={styles.contentBody}>
-          {/* Header & Badges */}
-          <View style={styles.badgeRow}>
-            <Badge level={listing.landlordVerificationLevel} />
-            <View style={[styles.typePill, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
-                📐 {formatArea(listing.areaSquareMeters)}
-              </Text>
-            </View>
+        {/* 2. Property Summary (Section 17) */}
+        <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={styles.priceRow}>
+            <Text style={[styles.mainRent, { color: colors.primary }]}>
+              {formatVND(listing.monthlyRent)}
+            </Text>
+            <Text style={[styles.mainRentPeriod, { color: colors.textSecondary }]}>/ tháng</Text>
           </View>
 
-          {/* Title */}
           <Text style={[styles.mainTitle, { color: colors.textPrimary }]}>
             {listing.title}
           </Text>
 
-          {/* 2-tier Address Specification */}
-          <View style={[styles.addressBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.addressLabel, { color: colors.textSecondary }]}>Địa chỉ phòng (Cấu trúc 2 cấp):</Text>
-            <Text style={[styles.addressFull, { color: colors.textPrimary }]}>
-              Số {listing.houseNumber} {listing.street}, {listing.wardName}, TP. Đà Nẵng
-            </Text>
+          {/* Quick Specifications */}
+          <View style={styles.specsRow}>
+            <View style={[styles.specPill, { backgroundColor: colors.background, borderColor: colors.border }]}>
+              <Text style={[styles.specText, { color: colors.textPrimary }]}>
+                🏠 {PROPERTY_TYPE_NAMES[listing.propertyType] || 'Phòng trọ'}
+              </Text>
+            </View>
+            <View style={[styles.specPill, { backgroundColor: colors.background, borderColor: colors.border }]}>
+              <Text style={[styles.specText, { color: colors.textPrimary }]}>
+                📐 {formatArea(listing.areaSquareMeters)}
+              </Text>
+            </View>
+            <View style={[styles.specPill, { backgroundColor: colors.background, borderColor: colors.border }]}>
+              <Text style={[styles.specText, { color: colors.textPrimary }]}>
+                🚪 1 phòng
+              </Text>
+            </View>
           </View>
 
-          {/* Transparent Cost Card (Strict Core Rule) */}
-          <CostCard costs={listing.costs} />
+          {/* Verification Badge */}
+          {isVerified && (
+            <View style={[styles.verifiedStatusBox, { backgroundColor: '#ECFDF5', borderColor: '#10B981' }]}>
+              <Text style={styles.verifiedStatusText}>
+                ✓ Đã xác minh an toàn bởi Trọ Việt
+              </Text>
+            </View>
+          )}
+        </View>
 
-          {/* Explainable Trust Score Card (Phase 5) */}
-          <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.trustScoreHeader}>
-              <View style={{ flex: 1, marginRight: 8 }}>
-                <Text style={[styles.sectionHeading, { color: colors.textPrimary, marginBottom: 2 }]}>
-                  🛡️ Điểm tin cậy Trọ Việt
-                </Text>
-                <Text style={[styles.trustSub, { color: colors.textSecondary }]}>
-                  Đánh giá minh bạch đa chiều dựa trên quy tắc khách quan
-                </Text>
-              </View>
+        {/* 3. Amenities Section (Section 15) */}
+        <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+            Tiện nghi & Dịch vụ sẵn có
+          </Text>
+          <View style={styles.amenitiesGrid}>
+            {listing.amenities.map((amenity) => (
               <View
-                style={[
-                  styles.trustScorePill,
-                  {
-                    backgroundColor:
-                      trustScore.level === 'very_high' || trustScore.level === 'high'
-                        ? '#e6fcf5'
-                        : trustScore.level === 'medium'
-                        ? '#fff9db'
-                        : '#ffe3e3',
-                    borderColor:
-                      trustScore.level === 'very_high' || trustScore.level === 'high'
-                        ? '#0ca678'
-                        : trustScore.level === 'medium'
-                        ? '#f59f00'
-                        : '#fa5252',
-                  },
-                ]}
+                key={amenity.id}
+                style={[styles.amenityChip, { backgroundColor: colors.background, borderColor: colors.border }]}
               >
-                <Text
-                  style={[
-                    styles.trustScoreValue,
-                    {
-                      color:
-                        trustScore.level === 'very_high' || trustScore.level === 'high'
-                          ? '#087f5b'
-                          : trustScore.level === 'medium'
-                          ? '#d9480f'
-                          : '#c92a2a',
-                    },
-                  ]}
-                >
-                  {trustScore.score}/100
-                </Text>
-                <Text
-                  style={[
-                    styles.trustLevelText,
-                    {
-                      color:
-                        trustScore.level === 'very_high' || trustScore.level === 'high'
-                          ? '#087f5b'
-                          : trustScore.level === 'medium'
-                          ? '#d9480f'
-                          : '#c92a2a',
-                    },
-                  ]}
-                >
-                  {trustScore.levelLabel}
+                <Text style={{ color: colors.primary, marginRight: 6, fontWeight: '700' }}>✓</Text>
+                <Text style={[styles.amenityChipText, { color: colors.textPrimary }]}>
+                  {amenity.name}
                 </Text>
               </View>
-            </View>
-
-            {/* Toggle breakdown */}
-            <TouchableOpacity
-              style={styles.trustToggleRow}
-              onPress={() => setIsTrustDetailsOpen(!isTrustDetailsOpen)}
-            >
-              <Text style={[styles.trustToggleText, { color: colors.primary }]}>
-                {isTrustDetailsOpen
-                  ? '▲ Thu gọn tiêu chí chấm điểm'
-                  : `▼ Xem chi tiết ${trustScore.factors.length} yếu tố chấm điểm`}
-              </Text>
-            </TouchableOpacity>
-
-            {isTrustDetailsOpen && (
-              <View style={styles.trustFactorsList}>
-                {trustScore.factors.map((f, idx) => (
-                  <View key={idx} style={[styles.factorRow, { borderBottomColor: colors.border }]}>
-                    <Text
-                      style={[
-                        styles.factorPoints,
-                        { color: f.points >= 0 ? colors.success : colors.error },
-                      ]}
-                    >
-                      {f.points >= 0 ? `+${f.points}` : `${f.points}`}
-                    </Text>
-                    <Text style={[styles.factorDesc, { color: colors.textPrimary }]}>
-                      {f.description}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            )}
+            ))}
           </View>
+        </View>
 
-          {/* AI Room Insights (Grounded Fact-based) */}
-          <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.aiInsightsHeader}>
-              <Text style={[styles.sectionHeading, { color: colors.textPrimary, marginBottom: 2 }]}>
-                🤖 Phân tích phòng AI (Dữ liệu thực tế)
-              </Text>
-              <Text style={[styles.aiBadgeDisclaimer, { color: colors.textSecondary }]}>
-                So sánh với mặt bằng giá & dữ liệu thực tế tại {listing.wardName}
-              </Text>
-            </View>
-
-            {/* Price comparison */}
-            <View style={[styles.aiInsightRow, { backgroundColor: colors.background }]}>
-              <Text style={{ fontSize: 20, marginRight: 10 }}>📊</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.aiInsightTitle, { color: colors.textPrimary }]}>
-                  {roomAnalysis.priceAssessment.label}
-                </Text>
-                <Text style={[styles.aiInsightDetails, { color: colors.textSecondary }]}>
-                  {roomAnalysis.priceAssessment.details}
-                </Text>
-              </View>
-            </View>
-
-            {/* Transparency check */}
-            <View style={[styles.aiInsightRow, { backgroundColor: colors.background, marginTop: 8 }]}>
-              <Text style={{ fontSize: 20, marginRight: 10 }}>
-                {roomAnalysis.transparencyAssessment.isFullyTransparent ? '✅' : '⚠️'}
-              </Text>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.aiInsightTitle, { color: colors.textPrimary }]}>
-                  Tính minh bạch chi phí
-                </Text>
-                <Text style={[styles.aiInsightDetails, { color: colors.textSecondary }]}>
-                  {roomAnalysis.transparencyAssessment.label}
-                </Text>
-              </View>
-            </View>
-
-            {/* Key advantages */}
-            {roomAnalysis.keyAdvantages.length > 0 && (
-              <View style={{ marginTop: 10 }}>
-                <Text style={[styles.aiSubHeading, { color: colors.textPrimary }]}>
-                  ✨ Điểm nổi bật đã xác thực:
-                </Text>
-                {roomAnalysis.keyAdvantages.map((adv, idx) => (
-                  <Text key={idx} style={[styles.aiBullet, { color: colors.textSecondary }]}>
-                    • {adv}
-                  </Text>
-                ))}
-              </View>
-            )}
-
-            {/* Practical viewing advice */}
-            {roomAnalysis.viewingAdvice.length > 0 && (
-              <View style={{ marginTop: 10 }}>
-                <Text style={[styles.aiSubHeading, { color: colors.textPrimary }]}>
-                  💡 Lời khuyên của Trọ Việt khi đi xem:
-                </Text>
-                {roomAnalysis.viewingAdvice.map((adv, idx) => (
-                  <Text key={idx} style={[styles.aiBullet, { color: colors.textSecondary }]}>
-                    • {adv}
-                  </Text>
-                ))}
-              </View>
-            )}
-
-            {/* Viewing Checklist Button */}
-            <TouchableOpacity
-              style={[styles.checklistTriggerBtn, { backgroundColor: colors.primary }]}
-              onPress={() => setIsChecklistOpen(true)}
-            >
-              <Text style={styles.checklistTriggerText}>
-                📋 Mở sổ tay đi xem phòng (10 điểm kiểm tra)
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Amenities Section */}
-          <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.sectionHeading, { color: colors.textPrimary }]}>
-              Tiện nghi & Dịch vụ sẵn có
+        {/* 4. Cost Module (Section 18 & 19) */}
+        <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+              Chi phí hàng tháng
             </Text>
-            <View style={styles.amenitiesGrid}>
-              {listing.amenities.map((amenity) => (
-                <View
-                  key={amenity.id}
-                  style={[styles.amenityItem, { backgroundColor: colors.background }]}
-                >
-                  <Text style={{ color: colors.primary, marginRight: 6 }}>✓</Text>
-                  <Text style={[styles.amenityText, { color: colors.textPrimary }]}>
-                    {amenity.name}
+            <Text style={[styles.costSub, { color: colors.textSecondary }]}>
+              (Ước tính tiêu chuẩn 1 người)
+            </Text>
+          </View>
+
+          {/* Table Breakdown */}
+          <View style={[styles.costTable, { backgroundColor: colors.background, borderColor: colors.border }]}>
+            <View style={styles.costRow}>
+              <Text style={[styles.costLabel, { color: colors.textPrimary }]}>Tiền phòng</Text>
+              <Text style={[styles.costValue, { color: colors.textPrimary }]}>
+                {formatVND(listing.monthlyRent)}
+              </Text>
+            </View>
+
+            <View style={styles.costRow}>
+              <Text style={[styles.costLabel, { color: colors.textSecondary }]}>Điện</Text>
+              <Text style={[styles.costValue, { color: colors.textSecondary }]}>
+                {listing.costs.electricityCostPerUnit
+                  ? `${listing.costs.electricityCostPerUnit.toLocaleString('vi-VN')} đ/kWh`
+                  : 'Chưa có'}
+              </Text>
+            </View>
+
+            <View style={styles.costRow}>
+              <Text style={[styles.costLabel, { color: colors.textSecondary }]}>Nước</Text>
+              <Text style={[styles.costValue, { color: colors.textSecondary }]}>
+                {listing.costs.waterCostPerUnit
+                  ? `${listing.costs.waterCostPerUnit.toLocaleString('vi-VN')} đ/người hoặc khối`
+                  : 'Chưa có'}
+              </Text>
+            </View>
+
+            <View style={styles.costRow}>
+              <Text style={[styles.costLabel, { color: colors.textSecondary }]}>Internet</Text>
+              <Text style={[styles.costValue, { color: colors.textSecondary }]}>
+                {listing.costs.internetCost
+                  ? `${listing.costs.internetCost.toLocaleString('vi-VN')} ₫/tháng`
+                  : 'Miễn phí'}
+              </Text>
+            </View>
+
+            <View style={styles.costRow}>
+              <Text style={[styles.costLabel, { color: colors.textSecondary }]}>Gửi xe</Text>
+              <Text style={[styles.costValue, { color: colors.textSecondary }]}>
+                {listing.costs.parkingCost
+                  ? `${listing.costs.parkingCost.toLocaleString('vi-VN')} ₫/tháng`
+                  : 'Miễn phí'}
+              </Text>
+            </View>
+
+            <View style={[styles.costTotalRow, { borderTopColor: colors.border }]}>
+              <Text style={[styles.costTotalLabel, { color: colors.textPrimary }]}>
+                Tổng dự kiến:
+              </Text>
+              <Text style={[styles.costTotalValue, { color: colors.primary }]}>
+                {formatVND(baselineCost.monthlyEstimatedTotal)}
+              </Text>
+            </View>
+          </View>
+
+          {/* Button: Tính chi phí của tôi (Section 18) */}
+          <TouchableOpacity
+            style={[styles.calcTriggerBtn, { borderColor: colors.primary }]}
+            onPress={() => setIsCostCalculatorOpen(true)}
+          >
+            <Text style={[styles.calcTriggerText, { color: colors.primary }]}>
+              🧮 Tính chi phí của tôi
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* 5. Location Section (Section 15) */}
+        <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+            Vị trí phòng trọ
+          </Text>
+          <Text style={[styles.locationAddress, { color: colors.textPrimary }]}>
+            Số {listing.houseNumber} {listing.street}, {listing.wardName}, TP. Đà Nẵng
+          </Text>
+          <View style={[styles.miniMapPlaceholder, { backgroundColor: colors.background, borderColor: colors.border }]}>
+            <Text style={{ fontSize: 24 }}>📍</Text>
+            <Text style={[styles.miniMapText, { color: colors.textSecondary }]}>
+              Tọa độ: {listing.latitude.toFixed(4)}, {listing.longitude.toFixed(4)}
+            </Text>
+          </View>
+        </View>
+
+        {/* 6. Landlord Module (Section 20) */}
+        <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+            Chủ nhà & Xác thực
+          </Text>
+
+          <View style={styles.landlordRow}>
+            <View style={[styles.landlordAvatar, { backgroundColor: colors.primary }]}>
+              <Text style={styles.landlordAvatarText}>
+                {listing.landlordName.charAt(0).toUpperCase()}
+              </Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.landlordName, { color: colors.textPrimary }]}>
+                {listing.landlordName}
+              </Text>
+              <Text style={[styles.landlordStatus, { color: colors.textSecondary }]}>
+                {isVerified ? '✓ Chủ trọ đã xác minh' : 'Đã xác thực SĐT'}
+              </Text>
+            </View>
+          </View>
+
+          {/* Button: Xem thông tin xác minh (Section 20) */}
+          <TouchableOpacity
+            style={[styles.verifyTriggerBtn, { backgroundColor: colors.background, borderColor: colors.border }]}
+            onPress={() => setIsVerificationModalOpen(true)}
+          >
+            <Text style={[styles.verifyTriggerText, { color: colors.primary }]}>
+              🛡️ Xem thông tin xác minh →
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* 7. Trust Score & Anti-Scam (Section 15) */}
+        <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={styles.trustScoreHeader}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 2 }]}>
+                Độ tin cậy Trọ Việt
+              </Text>
+              <Text style={[styles.trustSub, { color: colors.textSecondary }]}>
+                Đánh giá khách quan dựa trên dữ liệu minh bạch
+              </Text>
+            </View>
+            <View style={[styles.trustPill, { backgroundColor: '#ECFDF5', borderColor: '#10B981' }]}>
+              <Text style={styles.trustScoreValue}>{trustScore.score}/100</Text>
+              <Text style={styles.trustScoreLevel}>{trustScore.levelLabel}</Text>
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={styles.trustToggle}
+            onPress={() => setIsTrustFactorsOpen(!isTrustFactorsOpen)}
+          >
+            <Text style={[styles.trustToggleText, { color: colors.primary }]}>
+              {isTrustFactorsOpen ? '▲ Thu gọn tiêu chí' : '▼ Xem chi tiết các tiêu chí chấm điểm'}
+            </Text>
+          </TouchableOpacity>
+
+          {isTrustFactorsOpen && (
+            <View style={styles.trustFactorsWrap}>
+              {trustScore.factors.map((f, idx) => (
+                <View key={idx} style={[styles.trustFactorRow, { borderBottomColor: colors.border }]}>
+                  <Text style={[styles.trustFactorPoints, { color: f.points >= 0 ? colors.success : colors.error }]}>
+                    {f.points >= 0 ? `+${f.points}` : `${f.points}`}
+                  </Text>
+                  <Text style={[styles.trustFactorDesc, { color: colors.textPrimary }]}>
+                    {f.description}
                   </Text>
                 </View>
               ))}
             </View>
+          )}
+        </View>
+
+        {/* 8. Controlled Reviews Section (Section 15) */}
+        <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={styles.reviewHeaderRow}>
+            <View>
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 2 }]}>
+                Đánh giá từ người thuê
+              </Text>
+              <Text style={[styles.reviewSub, { color: colors.textSecondary }]}>
+                {avgRating
+                  ? `⭐ ${avgRating} / 5 (${listingReviews.length} đánh giá đã kiểm thực)`
+                  : 'Chưa có đánh giá nào'}
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.writeReviewBtn, { borderColor: colors.primary }]}
+              onPress={handleOpenWriteReview}
+            >
+              <Text style={[styles.writeReviewBtnText, { color: colors.primary }]}>
+                ⭐ Viết đánh giá
+              </Text>
+            </TouchableOpacity>
           </View>
 
-          {/* Landlord Trust Card */}
-          <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.sectionHeading, { color: colors.textPrimary }]}>
-              Thông tin chủ nhà & Độ tin cậy
-            </Text>
-            <View style={styles.landlordRow}>
-              <View style={[styles.avatarCircle, { backgroundColor: colors.primary }]}>
-                <Text style={styles.avatarText}>
-                  {listing.landlordName.charAt(0)}
-                </Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.landlordName, { color: colors.textPrimary }]}>
-                  {listing.landlordName}
-                </Text>
-                <Text style={[styles.landlordSub, { color: colors.textSecondary }]}>
-                  Trạng thái: {listing.landlordVerificationLevel === 'L2' ? 'Đã xác minh danh tính CCCD' : 'Đã xác thực số điện thoại'}
-                </Text>
-              </View>
+          {listingReviews.length === 0 ? (
+            <View style={styles.emptyReviews}>
+              <Text style={[styles.emptyReviewsText, { color: colors.textSecondary }]}>
+                Chỉ người thuê từng nhắn tin trao đổi với chủ trọ mới có quyền đánh giá phòng này.
+              </Text>
             </View>
-          </View>
-
-          {/* Controlled Reviews Section (Phase 3) */}
-          <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.reviewHeaderRow}>
-              <View>
-                <Text style={[styles.sectionHeading, { color: colors.textPrimary, marginBottom: 2 }]}>
-                  Đánh giá từ người thuê
-                </Text>
-                <Text style={[styles.reviewSub, { color: colors.textSecondary }]}>
-                  {avgRating
-                    ? `⭐ ${avgRating} / 5 (${listingReviews.length} đánh giá đã kiểm thực)`
-                    : 'Chưa có đánh giá nào'}
-                </Text>
-              </View>
-              <TouchableOpacity
-                style={[styles.writeReviewBtn, { borderColor: colors.primary }]}
-                onPress={handleOpenWriteReview}
-              >
-                <Text style={[styles.writeReviewBtnText, { color: colors.primary }]}>
-                  ⭐ Viết đánh giá
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {listingReviews.length === 0 ? (
-              <View style={styles.emptyReviews}>
-                <Text style={[styles.emptyReviewsText, { color: colors.textSecondary }]}>
-                  Chỉ người thuê từng nhắn tin trao đổi với chủ trọ mới có quyền đánh giá phòng này.
-                </Text>
-              </View>
-            ) : (
-              <View style={styles.reviewsList}>
-                {listingReviews.map((rev: Review) => (
-                  <View
-                    key={rev.id}
-                    style={[styles.reviewItem, { borderBottomColor: colors.border }]}
-                  >
-                    <View style={styles.reviewTopRow}>
-                      <Text style={[styles.reviewerName, { color: colors.textPrimary }]}>
-                        {rev.tenantName}
-                      </Text>
-                      <Text style={styles.starText}>
-                        {'★'.repeat(rev.rating)}{'☆'.repeat(5 - rev.rating)}
-                      </Text>
-                    </View>
-                    <Text style={[styles.reviewBody, { color: colors.textPrimary }]}>
-                      {rev.content}
+          ) : (
+            <View style={styles.reviewsList}>
+              {listingReviews.map((rev: Review) => (
+                <View key={rev.id} style={[styles.reviewItem, { borderBottomColor: colors.border }]}>
+                  <View style={styles.reviewTopRow}>
+                    <Text style={[styles.reviewerName, { color: colors.textPrimary }]}>
+                      {rev.tenantName}
                     </Text>
-                    <Text style={[styles.reviewDate, { color: colors.textSecondary }]}>
-                      {new Date(rev.createdAt).toLocaleDateString('vi-VN')}
+                    <Text style={styles.starText}>
+                      {'★'.repeat(rev.rating)}{'☆'.repeat(5 - rev.rating)}
                     </Text>
-
-                    {/* Landlord reply */}
-                    {rev.landlordResponse && (
-                      <View style={[styles.landlordReplyBox, { backgroundColor: colors.background, borderColor: colors.border }]}>
-                        <Text style={[styles.landlordReplyTitle, { color: colors.primary }]}>
-                          💬 Phản hồi từ chủ trọ:
-                        </Text>
-                        <Text style={[styles.landlordReplyBody, { color: colors.textPrimary }]}>
-                          {rev.landlordResponse}
-                        </Text>
-                      </View>
-                    )}
                   </View>
-                ))}
-              </View>
-            )}
-          </View>
+                  <Text style={[styles.reviewBody, { color: colors.textPrimary }]}>
+                    {rev.content}
+                  </Text>
+                  <Text style={[styles.reviewDate, { color: colors.textSecondary }]}>
+                    {new Date(rev.createdAt).toLocaleDateString('vi-VN')}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
       </ScrollView>
 
-      {/* Bottom Sticky Action Bar */}
+      {/* 9. Fixed Bottom Bar (Section 23) */}
       <View style={[styles.bottomBar, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
-        <View style={styles.bottomPriceCol}>
-          <Text style={[styles.bottomRentLabel, { color: colors.textSecondary }]}>Tiền phòng tháng:</Text>
-          <Text style={[styles.bottomRentValue, { color: colors.primary }]}>
-            {formatVND(listing.monthlyRent)}
+        <TouchableOpacity
+          style={[styles.scheduleBtn, { borderColor: colors.primary }]}
+          onPress={() => setIsChecklistOpen(true)}
+        >
+          <Text style={[styles.scheduleBtnText, { color: colors.primary }]}>
+            📋 Đặt lịch xem
           </Text>
-        </View>
+        </TouchableOpacity>
 
-        <View style={styles.bottomActionsCol}>
-          <TouchableOpacity
-            style={[styles.chatActionBtn, { backgroundColor: colors.primary }]}
-            onPress={handleStartChat}
-          >
-            <Text style={styles.chatActionText}>💬 Nhắn tin</Text>
-          </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.chatBtn, { backgroundColor: colors.primary }]}
+          onPress={handleStartChat}
+        >
+          <Text style={styles.chatBtnText}>💬 Nhắn tin</Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[
-              styles.callActionBtn,
-              {
-                borderColor: colors.border,
-                backgroundColor: showPhone ? colors.primary : colors.background,
-              },
-            ]}
-            onPress={() => {
-              if (!isLoggedIn) {
-                Alert.alert(
-                  'Đăng nhập để xem SĐT',
-                  'Vui lòng đăng nhập để xem số điện thoại liên hệ trực tiếp.'
-                );
-                return;
-              }
-              setShowPhone(!showPhone);
-            }}
-          >
-            <Text
-              style={[
-                styles.callActionText,
-                { color: showPhone ? '#ffffff' : colors.textPrimary },
-              ]}
-            >
-              {showPhone ? '0905 123 456' : '📞 Gọi điện'}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity
+          style={[styles.callBtn, { borderColor: colors.border, backgroundColor: colors.background }]}
+          onPress={() => {
+            if (!isLoggedIn) {
+              Alert.alert('Đăng nhập để xem SĐT', 'Vui lòng đăng nhập để liên hệ trực tiếp với chủ trọ.');
+              return;
+            }
+            setShowPhone(!showPhone);
+          }}
+        >
+          <Text style={[styles.callBtnText, { color: colors.textPrimary }]}>
+            {showPhone ? '0905 123 456' : '📞 Gọi'}
+          </Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Realtime Chat Modal */}
+      {/* Sub-modals */}
+      <InteractiveCostCalculatorModal
+        visible={isCostCalculatorOpen}
+        onClose={() => setIsCostCalculatorOpen(false)}
+        costs={listing.costs}
+      />
+
+      <LandlordVerificationModal
+        visible={isVerificationModalOpen}
+        onClose={() => setIsVerificationModalOpen(false)}
+        listing={listing}
+      />
+
+      <ViewingChecklistModal
+        visible={isChecklistOpen}
+        listing={listing}
+        onClose={() => setIsChecklistOpen(false)}
+      />
+
       <ChatRoomModal
         visible={activeChatConvId !== null}
         onClose={() => setActiveChatConvId(null)}
         conversationId={activeChatConvId}
-        onOpenReportModal={(type, id, title) => {
-          setIsReportOpen(true);
-        }}
+        onOpenReportModal={() => setIsReportOpen(true)}
       />
 
-      {/* Report Modal */}
       <ReportModal
         visible={isReportOpen}
         onClose={() => setIsReportOpen(false)}
@@ -553,127 +561,61 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
         targetId={listing.id}
         targetTitle={listing.title}
       />
-
-      {/* Write Review Modal */}
-      <Modal visible={isWriteReviewOpen} animationType="slide" transparent>
-        <View style={styles.writeReviewOverlay}>
-          <View style={[styles.writeReviewCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.writeReviewTitle, { color: colors.textPrimary }]}>
-              Viết đánh giá phòng trọ
-            </Text>
-            <Text style={[styles.writeReviewSub, { color: colors.textSecondary }]}>
-              {listing.title}
-            </Text>
-
-            {/* Star selector */}
-            <View style={styles.starsRow}>
-              {[1, 2, 3, 4, 5].map((star) => (
-                <TouchableOpacity key={star} onPress={() => setReviewRating(star)}>
-                  <Text style={{ fontSize: 32, marginHorizontal: 4 }}>
-                    {star <= reviewRating ? '★' : '☆'}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <TextInput
-              style={[
-                styles.reviewInput,
-                {
-                  backgroundColor: colors.background,
-                  borderColor: colors.border,
-                  color: colors.textPrimary,
-                },
-              ]}
-              placeholder="Chia sẻ trải nghiệm thực tế của bạn về phòng trọ, điện nước, an ninh và chủ nhà..."
-              placeholderTextColor={colors.textSecondary}
-              value={reviewComment}
-              onChangeText={setReviewComment}
-              multiline
-              numberOfLines={4}
-            />
-
-            <View style={styles.reviewBtnsRow}>
-              <TouchableOpacity
-                style={[styles.cancelBtn, { borderColor: colors.border }]}
-                onPress={() => setIsWriteReviewOpen(false)}
-              >
-                <Text style={{ color: colors.textPrimary, fontWeight: '600' }}>Hủy</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.confirmBtn,
-                  {
-                    backgroundColor: reviewComment.trim() ? colors.primary : colors.border,
-                  },
-                ]}
-                onPress={handleSubmitReview}
-                disabled={!reviewComment.trim()}
-              >
-                <Text style={styles.confirmBtnText}>Gửi đánh giá</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Phase 5 Viewing Checklist Modal */}
-      <ViewingChecklistModal
-        visible={isChecklistOpen}
-        listing={listing}
-        onClose={() => setIsChecklistOpen(false)}
-      />
-    </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  modalContainer: {
+  root: {
     flex: 1,
   },
-  topBar: {
-    height: 52,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-  },
-  backButton: {
-    paddingVertical: 8,
-    paddingRight: 12,
-  },
-  backText: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  topBarTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    flex: 1,
-    textAlign: 'center',
-  },
-  reportTopBtn: {
-    paddingVertical: 6,
-    paddingLeft: 8,
-  },
-  scrollContent: {
-    paddingBottom: 110,
-  },
-  coverBox: {
-    height: 180,
+  galleryBox: {
+    height: 220,
+    position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  coverSub: {
-    marginTop: 8,
+  galleryInner: {
+    alignItems: 'center',
+  },
+  galleryPlaceholderText: {
     fontSize: 13,
+    fontWeight: '500',
+    marginTop: 6,
+  },
+  topOverlayRow: {
+    position: 'absolute',
+    top: 14,
+    left: 14,
+    right: 14,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  overlayIconBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+    elevation: 3,
+  },
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 90,
   },
   scamBanner: {
     flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderBottomWidth: 1,
+    alignItems: 'flex-start',
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: 16,
   },
   scamTitle: {
     fontSize: 13,
@@ -684,130 +626,277 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
   },
-  contentBody: {
+  sectionCard: {
     padding: 16,
+    borderRadius: 18,
+    borderWidth: 1,
+    marginBottom: 16,
   },
-  badgeRow: {
+  priceRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 10,
+    alignItems: 'baseline',
+    marginBottom: 6,
   },
-  typePill: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    borderWidth: 1,
+  mainRent: {
+    fontSize: 24,
+    fontWeight: '900',
+    letterSpacing: -0.5,
   },
-  mainTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    lineHeight: 26,
-    marginBottom: 12,
-  },
-  addressBox: {
-    borderRadius: 10,
-    borderWidth: 1,
-    padding: 12,
-    marginBottom: 12,
-  },
-  addressLabel: {
-    fontSize: 12,
-    marginBottom: 4,
-  },
-  addressFull: {
+  mainRentPeriod: {
     fontSize: 14,
     fontWeight: '600',
+    marginLeft: 4,
   },
-  sectionCard: {
+  mainTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    lineHeight: 22,
+    marginBottom: 12,
+  },
+  specsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 12,
+  },
+  specPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 12,
     borderWidth: 1,
-    padding: 16,
-    marginVertical: 8,
   },
-  sectionHeading: {
-    fontSize: 15,
+  specText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  verifiedStatusBox: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  verifiedStatusText: {
+    color: '#059669',
+    fontSize: 12,
     fontWeight: '700',
-    marginBottom: 10,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+    marginBottom: 12,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+    marginBottom: 12,
+  },
+  costSub: {
+    fontSize: 11,
   },
   amenitiesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
   },
-  amenityItem: {
+  amenityChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 10,
+    borderWidth: 1,
   },
-  amenityText: {
+  amenityChipText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  costTable: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 12,
+    marginBottom: 12,
+  },
+  costRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  costLabel: {
     fontSize: 13,
+  },
+  costValue: {
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  costTotalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    paddingTop: 8,
+    marginTop: 4,
+  },
+  costTotalLabel: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  costTotalValue: {
+    fontSize: 17,
+    fontWeight: '900',
+  },
+  calcTriggerBtn: {
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  calcTriggerText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  locationAddress: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 10,
+  },
+  miniMapPlaceholder: {
+    height: 90,
+    borderRadius: 12,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  miniMapText: {
+    fontSize: 11,
+    marginTop: 4,
   },
   landlordRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    marginBottom: 12,
   },
-  avatarCircle: {
+  landlordAvatar: {
     width: 44,
     height: 44,
     borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 12,
   },
-  avatarText: {
-    color: '#ffffff',
+  landlordAvatarText: {
+    color: '#FFFFFF',
+    fontWeight: '800',
     fontSize: 18,
-    fontWeight: '700',
   },
   landlordName: {
     fontSize: 15,
     fontWeight: '700',
   },
-  landlordSub: {
+  landlordStatus: {
     fontSize: 12,
     marginTop: 2,
+  },
+  verifyTriggerBtn: {
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  verifyTriggerText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  trustScoreHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  trustSub: {
+    fontSize: 12,
+  },
+  trustPill: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  trustScoreValue: {
+    color: '#047857',
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  trustScoreLevel: {
+    color: '#047857',
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  trustToggle: {
+    paddingVertical: 8,
+    marginTop: 8,
+  },
+  trustToggleText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  trustFactorsWrap: {
+    marginTop: 6,
+  },
+  trustFactorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+  },
+  trustFactorPoints: {
+    fontWeight: '800',
+    fontSize: 12,
+    width: 32,
+  },
+  trustFactorDesc: {
+    flex: 1,
+    fontSize: 12,
   },
   reviewHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+    alignItems: 'flex-start',
+    marginBottom: 10,
   },
   reviewSub: {
     fontSize: 12,
   },
   writeReviewBtn: {
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 5,
     borderRadius: 8,
     borderWidth: 1,
   },
   writeReviewBtnText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
   },
   emptyReviews: {
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
   emptyReviewsText: {
-    fontSize: 13,
-    fontStyle: 'italic',
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 17,
   },
   reviewsList: {
-    gap: 12,
+    gap: 10,
   },
   reviewItem: {
-    paddingBottom: 10,
-    borderBottomWidth: 0.5,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
   },
   reviewTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: 4,
   },
   reviewerName: {
@@ -815,237 +904,63 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   starText: {
-    color: '#f59f00',
-    fontSize: 14,
+    color: '#F59E0B',
+    fontSize: 12,
   },
   reviewBody: {
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 16,
     marginBottom: 4,
   },
   reviewDate: {
     fontSize: 11,
-  },
-  landlordReplyBox: {
-    marginTop: 6,
-    padding: 8,
-    borderRadius: 6,
-    borderWidth: 0.5,
-  },
-  landlordReplyTitle: {
-    fontSize: 11,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  landlordReplyBody: {
-    fontSize: 12,
   },
   bottomBar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: 72,
+    height: 64,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 16,
     borderTopWidth: 1,
-  },
-  bottomPriceCol: {
-    justifyContent: 'center',
-  },
-  bottomRentLabel: {
-    fontSize: 11,
-  },
-  bottomRentValue: {
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  bottomActionsCol: {
-    flexDirection: 'row',
     gap: 8,
   },
-  chatActionBtn: {
-    paddingHorizontal: 14,
-    height: 42,
-    borderRadius: 8,
+  scheduleBtn: {
+    flex: 1,
+    height: 44,
+    borderRadius: 12,
+    borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  chatActionText: {
-    color: '#ffffff',
-    fontSize: 14,
+  scheduleBtnText: {
+    fontSize: 13,
     fontWeight: '700',
   },
-  callActionBtn: {
+  chatBtn: {
+    flex: 1.2,
+    height: 44,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  chatBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  callBtn: {
     paddingHorizontal: 12,
-    height: 42,
-    borderRadius: 8,
+    height: 44,
+    borderRadius: 12,
     borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  callActionText: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  writeReviewOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  writeReviewCard: {
-    borderRadius: 16,
-    borderWidth: 1,
-    padding: 20,
-  },
-  writeReviewTitle: {
-    fontSize: 17,
-    fontWeight: '800',
-    marginBottom: 4,
-  },
-  writeReviewSub: {
+  callBtnText: {
     fontSize: 12,
-    marginBottom: 16,
-  },
-  starsRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  reviewInput: {
-    borderRadius: 10,
-    borderWidth: 1,
-    padding: 12,
-    minHeight: 90,
-    fontSize: 13,
-    textAlignVertical: 'top',
-    marginBottom: 16,
-  },
-  reviewBtnsRow: {
-    flexDirection: 'row',
-    gap: 10,
-    justifyContent: 'flex-end',
-  },
-  cancelBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  confirmBtn: {
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  confirmBtnText: {
-    color: '#ffffff',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  // Phase 5 Trust Score & AI Insights Styles
-  trustScoreHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  trustSub: {
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  trustScorePill: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 8,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    minWidth: 84,
-  },
-  trustScoreValue: {
-    fontSize: 18,
-    fontWeight: '800',
-  },
-  trustLevelText: {
-    fontSize: 10,
-    fontWeight: '700',
-    marginTop: 1,
-  },
-  trustToggleRow: {
-    paddingVertical: 4,
-    marginTop: 4,
-  },
-  trustToggleText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  trustFactorsList: {
-    marginTop: 8,
-    paddingTop: 4,
-  },
-  factorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 6,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    gap: 8,
-  },
-  factorPoints: {
-    fontSize: 12,
-    fontWeight: '800',
-    width: 32,
-    textAlign: 'right',
-  },
-  factorDesc: {
-    fontSize: 12,
-    flex: 1,
-    lineHeight: 16,
-  },
-  aiInsightsHeader: {
-    marginBottom: 10,
-  },
-  aiBadgeDisclaimer: {
-    fontSize: 11,
-    fontStyle: 'italic',
-  },
-  aiInsightRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    padding: 10,
-    borderRadius: 8,
-  },
-  aiInsightTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  aiInsightDetails: {
-    fontSize: 12,
-    lineHeight: 16,
-  },
-  aiSubHeading: {
-    fontSize: 12,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  aiBullet: {
-    fontSize: 12,
-    lineHeight: 18,
-    marginBottom: 2,
-  },
-  checklistTriggerBtn: {
-    marginTop: 14,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checklistTriggerText: {
-    color: '#ffffff',
-    fontSize: 13,
     fontWeight: '700',
   },
 });

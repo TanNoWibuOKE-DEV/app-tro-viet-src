@@ -1,38 +1,83 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ScrollView,
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
+  Alert,
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { useApp } from '../context/AppContext';
 import { ListingCard } from '../components/ListingCard';
 import { Button } from '../components/Button';
 
-export const FavoritesScreen: React.FC<{ onOpenComparison: () => void }> = ({
+interface FavoritesScreenProps {
+  onOpenComparison: () => void;
+  onSelectSavedSearch?: (criteria: any) => void;
+}
+
+type TabType = 'properties' | 'searches';
+
+export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({
   onOpenComparison,
+  onSelectSavedSearch,
 }) => {
   const { colors } = useTheme();
-  const { listings, favoriteIds, comparisonIds, setSelectedListing } = useApp();
+  const {
+    listings,
+    favoriteIds,
+    comparisonIds,
+    setSelectedListing,
+    savedSearches,
+    removeSavedSearch,
+  } = useApp();
+
+  const [activeTab, setActiveTab] = useState<TabType>('properties');
 
   const favoriteListings = listings.filter((l) => favoriteIds.includes(l.id));
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-          ❤️ Phòng trọ đã lưu ({favoriteListings.length})
-        </Text>
-        <Text style={[styles.headerSub, { color: colors.textSecondary }]}>
-          Lưu trữ ngoại tuyến — xem lại bất kỳ lúc nào dù mất mạng
-        </Text>
+      {/* 2-Segmented Tab Control (Section 21) */}
+      <View style={[styles.tabBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <TouchableOpacity
+          style={[
+            styles.tabItem,
+            activeTab === 'properties' && [styles.activeTabItem, { borderBottomColor: colors.primary }],
+          ]}
+          onPress={() => setActiveTab('properties')}
+        >
+          <Text
+            style={[
+              styles.tabText,
+              { color: activeTab === 'properties' ? colors.primary : colors.textSecondary },
+            ]}
+          >
+            Phòng đã lưu ({favoriteListings.length})
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.tabItem,
+            activeTab === 'searches' && [styles.activeTabItem, { borderBottomColor: colors.primary }],
+          ]}
+          onPress={() => setActiveTab('searches')}
+        >
+          <Text
+            style={[
+              styles.tabText,
+              { color: activeTab === 'searches' ? colors.primary : colors.textSecondary },
+            ]}
+          >
+            Tìm kiếm đã lưu ({savedSearches.length})
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* Comparison Floating Bar if at least 2 items selected */}
-      {comparisonIds.length >= 2 && (
+      {comparisonIds.length >= 2 && activeTab === 'properties' && (
         <View style={[styles.compareBanner, { backgroundColor: colors.primary }]}>
           <View style={{ flex: 1 }}>
             <Text style={styles.compareBannerTitle}>
@@ -43,33 +88,76 @@ export const FavoritesScreen: React.FC<{ onOpenComparison: () => void }> = ({
             </Text>
           </View>
           <TouchableOpacity style={styles.compareActionBtn} onPress={onOpenComparison}>
-            <Text style={styles.compareActionBtnText}>So sánh ngay</Text>
+            <Text style={styles.compareActionBtnText}>So sánh</Text>
           </TouchableOpacity>
         </View>
       )}
 
-      {/* List */}
-      <ScrollView contentContainerStyle={styles.scroll}>
-        {favoriteListings.length === 0 ? (
-          <View style={[styles.emptyBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={{ fontSize: 36, marginBottom: 8 }}>🤍</Text>
-            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-              Bạn chưa lưu phòng nào
-            </Text>
-            <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
-              Khi tìm phòng, hãy bấm vào biểu tượng trái tim để lưu lại những căn phòng ưng ý và so sánh chi phí nhé.
-            </Text>
-          </View>
-        ) : (
-          favoriteListings.map((listing) => (
-            <ListingCard
-              key={`fav-${listing.id}`}
-              listing={listing}
-              onPress={() => setSelectedListing(listing)}
-            />
-          ))
-        )}
-      </ScrollView>
+      {/* Tab 1: Saved Properties */}
+      {activeTab === 'properties' && (
+        <ScrollView contentContainerStyle={styles.scroll}>
+          {favoriteListings.length === 0 ? (
+            <View style={[styles.emptyBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={{ fontSize: 40, marginBottom: 10 }}>🤍</Text>
+              <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
+                Chưa có phòng nào được lưu
+              </Text>
+              <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
+                Khi duyệt phòng, bấm vào biểu tượng trái tim để lưu lại những căn phòng bạn ưng ý nhất.
+              </Text>
+            </View>
+          ) : (
+            favoriteListings.map((listing) => (
+              <ListingCard
+                key={`fav-${listing.id}`}
+                listing={listing}
+                onPress={() => setSelectedListing(listing)}
+              />
+            ))
+          )}
+        </ScrollView>
+      )}
+
+      {/* Tab 2: Saved Searches */}
+      {activeTab === 'searches' && (
+        <ScrollView contentContainerStyle={styles.scroll}>
+          {savedSearches.length === 0 ? (
+            <View style={[styles.emptyBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={{ fontSize: 40, marginBottom: 10 }}>🔔</Text>
+              <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
+                Chưa có tìm kiếm nào được lưu
+              </Text>
+              <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
+                Tại màn hình Tìm kiếm, bấm "Lưu tìm kiếm" để lưu các tiêu chí lọc nhanh cho lần sau.
+              </Text>
+            </View>
+          ) : (
+            savedSearches.map((item) => (
+              <View
+                key={item.id}
+                style={[styles.searchCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.searchName, { color: colors.textPrimary }]}>
+                    {item.name}
+                  </Text>
+                  <Text style={[styles.searchDate, { color: colors.textSecondary }]}>
+                    Lưu ngày: {new Date(item.createdAt).toLocaleDateString('vi-VN')}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={styles.deleteBtn}
+                  onPress={() => {
+                    removeSavedSearch(item.id);
+                  }}
+                >
+                  <Text style={{ color: colors.error, fontSize: 13, fontWeight: '700' }}>Xóa</Text>
+                </TouchableOpacity>
+              </View>
+            ))
+          )}
+        </ScrollView>
+      )}
     </View>
   );
 };
@@ -78,17 +166,22 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
   },
-  header: {
-    padding: 16,
+  tabBar: {
+    flexDirection: 'row',
     borderBottomWidth: 1,
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    marginBottom: 4,
+  tabItem: {
+    flex: 1,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  headerSub: {
-    fontSize: 12,
+  activeTabItem: {
+    borderBottomWidth: 2,
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '700',
   },
   compareBanner: {
     flexDirection: 'row',
@@ -122,11 +215,11 @@ const styles = StyleSheet.create({
     paddingBottom: 90,
   },
   emptyBox: {
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
-    padding: 24,
+    padding: 30,
     alignItems: 'center',
-    marginTop: 30,
+    marginTop: 40,
   },
   emptyTitle: {
     fontSize: 16,
@@ -137,5 +230,24 @@ const styles = StyleSheet.create({
     fontSize: 13,
     textAlign: 'center',
     lineHeight: 18,
+  },
+  searchCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginBottom: 12,
+  },
+  searchName: {
+    fontSize: 14,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  searchDate: {
+    fontSize: 12,
+  },
+  deleteBtn: {
+    padding: 8,
   },
 });
