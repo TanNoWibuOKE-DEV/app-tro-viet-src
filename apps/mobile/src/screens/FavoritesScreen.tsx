@@ -133,27 +133,30 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({
             </View>
           ) : (
             savedSearches.map((item) => (
-              <View
+              <TouchableOpacity
                 key={item.id}
                 style={[styles.searchCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                onPress={() => onSelectSavedSearch?.(item.criteria)}
+                activeOpacity={0.7}
               >
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.searchName, { color: colors.textPrimary }]}>
                     {item.name}
                   </Text>
                   <Text style={[styles.searchDate, { color: colors.textSecondary }]}>
-                    Lưu ngày: {new Date(item.createdAt).toLocaleDateString('vi-VN')}
+                    Lưu ngày: {new Date(item.createdAt).toLocaleDateString('vi-VN')} · Bấm để tìm kiếm →
                   </Text>
                 </View>
                 <TouchableOpacity
                   style={styles.deleteBtn}
-                  onPress={() => {
+                  onPress={(e) => {
+                    e.stopPropagation?.();
                     removeSavedSearch(item.id);
                   }}
                 >
                   <Text style={{ color: colors.error, fontSize: 13, fontWeight: '700' }}>Xóa</Text>
                 </TouchableOpacity>
-              </View>
+              </TouchableOpacity>
             ))
           )}
         </ScrollView>

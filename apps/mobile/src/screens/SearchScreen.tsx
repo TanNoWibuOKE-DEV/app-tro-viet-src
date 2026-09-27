@@ -24,9 +24,13 @@ import {
 
 interface SearchScreenProps {
   initialQuery?: string;
+  initialCriteria?: any;
 }
 
-export const SearchScreen: React.FC<SearchScreenProps> = ({ initialQuery = '' }) => {
+export const SearchScreen: React.FC<SearchScreenProps> = ({
+  initialQuery = '',
+  initialCriteria = null,
+}) => {
   const { colors, isDark } = useTheme();
   const { listings, setSelectedListing, saveSearch } = useApp();
 
@@ -107,10 +111,24 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({ initialQuery = '' })
   };
 
   useEffect(() => {
-    if (initialQuery.trim().length > 0) {
+    if (initialCriteria) {
+      if (initialCriteria.query) setQuery(initialCriteria.query);
+      if (initialCriteria.wardCode) {
+        setFilters((prev) => ({ ...prev, wardCode: initialCriteria.wardCode }));
+      }
+      if (initialCriteria.propertyType) {
+        setFilters((prev) => ({ ...prev, propertyType: initialCriteria.propertyType }));
+      }
+      if (initialCriteria.amenityCodes) {
+        setFilters((prev) => ({ ...prev, amenityCodes: initialCriteria.amenityCodes }));
+      }
+      if (initialCriteria.maxRent) {
+        setCustomMaxRent(initialCriteria.maxRent);
+      }
+    } else if (initialQuery.trim().length > 0) {
       executeAISearch(initialQuery.trim());
     }
-  }, [initialQuery]);
+  }, [initialQuery, initialCriteria]);
 
   // Compute filtered results
   const filteredResults = useMemo(() => {

@@ -50,6 +50,7 @@ const MainApp: React.FC = () => {
   const [selectedCity, setSelectedCity] = useState(SUPPORTED_CITIES[0]);
   const [isCityModalOpen, setIsCityModalOpen] = useState(false);
   const [searchInitialQuery, setSearchInitialQuery] = useState('');
+  const [searchInitialCriteria, setSearchInitialCriteria] = useState<any>(null);
   const [isComparisonOpen, setIsComparisonOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isMessagesOpen, setIsMessagesOpen] = useState(false);
@@ -58,6 +59,7 @@ const MainApp: React.FC = () => {
   const unreadMessagesCount = conversations.length;
 
   const navigateToSearchWithQuery = (query?: string) => {
+    setSearchInitialCriteria(null);
     setSearchInitialQuery(query || '');
     setActiveTab('search');
   };
@@ -135,11 +137,20 @@ const MainApp: React.FC = () => {
           />
         )}
         {activeTab === 'search' && (
-          <SearchScreen initialQuery={searchInitialQuery} />
+          <SearchScreen
+            initialQuery={searchInitialQuery}
+            initialCriteria={searchInitialCriteria}
+          />
         )}
         {activeTab === 'map' && <MapScreen />}
         {activeTab === 'saved' && (
-          <FavoritesScreen onOpenComparison={() => setIsComparisonOpen(true)} />
+          <FavoritesScreen
+            onOpenComparison={() => setIsComparisonOpen(true)}
+            onSelectSavedSearch={(criteria) => {
+              setSearchInitialCriteria(criteria);
+              setActiveTab('search');
+            }}
+          />
         )}
         {activeTab === 'profile' && <AuthOnboardingScreen />}
       </View>
@@ -298,6 +309,7 @@ const MainApp: React.FC = () => {
           </View>
           <ChatListScreen
             onOpenConversation={(id) => {
+              setIsMessagesOpen(false);
               setActiveConversationId(id);
             }}
           />
