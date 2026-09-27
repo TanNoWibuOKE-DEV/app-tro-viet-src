@@ -72,9 +72,21 @@
   - Giao diện Biên bản bàn giao phòng thực địa (`ViewingHandoverModal.tsx`): Giao diện ký biên bản bàn giao, nhập chỉ số công tơ điện nước đầu vào, checklist thiết bị, tích hợp vào luồng hợp đồng.
   - Tích hợp điểm chạm và thông báo: Nút "Tìm bạn ở ghép" tại `HomeScreen.tsx` và `Profile`, hiển thị thông báo nhắc hạn tự động trên `NotificationsModal.tsx`.
   - Bộ kiểm thử trọn vẹn: Đạt **63/63 tests pass across 22 test suites**, typecheck TypeScript và lint 100% sạch sẽ.
+- **Mobile UI/UX Refactor — Clean, Simple, Modular Architecture:**
+  - Tổ chức lại toàn bộ ứng dụng theo triết lý "Một màn hình = một mục đích chính".
+  - Bottom Navigation chuẩn hóa đúng 5 module cốt lõi: `Trang chủ` (Khám phá), `Tìm kiếm` (Search & Filter), `Bản đồ` (Map), `Đã lưu` (Saved), `Cá nhân` (Profile).
+  - Header đồng bộ tinh gọn: Bộ chọn Tỉnh/Thành phố (`📍 Đà Nẵng`), Tin nhắn (`💬` kèm badge chưa đọc), Thông báo (`🔔` kèm badge chưa đọc), Chuyển đổi giao diện sáng/tối (`☀️/🌙`).
+  - Trang chủ (`HomeScreen.tsx`): Tập trung vào khám phá phòng, loại bỏ các banner/card gây quá tải thị giác, tích hợp lối vào AI Search gọn gàng.
+  - Màn hình Tìm phòng AI riêng biệt (`AISearchModal.tsx`): Trợ lý tìm kiếm ngôn ngữ tự nhiên độc lập.
+  - Tìm kiếm & Bộ lọc nâng cao (`SearchScreen.tsx`, `FilterModal.tsx`): Bộ lọc dạng accordion phân nhóm giá, địa điểm, loại phòng, tiện nghi, điều kiện sinh hoạt; kết quả hiển thị thẻ phòng tối giản.
+  - Thẻ phòng chuẩn hóa (`ListingCard.tsx`): Border radius 18px, giá nổi bật, diện tích, địa chỉ 2 cấp, huy hiệu xác minh và tiện nghi nổi bật.
+  - Chi tiết phòng phân lớp chuẩn (`PropertyDetailModal.tsx`): Ảnh cover lớn, tóm tắt, tiện nghi, bảng chi phí minh bạch kèm nút mở `InteractiveCostCalculatorModal`, vị trí, chủ trọ kèm nút mở `LandlordVerificationModal`, điểm tin cậy, đánh giá từ người thuê, thanh tác vụ dính chân màn hình (Đặt lịch xem phòng, Nhắn tin, Gọi điện).
+  - Tab Đã lưu 2 phân đoạn (`FavoritesScreen.tsx`): Phân chia rõ ràng "Phòng đã lưu" và "Tìm kiếm đã lưu".
+  - Trung tâm Cá nhân chuẩn hóa (`AuthOnboardingScreen.tsx`): Hồ sơ cá nhân, chuyển đổi chế độ Chủ trọ / Người thuê, danh mục menu quản trị thuê (Hợp đồng, Hóa đơn VietQR, Biên bản bàn giao, Ở ghép, Mặt bằng giá), bảo mật CCCD L2, quyền dữ liệu cá nhân theo Luật 91/2025/QH15.
+  - Đảm bảo 100% không mất bất kỳ tính năng backend/logic nào; 63/63 tests pass; xuất bundle Web và Android thành công 100%.
 
 ## Trạng thái dự án
-Toàn bộ **37/37 modules** trong kế hoạch đặc tả [docs/SPEC.md](file:///d:/File_Website/web_tmđt/docs/SPEC.md) đã được hoàn thành đầy đủ, đạt chuẩn kiến trúc sản phẩm thương mại cho người dùng Việt Nam.
+Toàn bộ **37/37 modules** trong kế hoạch đặc tả [docs/SPEC.md](file:///d:/File_Website/web_tmđt/docs/SPEC.md) cùng giao diện người dùng Mobile UI/UX đã được tái cấu trúc hoàn chỉnh, đạt chuẩn Clean, Modular, Modern, Safe & Smart.
 
 ## Việc nợ & Đề xuất tương lai
 Xem [BACKLOG.md](file:///d:/File_Website/web_tmđt/docs/BACKLOG.md).
