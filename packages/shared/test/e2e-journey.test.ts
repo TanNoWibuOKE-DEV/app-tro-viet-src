@@ -15,9 +15,17 @@ import {
   UserProfile,
   Review,
   Report,
+  MOCK_ROOMMATE_PROFILES,
+  MOCK_PROPERTY_HANDOVERS,
+  calculateRoommateCompatibility,
+  validateHandoverRecord,
+  checkRentInvoiceReminders,
+  checkContractExpiryReminders,
+  RentInvoice,
+  RentalContract,
 } from '../src/index.js';
 
-describe('Phase 4 End-to-End User Journey Tests (Full MVP Lifecycle)', () => {
+describe('Trọ Việt Full Lifecycle End-to-End User Journey Tests', () => {
   // Test Actor Profiles
   const tenant: UserProfile = {
     id: 'u-tenant-e2e',
@@ -213,4 +221,88 @@ describe('Phase 4 End-to-End User Journey Tests (Full MVP Lifecycle)', () => {
     assert.ok(anonymizedReviews[0].tenantName.includes('Người dùng ẩn danh'));
     assert.strictEqual(anonymizedReviews[0].content, 'Phòng rất thoáng mát, cô chủ nhiệt tình.');
   });
+
+  it('Journey 5: Roommate matching compatibility, property handover with initial meter readings, and automated reminders', () => {
+    // 1. Roommate Matching Compatibility Engine
+    const profileA = MOCK_ROOMMATE_PROFILES[0]; // Minh Khang, male, night_owl, budget 1.8tr
+    const profileB = MOCK_ROOMMATE_PROFILES[1]; // Quang Huy, male, night_owl, budget 1.7tr
+    const profileC = MOCK_ROOMMATE_PROFILES[2]; // Phuong Thao, female, female_only
+
+    const matchAB = calculateRoommateCompatibility(profileA, profileB);
+    assert.ok(matchAB.compatibilityScore >= 80, 'Minh Khang and Quang Huy must have high compatibility score (>= 80)');
+    assert.strictEqual(matchAB.isGenderCompatible, true);
+    assert.ok(matchAB.matchingStrengths.length > 0, 'Must highlight shared habits');
+
+    // Incompatible gender preferences are strictly caught
+    const matchAC = calculateRoommateCompatibility(profileA, profileC);
+    assert.strictEqual(matchAC.isGenderCompatible, false);
+    assert.ok(matchAC.compatibilityScore < 50, 'Mismatched gender preference heavily penalizes score');
+
+    // 2. Property Handover initial meter readings and condition verification
+    const handover = MOCK_PROPERTY_HANDOVERS[0];
+    const validation = validateHandoverRecord(handover);
+    assert.strictEqual(validation.valid, true);
+    assert.strictEqual(handover.initialElectricityMeter, 1250);
+    assert.strictEqual(handover.initialWaterMeter, 48);
+    assert.strictEqual(handover.status, 'completed');
+    assert.strictEqual(handover.landlordConfirmed, true);
+    assert.strictEqual(handover.tenantConfirmed, true);
+
+    // 3. Automated Tenancy Reminders Scheduler
+    const sampleInvoices: RentInvoice[] = [
+      {
+        id: 'inv-due-soon',
+        contractId: 'contract-01',
+        listingId: 'listing-01',
+        listingTitle: 'Phòng studio view sông Hàn',
+        landlordId: landlord.id,
+        landlordName: landlord.fullName,
+        tenantId: tenant.id,
+        tenantName: tenant.fullName,
+        monthYear: '10/2026',
+        rentAmount: 3000000,
+        electricityAmount: 200000,
+        waterAmount: 50000,
+        internetAmount: 0,
+        serviceAmount: 0,
+        totalAmount: 3250000,
+        status: 'pending',
+        vietqrUrl: 'https://img.vietqr.io/image/970422-123-compact2.png',
+        createdAt: '2026-10-01T00:00:00Z',
+      },
+    ];
+
+    const sampleContracts: RentalContract[] = [
+      {
+        id: 'con-exp-soon',
+        listingId: 'listing-01',
+        listingTitle: 'Phòng studio view sông Hàn',
+        landlordId: landlord.id,
+        landlordName: landlord.fullName,
+        tenantId: tenant.id,
+        tenantName: tenant.fullName,
+        startDate: '2025-11-01T00:00:00Z',
+        endDate: '2026-10-25T00:00:00Z',
+        monthlyRent: 3000000,
+        deposit: 3000000,
+        status: 'active',
+        createdAt: '2025-11-01T00:00:00Z',
+      },
+    ];
+
+    const refDate = new Date('2026-10-03T10:00:00Z'); // 2 days before 5th Oct due date
+    const invoiceReminders = checkRentInvoiceReminders(sampleInvoices, refDate);
+    const contractReminders = checkContractExpiryReminders(sampleContracts, refDate);
+
+    assert.strictEqual(invoiceReminders.length, 1, 'Must generate 1 invoice reminder');
+    assert.strictEqual(invoiceReminders[0].type, 'rent_due_soon');
+    assert.strictEqual(invoiceReminders[0].userId, tenant.id);
+    assert.ok(invoiceReminders[0].title.includes('tiền phòng'));
+
+    assert.strictEqual(contractReminders.length, 2, 'Must notify both tenant and landlord for contract expiring');
+    assert.strictEqual(contractReminders[0].type, 'contract_expiring_soon');
+    assert.strictEqual(contractReminders[0].userId, tenant.id);
+    assert.strictEqual(contractReminders[1].userId, landlord.id);
+  });
 });
+
