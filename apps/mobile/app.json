@@ -24,6 +24,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "0f2ce4cd-bdc5-46cf-ac54-9d166e859829"
+      }
+    },
+    "owner": "tannn158"
   }
 }
