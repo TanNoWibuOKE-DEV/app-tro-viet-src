@@ -75,3 +75,23 @@ Tài liệu này ghi lại các giả định thiết kế và vận hành khi c
 2. **Chế độ đi xem phòng thực địa & Bàn giao phòng (Viewing Mode):**
    - Hỗ trợ lưu trữ ngoại tuyến chỉ số công tơ điện và nước ban đầu làm căn cứ pháp lý minh bạch cho các kỳ tính hóa đơn tiền phòng sau này.
 
+---
+
+## Phase 9 — Vận hành Thực tế Toàn quốc (Production Scale & Full Operational Suite)
+
+1. **Thông báo đẩy ngoại tuyến (Offline Push Notifications):**
+   - Đăng ký và lưu trữ Expo Push Token trên hồ sơ người dùng.
+   - Khi thiết bị ở chế độ nền hoặc tắt màn hình, hệ thống kích hoạt thông báo hệ điều hành (OS Push Notification) cho các sự kiện: tin nhắn mới, hóa đơn tiền phòng sắp đến hạn, hợp đồng sắp hết hạn và thông báo duyệt tin.
+   - Trong môi trường dev/offline, hệ thống tích hợp fallback cơ chế Local Scheduled Notifications mượt mà.
+
+2. **Tự động hóa đối soát thanh toán VietQR (Automated VietQR Reconciliation Webhook):**
+   - Nội dung chuyển khoản gắn mã hóa đơn chuẩn hóa `TRV<invoice_id_ngan>` (ví dụ `TRV1029`).
+   - Webhook Engine tiếp nhận payload chuẩn ngân hàng (SePAY / Open Banking), đối soát số tiền khớp 100% với số tiền hóa đơn (`integer VND`), tự động chuyển trạng thái hóa đơn sang `paid` và gửi thông báo xác nhận cho cả hai bên.
+   - Tích hợp Sandbox Test Trigger trên giao diện hóa đơn để người dùng thử nghiệm luồng đối soát ngay lập tức mà không cần tài khoản ngân hàng thật.
+
+3. **Mở rộng đa thị trường (Hà Nội, TP. Hồ Chí Minh):**
+   - Áp dụng mô hình địa giới hành chính 2 cấp hiện hành cho TP. Hà Nội (Cầu Giấy, Đống Đa, Hai Bà Trưng, Nam Từ Liêm...) và TP. Hồ Chí Minh (Quận 1, Bình Thạnh, Thủ Đức - Làng Đại học...).
+   - Bổ sung dữ liệu mặt bằng giá thực tế cho các phường sinh viên trọng điểm tại Hà Nội và TP.HCM vào Area Insights Engine.
+   - Cho phép người dùng chuyển đổi thị trường linh hoạt ngay tại Header `📍 Đà Nẵng | Hà Nội | TP. Hồ Chí Minh`.
+
+
