@@ -1,13 +1,13 @@
 import React from 'react';
 import {
   Modal,
-  SafeAreaView,
   View,
   Text,
   TouchableOpacity,
   ScrollView,
   StyleSheet,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
 import { CURRENT_PRIVACY_POLICY_VERSION } from '@troviet/shared';
 

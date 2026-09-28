@@ -1,7 +1,6 @@
 import React, { useState, useRef } from 'react';
 import {
   Modal,
-  SafeAreaView,
   View,
   Text,
   TextInput,
@@ -12,6 +11,7 @@ import {
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { useApp } from '../context/AppContext';
+import { useResponsiveLayout } from '../utils/responsive';
 import {
   formatVND,
   analyzeChatMessageForRisks,
@@ -39,6 +39,7 @@ export const ChatRoomModal: React.FC<ChatRoomModalProps> = ({
   onOpenReportModal,
 }) => {
   const { colors, isDark } = useTheme();
+  const { insets, contentMaxWidth } = useResponsiveLayout();
   const {
     currentUser,
     conversations,
@@ -100,12 +101,23 @@ export const ChatRoomModal: React.FC<ChatRoomModalProps> = ({
 
   return (
     <Modal visible={visible} animationType="slide">
-      <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]}>
-        {/* Top Header */}
-        <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-          <TouchableOpacity style={styles.backBtn} onPress={onClose}>
-            <Text style={[styles.backText, { color: colors.primary }]}>← Đóng</Text>
-          </TouchableOpacity>
+      <View style={[styles.root, { backgroundColor: colors.background }]}>
+        <View style={{ flex: 1, maxWidth: contentMaxWidth, width: '100%', alignSelf: 'center' }}>
+          {/* Top Header */}
+          <View
+            style={[
+              styles.header,
+              {
+                backgroundColor: colors.card,
+                borderBottomColor: colors.border,
+                paddingTop: insets.top,
+                height: 56 + insets.top,
+              },
+            ]}
+          >
+            <TouchableOpacity style={styles.backBtn} onPress={onClose}>
+              <Text style={[styles.backText, { color: colors.primary }]}>← Đóng</Text>
+            </TouchableOpacity>
 
           <View style={styles.headerTitleCol}>
             <Text style={[styles.partnerName, { color: colors.textPrimary }]} numberOfLines={1}>
@@ -278,7 +290,16 @@ export const ChatRoomModal: React.FC<ChatRoomModalProps> = ({
         </View>
 
         {/* Input Bar */}
-        <View style={[styles.inputBar, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
+        <View
+          style={[
+            styles.inputBar,
+            {
+              backgroundColor: colors.card,
+              borderTopColor: colors.border,
+              paddingBottom: Math.max(8, insets.bottom + 4),
+            },
+          ]}
+        >
           <TextInput
             style={[
               styles.textInput,
@@ -308,7 +329,8 @@ export const ChatRoomModal: React.FC<ChatRoomModalProps> = ({
             <Text style={styles.sendBtnText}>Gửi</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+        </View>
+      </View>
     </Modal>
   );
 };

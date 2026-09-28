@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import {
-  SafeAreaView,
   View,
   Text,
   TouchableOpacity,
@@ -8,8 +7,10 @@ import {
   Modal,
 } from 'react-native';
 import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
 import { AppProvider, useApp } from './src/context/AppContext';
+import { useResponsiveLayout } from './src/utils/responsive';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { SearchScreen } from './src/screens/SearchScreen';
 import { MapScreen } from './src/screens/MapScreen';
@@ -57,6 +58,7 @@ const MainApp: React.FC = () => {
 
   // Unread messages count / active threads
   const unreadMessagesCount = conversations.length;
+  const { insets, bottomNavHeight, contentMaxWidth } = useResponsiveLayout();
 
   const navigateToSearchWithQuery = (query?: string) => {
     setSearchInitialCriteria(null);
@@ -65,11 +67,21 @@ const MainApp: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]}>
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
       <ExpoStatusBar style={isDark ? 'light' : 'dark'} />
 
       {/* Header: Location Selector (Left) + Messages, Notifications, Theme (Right) (Section 8) */}
-      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+      <View
+        style={[
+          styles.header,
+          {
+            backgroundColor: colors.card,
+            borderBottomColor: colors.border,
+            paddingTop: insets.top,
+            height: 54 + insets.top,
+          },
+        ]}
+      >
         {/* Location Selector (Left) */}
         <TouchableOpacity
           style={styles.locationSelector}
@@ -128,7 +140,7 @@ const MainApp: React.FC = () => {
       <NetworkStatusBanner />
 
       {/* Screen Content: 5 Core Modules */}
-      <View style={styles.screenContainer}>
+      <View style={[styles.screenContainer, { maxWidth: contentMaxWidth, width: '100%', alignSelf: 'center' }]}>
         {activeTab === 'home' && (
           <HomeScreen
             onNavigateToSearch={navigateToSearchWithQuery}
@@ -156,7 +168,17 @@ const MainApp: React.FC = () => {
       </View>
 
       {/* Bottom Navigation: Strictly 5 items (Section 30 & 36) */}
-      <View style={[styles.bottomNav, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
+      <View
+        style={[
+          styles.bottomNav,
+          {
+            backgroundColor: colors.card,
+            borderTopColor: colors.border,
+            paddingBottom: insets.bottom,
+            height: bottomNavHeight,
+          },
+        ]}
+      >
         <TouchableOpacity
           style={styles.navItem}
           onPress={() => setActiveTab('home')}
@@ -251,7 +273,13 @@ const MainApp: React.FC = () => {
       {/* Floating Compare Pill if 2-3 items selected */}
       {comparisonIds.length >= 2 && activeTab !== 'saved' && (
         <TouchableOpacity
-          style={[styles.floatingCompareBtn, { backgroundColor: colors.primary }]}
+          style={[
+            styles.floatingCompareBtn,
+            {
+              backgroundColor: colors.primary,
+              bottom: bottomNavHeight + 12,
+            },
+          ]}
           onPress={() => setIsComparisonOpen(true)}
         >
           <Text style={styles.floatingCompareText}>
@@ -299,21 +327,33 @@ const MainApp: React.FC = () => {
 
       {/* Messages Modal (Header → Messages) */}
       <Modal visible={isMessagesOpen} animationType="slide">
-        <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-          <View style={[styles.modalHeader, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <View style={{ flex: 1, backgroundColor: colors.background }}>
+          <View
+            style={[
+              styles.modalHeader,
+              {
+                backgroundColor: colors.card,
+                borderBottomColor: colors.border,
+                paddingTop: insets.top,
+                height: 52 + insets.top,
+              },
+            ]}
+          >
             <TouchableOpacity onPress={() => setIsMessagesOpen(false)} style={{ padding: 6 }}>
               <Text style={{ color: colors.primary, fontSize: 15, fontWeight: '700' }}>← Trở lại</Text>
             </TouchableOpacity>
             <Text style={{ fontSize: 16, fontWeight: '800', color: colors.textPrimary }}>Tin nhắn</Text>
             <View style={{ width: 60 }} />
           </View>
-          <ChatListScreen
-            onOpenConversation={(id) => {
-              setIsMessagesOpen(false);
-              setActiveConversationId(id);
-            }}
-          />
-        </SafeAreaView>
+          <View style={{ flex: 1, maxWidth: contentMaxWidth, width: '100%', alignSelf: 'center' }}>
+            <ChatListScreen
+              onOpenConversation={(id) => {
+                setIsMessagesOpen(false);
+                setActiveConversationId(id);
+              }}
+            />
+          </View>
+        </View>
       </Modal>
 
       {/* Property Detail Modal */}
@@ -345,17 +385,19 @@ const MainApp: React.FC = () => {
         visible={isNotificationsOpen}
         onClose={() => setIsNotificationsOpen(false)}
       />
-    </SafeAreaView>
+    </View>
   );
 };
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <AppProvider>
-        <MainApp />
-      </AppProvider>
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <ThemeProvider>
+        <AppProvider>
+          <MainApp />
+        </AppProvider>
+      </ThemeProvider>
+    </SafeAreaProvider>
   );
 }
 

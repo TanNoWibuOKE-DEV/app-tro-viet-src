@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
   Modal,
-  SafeAreaView,
   View,
   Text,
   TouchableOpacity,
@@ -9,6 +8,7 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../theme/ThemeContext';
 import { useApp } from '../context/AppContext';
 import {

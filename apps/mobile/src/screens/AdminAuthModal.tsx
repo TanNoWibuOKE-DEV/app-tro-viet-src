@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { useApp } from '../context/AppContext';
@@ -131,9 +132,10 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.overlay}
       >
-        <View style={[styles.modalCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          {/* Header */}
-          <View style={styles.headerRow}>
+        <View style={[styles.modalCard, { backgroundColor: colors.card, borderColor: colors.border, maxHeight: '90%' }]}>
+          <ScrollView showsVerticalScrollIndicator={false} bounces={false} keyboardShouldPersistTaps="handled">
+            {/* Header */}
+            <View style={styles.headerRow}>
             <View style={styles.iconCircle}>
               <Text style={{ fontSize: 24 }}>🛡️</Text>
             </View>
@@ -229,8 +231,9 @@ export const AdminAuthModal: React.FC<AdminAuthModalProps> = ({
               />
             </View>
           </View>
-        </View>
-      </KeyboardAvoidingView>
+        </ScrollView>
+      </View>
+    </KeyboardAvoidingView>
     </Modal>
   );
 };

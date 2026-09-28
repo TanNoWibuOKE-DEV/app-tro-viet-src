@@ -5,10 +5,10 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
+import { useResponsiveLayout } from '../utils/responsive';
 import { Button } from '../components/Button';
 import { PropertyType, STANDARD_AMENITIES } from '@troviet/shared';
 
@@ -77,6 +77,7 @@ export const FilterModal: React.FC<FilterModalProps> = ({
   totalMatching,
 }) => {
   const { colors } = useTheme();
+  const { insets, contentMaxWidth } = useResponsiveLayout();
 
   // Local draft state
   const [draft, setDraft] = useState<FilterState>(filters);
@@ -132,19 +133,30 @@ export const FilterModal: React.FC<FilterModalProps> = ({
 
   return (
     <Modal visible={visible} animationType="slide" transparent={false}>
-      <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]}>
-        {/* Header */}
-        <View style={[styles.header, { borderBottomColor: colors.border, backgroundColor: colors.card }]}>
-          <TouchableOpacity onPress={onClose} style={styles.backBtn} accessibilityRole="button">
-            <Text style={[styles.backText, { color: colors.primary }]}>← Đóng</Text>
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-            Bộ lọc tìm kiếm
-          </Text>
-          <TouchableOpacity onPress={handleReset} style={styles.resetBtn} accessibilityRole="button">
-            <Text style={[styles.resetText, { color: colors.textSecondary }]}>Đặt lại</Text>
-          </TouchableOpacity>
-        </View>
+      <View style={[styles.root, { backgroundColor: colors.background }]}>
+        <View style={{ flex: 1, maxWidth: contentMaxWidth, width: '100%', alignSelf: 'center' }}>
+          {/* Header */}
+          <View
+            style={[
+              styles.header,
+              {
+                borderBottomColor: colors.border,
+                backgroundColor: colors.card,
+                paddingTop: insets.top,
+                height: 56 + insets.top,
+              },
+            ]}
+          >
+            <TouchableOpacity onPress={onClose} style={styles.backBtn} accessibilityRole="button">
+              <Text style={[styles.backText, { color: colors.primary }]}>← Đóng</Text>
+            </TouchableOpacity>
+            <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
+              Bộ lọc tìm kiếm
+            </Text>
+            <TouchableOpacity onPress={handleReset} style={styles.resetBtn} accessibilityRole="button">
+              <Text style={[styles.resetText, { color: colors.textSecondary }]}>Đặt lại</Text>
+            </TouchableOpacity>
+          </View>
 
         <ScrollView contentContainerStyle={styles.container}>
           {/* Accordion 1: Giá phòng */}
@@ -422,14 +434,24 @@ export const FilterModal: React.FC<FilterModalProps> = ({
         </ScrollView>
 
         {/* Bottom Sticky Action Bar */}
-        <View style={[styles.bottomBar, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
+        <View
+          style={[
+            styles.bottomBar,
+            {
+              backgroundColor: colors.card,
+              borderTopColor: colors.border,
+              paddingBottom: Math.max(16, insets.bottom + 8),
+            },
+          ]}
+        >
           <Button
             title={`Áp dụng kết quả (${totalMatching} phòng)`}
             variant="primary"
             onPress={handleApply}
           />
         </View>
-      </SafeAreaView>
+        </View>
+      </View>
     </Modal>
   );
 };

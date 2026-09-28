@@ -39,3 +39,4 @@ export * from './legal/utility-regulations.js';
 export * from './community/flood-risk.js';
 export * from './community/campus.js';
 export * from './community/transfer-pass.js';
+export * from './utils/scaling.js';

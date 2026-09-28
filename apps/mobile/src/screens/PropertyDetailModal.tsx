@@ -7,10 +7,10 @@ import {
   TouchableOpacity,
   Alert,
   TextInput,
-  SafeAreaView,
 } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { useApp } from '../context/AppContext';
+import { useResponsiveLayout } from '../utils/responsive';
 import { Button } from '../components/Button';
 import { ReportModal } from '../components/ReportModal';
 import { ChatRoomModal } from './ChatRoomModal';
@@ -50,6 +50,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
   isLoggedIn,
 }) => {
   const { colors, isDark } = useTheme();
+  const { insets, contentMaxWidth } = useResponsiveLayout();
   const {
     openChatWithLandlord,
     reviews,
@@ -169,23 +170,24 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
   };
 
   return (
-    <SafeAreaView style={[styles.root, { backgroundColor: colors.background }]}>
-      {/* 1. Large Gallery Header with Back (←) and Heart (♡) Overlay (Section 16) */}
-      <View style={[styles.galleryBox, { backgroundColor: colors.border }]}>
-        <View style={styles.galleryInner}>
-          <Text style={{ fontSize: 48 }}>🏡</Text>
-          <Text style={[styles.galleryPlaceholderText, { color: colors.textSecondary }]}>
-            Hình ảnh thực tế căn phòng
-          </Text>
-        </View>
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
+      <View style={{ flex: 1, maxWidth: contentMaxWidth, width: '100%', alignSelf: 'center' }}>
+        {/* 1. Large Gallery Header with Back (←) and Heart (♡) Overlay (Section 16) */}
+        <View style={[styles.galleryBox, { backgroundColor: colors.border }]}>
+          <View style={styles.galleryInner}>
+            <Text style={{ fontSize: 48 }}>🏡</Text>
+            <Text style={[styles.galleryPlaceholderText, { color: colors.textSecondary }]}>
+              Hình ảnh thực tế căn phòng
+            </Text>
+          </View>
 
-        {/* Top Overlay Buttons */}
-        <View style={styles.topOverlayRow}>
-          <TouchableOpacity
-            style={styles.overlayIconBtn}
-            onPress={onClose}
-            accessibilityRole="button"
-          >
+          {/* Top Overlay Buttons */}
+          <View style={[styles.topOverlayRow, { top: Math.max(14, insets.top + 6) }]}>
+            <TouchableOpacity
+              style={styles.overlayIconBtn}
+              onPress={onClose}
+              accessibilityRole="button"
+            >
             <Text style={{ fontSize: 18, color: '#111827' }}>←</Text>
           </TouchableOpacity>
 
@@ -209,7 +211,10 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: 88 + insets.bottom }]}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Anti-Scam Alert if pricing anomaly detected */}
         {priceSignals.length > 0 && (
           <View style={[styles.scamBanner, { backgroundColor: isDark ? '#3d1414' : '#fff5f5', borderColor: colors.error }]}>
@@ -560,8 +565,20 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
       </ScrollView>
 
       {/* 9. Fixed Bottom Bar (Section 23) */}
-      {/* 9. Fixed Bottom Bar (Section 23) */}
-      <View style={[styles.bottomBar, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
+      <View
+        style={[
+          styles.bottomBar,
+          {
+            backgroundColor: colors.card,
+            borderTopColor: colors.border,
+            height: 64 + insets.bottom,
+            paddingBottom: insets.bottom,
+            maxWidth: contentMaxWidth,
+            width: '100%',
+            alignSelf: 'center',
+          },
+        ]}
+      >
         <TouchableOpacity
           style={[styles.scheduleBtn, { borderColor: '#10B981', backgroundColor: isDark ? '#064E3B' : '#ECFDF5' }]}
           onPress={() => setIsDepositEscrowOpen(true)}
@@ -648,7 +665,8 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
         targetId={listing.id}
         targetTitle={listing.title}
       />
-    </SafeAreaView>
+      </View>
+    </View>
   );
 };
 
