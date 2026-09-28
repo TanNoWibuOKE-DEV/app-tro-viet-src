@@ -32,3 +32,4 @@ export * from './handover/checklist.js';
 export * from './scheduler/reminders.js';
 export * from './seed/mock-phase7.js';
 export * from './ekyc/verification.js';
+export * from './analytics/financial.js';
