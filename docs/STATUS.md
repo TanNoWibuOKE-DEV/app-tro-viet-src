@@ -1,9 +1,12 @@
 # Trọ Việt — Tiến độ
 
-**Phase hiện tại:** Phase 8 — Chuẩn bị phát hành Store & Bản dựng Production (Store Release Readiness & EAS Production Deployment)
-**Trạng thái:** Đã hoàn thành toàn diện (100% cấu hình Store, EAS Build & Submit, An toàn Dữ liệu theo Luật 91/2025/QH15)
+**Phase hiện tại:** Phase 9 — Hoàn thiện Vận hành Thực tế Toàn quốc (Production Scale & Full Operational Suite)
+**Trạng thái:** Đã hoàn thành toàn diện (84/84 tests pass across 25 suites, 0 lỗi TypeScript)
 
-## Quyết định đã chốt (Sau Phase 8)
+## Quyết định đã chốt (Sau Phase 9)
+- **Tự động hóa đối soát thanh toán VietQR (Automated VietQR Reconciliation Engine):** Tiếp nhận dữ liệu webhook ngân hàng chuẩn Open Banking / SePAY / Casso, đối soát mã hóa đơn dạng `TRV...` và số tiền chính xác, tự động gạch nợ hóa đơn sang `paid` tức thì, bảo vệ chủ trọ trước tình trạng chuyển thiếu tiền (`partial_payment`). Tích hợp nút Sandbox Test mô phỏng ngay trên modal hóa đơn di động.
+- **Thông báo đẩy ngoại tuyến (Offline Push Notifications):** Chuẩn hóa cấu trúc Expo Push Token, hỗ trợ sinh payload thông báo hệ điều hành cho màn hình khóa/khay hệ thống theo mức độ ưu tiên: Tin nhắn mới (High), Lịch nhắc tiền phòng đến hạn (High), Cảnh báo an toàn lừa đảo (Safety - Max), Xác nhận thanh toán hóa đơn và Hợp đồng sắp hết hạn (Normal).
+- **Mở rộng đa thị trường 3 miền toàn quốc (Multi-City Expansion):** Kích hoạt cả 3 đại đô thị TP. Đà Nẵng, TP. Hà Nội, TP. Hồ Chí Minh với danh mục hành chính 2 cấp theo Luật hiện hành, dữ liệu mặt bằng giá thực tế cho các phường sinh viên trọng điểm (Dịch Vọng Hậu, Láng Thượng, Bách Khoa, Linh Trung Làng ĐH, Phường 25 Bình Thạnh...), bộ chọn thành phố tại Header và bản đồ tọa độ các trường đại học lớn.
 - **Chuẩn hóa cấu hình phát hành v1.0.0:** `app.json` nâng lên version 1.0.0, buildNumber 1, versionCode 1, package `vn.troviet.app`, bundleIdentifier `vn.troviet.app`. Quyền truy cập thiết bị được tối giản (Camera, Fine Location, Media Library) kèm lý do giải trình minh bạch cho reviewer Apple & Google Play.
 - **Tài sản đồ họa chuẩn Store:** 1024x1024 px cho `icon.png` và `splash-icon.png`, 512x512 px cho Android Adaptive Icon, tuân thủ nguyên tắc không sử dụng góc bo sẵn (store tự bo) và tương phản cao.
 - **Khai báo An toàn dữ liệu (Data Safety) theo Luật 91/2025/QH15:** Mọi dữ liệu thu thập (Vị trí, Liên hệ, Ảnh phòng trọ/hợp đồng, CCCD) đều được mã hóa khi truyền tải (TLS 1.3), lưu trữ an toàn với Supabase RLS, người dùng có toàn quyền xem, xuất và xóa dữ liệu theo Luật Bảo vệ Dữ liệu Cá nhân số 91/2025/QH15.
@@ -94,9 +97,14 @@
   - Cập nhật tài liệu niêm yết Store [docs/STORE_METADATA.md](file:///d:/File_Website/web_tmđt/docs/STORE_METADATA.md): Tiêu đề, Phụ đề, Mô tả ngắn 80 ký tự, Mô tả chi tiết 4000 ký tự tiếng Việt, Danh sách tài khoản kiểm duyệt App Reviewer (`admin@troviet.vn`, `chutro@troviet.vn`, `nguoidung@troviet.vn`), Bảng kê khai An toàn Dữ liệu (Google Play Data Safety) tuân thủ Luật Bảo vệ Dữ liệu Cá nhân số 91/2025/QH15.
   - Thêm các lệnh build và submit tiện lợi vào root `package.json` (`npm run build:aab`, `npm run submit:android`).
   - Kiểm thử chất lượng xuất bản: 100% Typecheck sạch sẽ (0 lỗi), 63/63 tests pass across 22 test suites.
+- **Phase 9 — Hoàn thiện Vận hành Thực tế Toàn quốc (Production Scale & Full Operational Suite):**
+  - Xây dựng bộ máy đối soát ngân hàng tự động VietQR (`reconcileBankTransaction`, `createMockBankTransaction`): Xử lý webhook Open Banking / SePAY, tự động đối soát mã `TRV...` và số tiền chính xác, tự động gạch nợ hóa đơn sang `paid`, phát hiện thiếu tiền (`partial_payment`), kiểm tra trùng lặp (idempotency). Tích hợp nút Sandbox Test mô phỏng trực quan trên `InvoiceDetailModal.tsx`.
+  - Xây dựng module Thông báo đẩy ngoại tuyến (`push.ts`): Đăng ký Expo Push Token, sinh payload chuẩn hóa cho màn hình khóa/khay hệ thống theo kênh thông báo Android (Safety, High, Default) cho tin nhắn, hóa đơn sắp đến hạn, xác nhận thanh toán và cảnh báo hợp đồng.
+  - Mở rộng đa thị trường 3 miền toàn quốc: Cập nhật danh mục hành chính 2 cấp theo Luật hiện hành cho TP. Hà Nội, TP. Hồ Chí Minh và TP. Đà Nẵng; tích hợp dữ liệu mặt bằng giá và xu hướng 6 tháng cho các cụm phường sinh viên trọng điểm (Dịch Vọng Hậu, Láng Thượng, Bách Khoa, Linh Trung, Phường 25, Bến Nghé...); bổ sung bộ chọn Tỉnh/Thành phố tại Header và các ghim tọa độ trường đại học trên `MapScreen.tsx`.
+  - Bộ kiểm thử chất lượng toàn diện: Đạt **84/84 tests pass across 25 suites**, TypeScript sạch 100%.
 
 ## Trạng thái dự án
-Toàn bộ **37/37 modules** trong kế hoạch đặc tả [docs/SPEC.md](file:///d:/File_Website/web_tmđt/docs/SPEC.md), giao diện người dùng Mobile UI/UX Clean & Modular, cùng toàn bộ cấu hình phát hành Production Store (Phase 8) đã được hoàn tất 100%, sẵn sàng bàn giao và phát hành.
+Toàn bộ **37/37 modules** trong kế hoạch đặc tả [docs/SPEC.md](file:///d:/File_Website/web_tmđt/docs/SPEC.md), giao diện người dùng Mobile UI/UX Clean & Modular, cấu hình phát hành Production Store (Phase 8), và bộ năng lực vận hành thực tế toàn quốc 3 miền (Phase 9) đã được hoàn tất 100%, sẵn sàng triển khai thực địa.
 
 ## Việc nợ & Đề xuất tương lai
 Xem [BACKLOG.md](file:///d:/File_Website/web_tmđt/docs/BACKLOG.md).
