@@ -15,4 +15,9 @@ config.resolver.nodeModulesPaths = [
   path.resolve(workspaceRoot, 'node_modules'),
 ];
 
+// 3. Explicitly alias workspace packages for robust monorepo resolution
+config.resolver.extraNodeModules = {
+  '@troviet/shared': path.resolve(workspaceRoot, 'packages/shared'),
+};
+
 module.exports = config;
