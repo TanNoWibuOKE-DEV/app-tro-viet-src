@@ -26,6 +26,7 @@ import { TenantLifeHubModal } from './TenantLifeHubModal';
 import { LegalAssistantModal } from './LegalAssistantModal';
 import { FloodRiskMapModal } from './FloodRiskMapModal';
 import { CampusHubModal } from './CampusHubModal';
+import { AdminAuthModal } from './AdminAuthModal';
 import { UserRole, RentalContract, RentInvoice } from '@troviet/shared';
 
 interface MenuItemProps {
@@ -83,6 +84,7 @@ export const AuthOnboardingScreen: React.FC = () => {
   const { colors, isDark } = useTheme();
   const {
     currentUser,
+    setCurrentUser,
     mockLoginAs,
     contracts,
     invoices,
@@ -108,6 +110,7 @@ export const AuthOnboardingScreen: React.FC = () => {
   const [isLegalAssistantOpen, setIsLegalAssistantOpen] = useState(false);
   const [isFloodMapOpen, setIsFloodMapOpen] = useState(false);
   const [isCampusHubOpen, setIsCampusHubOpen] = useState(false);
+  const [isAdminAuthModalOpen, setIsAdminAuthModalOpen] = useState(false);
 
   // Admin pending counts
   const pendingListings = listings.filter((l) => l.status === 'pending_review').length;
@@ -157,43 +160,22 @@ export const AuthOnboardingScreen: React.FC = () => {
           </View>
         )}
 
-        {/* Demo Fast Role Switcher */}
+        {/* User Account Role Status */}
         <View style={[styles.roleSwitchContainer, { borderTopColor: colors.border }]}>
-          <Text style={[styles.roleSwitchCaption, { color: colors.textSecondary }]}>
-            Góc nhìn trải nghiệm (Dành cho thử nghiệm):
-          </Text>
-          <View style={styles.roleBtnGroup}>
-            {[
-              { role: 'tenant', label: '👤 Người thuê' },
-              { role: 'landlord', label: '🏠 Chủ trọ' },
-              { role: 'admin', label: '🛡️ Admin' },
-            ].map((item) => {
-              const active = currentUser?.role === item.role;
-              return (
-                <TouchableOpacity
-                  key={item.role}
-                  style={[
-                    styles.roleBtn,
-                    {
-                      backgroundColor: active ? colors.primary : colors.background,
-                      borderColor: active ? colors.primary : colors.border,
-                    },
-                  ]}
-                  onPress={() => mockLoginAs(item.role as UserRole)}
-                >
-                  <Text
-                    style={{
-                      color: active ? '#FFFFFF' : colors.textPrimary,
-                      fontSize: 11,
-                      fontWeight: '700',
-                    }}
-                  >
-                    {item.label}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+          {currentUser?.role === 'admin' ? (
+            <View style={{ backgroundColor: isDark ? '#1E293B' : '#ECFDF5', padding: 10, borderRadius: 10, borderWidth: 1, borderColor: colors.primary }}>
+              <Text style={{ fontSize: 12, fontWeight: '800', color: colors.primary }}>
+                🛡️ Bạn đang đăng nhập quyền Quản trị viên (Admin)
+              </Text>
+              <Text style={{ fontSize: 11, color: colors.textSecondary, marginTop: 2 }}>
+                Tài khoản cấp cao được phân quyền kiểm duyệt tin đăng và hồ sơ toàn hệ thống.
+              </Text>
+            </View>
+          ) : (
+            <Text style={[styles.roleSwitchCaption, { color: colors.textSecondary }]}>
+              Vai trò: {currentUser?.role === 'landlord' ? '🏠 Chủ trọ' : '👤 Người tìm trọ'} · {currentUser?.email || 'Chưa liên kết email'}
+            </Text>
+          )}
         </View>
       </View>
 
@@ -326,13 +308,20 @@ export const AuthOnboardingScreen: React.FC = () => {
           HỆ THỐNG
         </Text>
 
-        {currentUser?.role === 'admin' && (
+        {currentUser?.role === 'admin' ? (
           <MenuItem
             icon="🛡️"
             title="Cổng Quản trị viên (Admin Moderation)"
-            subtitle="Kiểm duyệt tin đăng, hồ sơ L2 và báo cáo vi phạm"
+            subtitle="Kiểm duyệt tin đăng, hồ sơ L2/L3 và báo cáo vi phạm"
             badge={totalAdminTasks > 0 ? `${totalAdminTasks} cần duyệt` : undefined}
             onPress={() => setIsAdminOpen(true)}
+          />
+        ) : (
+          <MenuItem
+            icon="🛡️"
+            title="Đăng nhập Cổng Quản trị viên (Admin)"
+            subtitle="Xác thực tài khoản quản trị hệ thống Trọ Việt"
+            onPress={() => setIsAdminAuthModalOpen(true)}
           />
         )}
 
@@ -352,7 +341,23 @@ export const AuthOnboardingScreen: React.FC = () => {
           onPress={() => {
             Alert.alert('Đăng xuất', 'Bạn có chắc chắn muốn đăng xuất khỏi tài khoản?', [
               { text: 'Hủy', style: 'cancel' },
-              { text: 'Đăng xuất', style: 'destructive', onPress: () => Alert.alert('Đã đăng xuất') },
+              {
+                text: 'Đăng xuất',
+                style: 'destructive',
+                onPress: () => {
+                  setCurrentUser({
+                    id: 'u-guest',
+                    phoneNumber: '0901000000',
+                    email: 'khachhang@troviet.vn',
+                    fullName: 'Khách vãng lai',
+                    avatarUrl: null,
+                    role: 'tenant',
+                    verificationLevel: 'none',
+                    createdAt: new Date().toISOString(),
+                  });
+                  Alert.alert('Đã đăng xuất', 'Bạn đã đăng xuất khỏi phiên làm việc.');
+                },
+              },
             ]);
           }}
         />
@@ -442,6 +447,16 @@ export const AuthOnboardingScreen: React.FC = () => {
           <AdminModerationScreen />
         </View>
       </Modal>
+
+      {/* Admin Authentication Modal */}
+      <AdminAuthModal
+        visible={isAdminAuthModalOpen}
+        onClose={() => setIsAdminAuthModalOpen(false)}
+        onSuccess={() => {
+          setIsAdminAuthModalOpen(false);
+          setIsAdminOpen(true);
+        }}
+      />
 
       {/* Landlord Post Modal */}
       <Modal visible={isPostOpen} animationType="slide">

@@ -209,13 +209,25 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </Text>
         </View>
 
-        {filteredListings.map((listing) => (
-          <ListingCard
-            key={listing.id}
-            listing={listing}
-            onPress={() => setSelectedListing(listing)}
-          />
-        ))}
+        {filteredListings.length === 0 ? (
+          <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={{ fontSize: 32, marginBottom: 8 }}>🏡</Text>
+            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
+              Chưa có tin phòng trọ nào
+            </Text>
+            <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
+              Hệ thống đang ở trạng thái dữ liệu sạch. Hãy là người đầu tiên đăng tin hoặc nạp dữ liệu từ CSDL!
+            </Text>
+          </View>
+        ) : (
+          filteredListings.map((listing) => (
+            <ListingCard
+              key={listing.id}
+              listing={listing}
+              onPress={() => setSelectedListing(listing)}
+            />
+          ))
+        )}
       </View>
 
       {/* Section: Phòng đã xác minh */}
@@ -229,13 +241,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           Chủ nhà đã được đối soát danh tính hoặc giấy tờ cho thuê.
         </Text>
 
-        {verifiedListings.map((listing) => (
-          <ListingCard
-            key={`verified-${listing.id}`}
-            listing={listing}
-            onPress={() => setSelectedListing(listing)}
-          />
-        ))}
+        {verifiedListings.length === 0 ? (
+          <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
+              Chưa có phòng trọ nào đạt chứng nhận xác minh L2/L3.
+            </Text>
+          </View>
+        ) : (
+          verifiedListings.map((listing) => (
+            <ListingCard
+              key={`verified-${listing.id}`}
+              listing={listing}
+              onPress={() => setSelectedListing(listing)}
+            />
+          ))
+        )}
       </View>
 
       {/* Section: Khu vực phổ biến */}
@@ -382,5 +402,24 @@ const styles = StyleSheet.create({
   },
   areaSub: {
     fontSize: 11,
+  },
+  emptyCard: {
+    padding: 24,
+    borderRadius: 16,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 10,
+  },
+  emptyTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  emptySub: {
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: 'center',
   },
 });

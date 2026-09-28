@@ -1,10 +1,9 @@
-import React, { createContext, useContext, useState, useMemo } from 'react';
+import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
 import {
   UserProfile,
   ListingSummary,
   UserPreferences,
   SearchFilterParams,
-  MOCK_LISTINGS,
   UserRole,
   Conversation,
   ChatMessage,
@@ -20,20 +19,12 @@ import {
   RoommateProfile,
   PropertyHandoverRecord,
   TenancyReminder,
-  MOCK_CONVERSATIONS,
-  MOCK_MESSAGES,
-  MOCK_REVIEWS,
-  MOCK_REPORTS,
-  MOCK_NOTIFICATIONS,
-  MOCK_CONTRACTS,
-  MOCK_INVOICES,
-  MOCK_ROOMMATE_PROFILES,
-  MOCK_PROPERTY_HANDOVERS,
   checkRentInvoiceReminders,
   checkContractExpiryReminders,
   analyzeChatMessageForRisks,
   checkReviewEligibility,
 } from '@troviet/shared';
+import { supabase } from '../lib/supabase';
 
 export interface VerificationRequest {
   id: string;
@@ -147,99 +138,112 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const DEFAULT_USER: UserProfile = {
-  id: 'u-tenant-1',
+  id: 'u-current',
   phoneNumber: '0905123456',
   email: 'nguoidung@troviet.vn',
-  fullName: 'Nguyễn Văn An (Người tìm trọ)',
+  fullName: 'Người dùng Trọ Việt',
   avatarUrl: null,
   role: 'tenant',
   verificationLevel: 'L1',
-  createdAt: '2026-09-01T00:00:00Z',
+  createdAt: new Date().toISOString(),
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(DEFAULT_USER);
   const [userPreferences, setUserPreferences] = useState<UserPreferences | null>(null);
-  const [listings, setListings] = useState<ListingSummary[]>(MOCK_LISTINGS);
+  const [listings, setListings] = useState<ListingSummary[]>([]);
   const [searchFilter, setSearchFilter] = useState<SearchFilterParams>({ sortBy: 'newest' });
   const [selectedListing, setSelectedListing] = useState<ListingSummary | null>(null);
 
   // Favorites & Network Status
-  const [favoriteIds, setFavoriteIds] = useState<string[]>(['l-001']);
+  const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [isOnline, setIsOnline] = useState<boolean>(true);
 
   // Comparison
-  const [comparisonIds, setComparisonIds] = useState<string[]>(['l-001', 'l-002']);
+  const [comparisonIds, setComparisonIds] = useState<string[]>([]);
 
   // L2 Verification Requests
-  const [verificationRequests, setVerificationRequests] = useState<VerificationRequest[]>([
-    {
-      id: 'v-001',
-      userId: 'u-landlord-1',
-      userName: 'Cô Lan (Chủ nhà)',
-      cccdNumber: '048185001234',
-      realName: 'Nguyễn Thị Lan',
-      submittedAt: '2026-09-24T05:00:00Z',
-      status: 'pending',
-    },
-  ]);
+  const [verificationRequests, setVerificationRequests] = useState<VerificationRequest[]>([]);
 
   // Phase 3: Chat State
-  const [conversations, setConversations] = useState<Conversation[]>(MOCK_CONVERSATIONS);
-  const [messages, setMessages] = useState<Record<string, ChatMessage[]>>(MOCK_MESSAGES);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [messages, setMessages] = useState<Record<string, ChatMessage[]>>({});
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
 
   // Phase 3: Reviews State
-  const [reviews, setReviews] = useState<Review[]>(MOCK_REVIEWS);
+  const [reviews, setReviews] = useState<Review[]>([]);
 
   // Phase 3: Reports State
-  const [reports, setReports] = useState<Report[]>(MOCK_REPORTS);
+  const [reports, setReports] = useState<Report[]>([]);
 
   // Phase 3: Notifications State
-  const [notifications, setNotifications] = useState<AppNotification[]>(MOCK_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
   // Phase 5: Saved Searches State
-  const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([
-    {
-      id: 's-001',
-      userId: 'u-tenant-1',
-      name: 'Phòng trọ Hải Châu < 3 triệu có máy lạnh',
-      criteria: {
-        query: 'Hai Chau',
-        wardCode: '48_HAICHAU1',
-        maxRent: 3000000,
-        amenityCodes: ['air_conditioner'],
-      },
-      notifyNewMatches: true,
-      createdAt: '2026-09-24T10:00:00Z',
-      updatedAt: '2026-09-24T10:00:00Z',
-    },
-  ]);
+  const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
 
   // Phase 5: L3 Verification Requests State
-  const [l3VerificationRequests, setL3VerificationRequests] = useState<LandlordVerification[]>([
-    {
-      id: 'ver-l3-001',
-      userId: 'u-landlord-1',
-      userName: 'Cô Lan (Chủ nhà)',
-      userPhone: '0905666777',
-      level: 'L3',
-      status: 'pending',
-      documentType: 'land_ownership_certificate',
-      propertyId: 'l-001',
-      propertyTitle: 'Phòng trọ gác lửng kiệt Hải Châu',
-      notes: 'Giấy chứng nhận QSDĐ số AB123456 cấp tại TP. Đà Nẵng',
-      createdAt: '2026-09-24T08:30:00Z',
-    },
-  ]);
+  const [l3VerificationRequests, setL3VerificationRequests] = useState<LandlordVerification[]>([]);
 
   // Phase 6: Contracts & Invoices State
-  const [contracts, setContracts] = useState<RentalContract[]>(MOCK_CONTRACTS);
-  const [invoices, setInvoices] = useState<RentInvoice[]>(MOCK_INVOICES);
+  const [contracts, setContracts] = useState<RentalContract[]>([]);
+  const [invoices, setInvoices] = useState<RentInvoice[]>([]);
 
   // Phase 7: Roommate Profiles & Property Handovers State
-  const [roommateProfiles, setRoommateProfiles] = useState<RoommateProfile[]>(MOCK_ROOMMATE_PROFILES);
-  const [handovers, setHandovers] = useState<PropertyHandoverRecord[]>(MOCK_PROPERTY_HANDOVERS);
+  const [roommateProfiles, setRoommateProfiles] = useState<RoommateProfile[]>([]);
+  const [handovers, setHandovers] = useState<PropertyHandoverRecord[]>([]);
+
+  // Load real published listings from Supabase on mount
+  useEffect(() => {
+    async function loadRealData() {
+      try {
+        const { data, error } = await supabase
+          .from('listings')
+          .select('*')
+          .eq('status', 'published')
+          .order('created_at', { ascending: false });
+
+        if (!error && data && data.length > 0) {
+          const loaded: ListingSummary[] = data.map((row: any) => ({
+            id: row.id,
+            title: row.title,
+            propertyType: row.property_type || 'room',
+            monthlyRent: Number(row.monthly_rent || 0),
+            deposit: Number(row.deposit_amount || row.monthly_rent || 0),
+            areaSquareMeters: Number(row.area_square_meters || 0),
+            street: row.street || '',
+            houseNumber: row.house_number || '',
+            wardCode: row.ward_code || '',
+            wardName: row.ward_name || '',
+            provinceCode: row.province_code || '48',
+            latitude: Number(row.latitude || 16.06),
+            longitude: Number(row.longitude || 108.21),
+            status: row.status || 'published',
+            coverImageUrl: row.cover_image || undefined,
+            landlordId: row.landlord_id || 'u-landlord-1',
+            landlordName: row.landlord_name || 'Chủ trọ',
+            landlordVerificationLevel: row.landlord_verification_level || 'L1',
+            amenities: [],
+            costs: {
+              monthlyRent: Number(row.monthly_rent || 0),
+              deposit: Number(row.deposit_amount || row.monthly_rent || 0),
+              electricityBillingType: 'meter',
+              waterBillingType: 'meter',
+              internetBillingType: 'unprovided',
+              parkingBillingType: 'unprovided',
+              serviceFeeBillingType: 'unprovided',
+            },
+            createdAt: row.created_at || new Date().toISOString(),
+            vipTier: row.vip_tier || 'regular',
+          }));
+          setListings(loaded);
+        }
+      } catch (err) {
+        // Offline / dev fallback
+      }
+    }
+    loadRealData();
+  }, []);
 
   const toggleFavorite = (id: string) => {
     setFavoriteIds((prev) =>
