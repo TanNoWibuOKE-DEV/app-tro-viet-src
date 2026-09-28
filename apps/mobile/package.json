@@ -16,9 +16,11 @@
     "postinstall": "cd ../.. && npm run build --workspace=@troviet/shared"
   },
   "dependencies": {
+    "@expo/vector-icons": "^15.0.2",
     "@supabase/supabase-js": "^2.49.1",
     "@troviet/shared": "*",
     "expo": "~57.0.24",
+    "expo-linear-gradient": "~57.0.2",
     "expo-status-bar": "~57.0.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",

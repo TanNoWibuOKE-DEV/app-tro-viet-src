@@ -8,6 +8,7 @@ import {
   Alert,
   Modal,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
 import { useApp } from '../context/AppContext';
 import { Badge } from '../components/Badge';
@@ -30,7 +31,10 @@ import { AdminAuthModal } from './AdminAuthModal';
 import { UserRole, RentalContract, RentInvoice } from '@troviet/shared';
 
 interface MenuItemProps {
-  icon: string;
+  icon?: string;
+  ionIcon?: keyof typeof Ionicons.glyphMap;
+  ionIconColor?: string;
+  ionIconBg?: string;
   title: string;
   subtitle?: string;
   badge?: string;
@@ -40,6 +44,9 @@ interface MenuItemProps {
 
 const MenuItem: React.FC<MenuItemProps> = ({
   icon,
+  ionIcon,
+  ionIconColor = '#0284C7',
+  ionIconBg = 'rgba(2, 132, 199, 0.1)',
   title,
   subtitle,
   badge,
@@ -54,7 +61,17 @@ const MenuItem: React.FC<MenuItemProps> = ({
       activeOpacity={0.7}
       accessibilityRole="button"
     >
-      <Text style={styles.menuIcon}>{icon}</Text>
+      {ionIcon ? (
+        <View style={[styles.menuIconContainer, { backgroundColor: isDestructive ? 'rgba(239, 68, 68, 0.12)' : ionIconBg }]}>
+          <Ionicons
+            name={ionIcon}
+            size={18}
+            color={isDestructive ? colors.error : ionIconColor}
+          />
+        </View>
+      ) : (
+        <Text style={styles.menuIcon}>{icon}</Text>
+      )}
       <View style={styles.menuTextCol}>
         <Text
           style={[
@@ -75,7 +92,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
           <Text style={styles.menuBadgeText}>{badge}</Text>
         </View>
       )}
-      <Text style={[styles.menuChevron, { color: colors.textSecondary }]}>›</Text>
+      <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
     </TouchableOpacity>
   );
 };
@@ -186,7 +203,9 @@ export const AuthOnboardingScreen: React.FC = () => {
         </Text>
 
         <MenuItem
-          icon="📑"
+          ionIcon="document-text"
+          ionIconColor="#6366F1"
+          ionIconBg="rgba(99, 102, 241, 0.12)"
           title="Hợp đồng của tôi"
           subtitle="Hợp đồng điện tử & Phân tích điều khoản bằng AI"
           badge={contracts.length > 0 ? `${contracts.length}` : undefined}
@@ -200,7 +219,9 @@ export const AuthOnboardingScreen: React.FC = () => {
         />
 
         <MenuItem
-          icon="💳"
+          ionIcon="card"
+          ionIconColor="#10B981"
+          ionIconBg="rgba(16, 185, 129, 0.12)"
           title="Hóa đơn & Thanh toán VietQR"
           subtitle="Thanh toán tiền phòng chuyển khoản 24/7"
           badge={invoices.length > 0 ? `${invoices.length}` : undefined}
@@ -214,49 +235,63 @@ export const AuthOnboardingScreen: React.FC = () => {
         />
 
         <MenuItem
-          icon="📋"
+          ionIcon="clipboard"
+          ionIconColor="#F59E0B"
+          ionIconBg="rgba(245, 158, 11, 0.12)"
           title="Biên bản bàn giao nhận phòng"
           subtitle="Chốt chỉ số công tơ điện nước & tình trạng phòng"
           onPress={() => setIsHandoverOpen(true)}
         />
 
         <MenuItem
-          icon="🤝"
+          ionIcon="people"
+          ionIconColor="#EC4899"
+          ionIconBg="rgba(236, 72, 153, 0.12)"
           title="Tìm người ở ghép (AI Match)"
           subtitle="Gợi ý bạn cùng phòng hợp thói quen & ngân sách"
           onPress={() => setIsRoommateMatchingOpen(true)}
         />
 
         <MenuItem
-          icon="📊"
+          ionIcon="stats-chart"
+          ionIconColor="#3B82F6"
+          ionIconBg="rgba(59, 130, 246, 0.12)"
           title="Mặt bằng giá thị trường các khu vực"
           subtitle="Biểu đồ xu hướng giá 6 tháng tại các phường"
           onPress={() => setIsAreaInsightsOpen(true)}
         />
 
         <MenuItem
-          icon="🚚"
+          ionIcon="cube"
+          ionIconColor="#06B6D4"
+          ionIconBg="rgba(6, 182, 212, 0.12)"
           title="Tiện ích sinh hoạt & Chuyển trọ"
           subtitle="Dự toán chuyển trọ, dọn phòng & sửa chữa điện nước"
           onPress={() => setIsTenantLifeHubOpen(true)}
         />
 
         <MenuItem
-          icon="⚖️"
+          ionIcon="shield"
+          ionIconColor="#8B5CF6"
+          ionIconBg="rgba(139, 92, 246, 0.12)"
           title="Trợ lý pháp lý & Đối soát giá điện nước"
           subtitle="Kiểm tra biểu giá EVN 6 bậc & Soạn thư đàm phán hoàn cọc"
           onPress={() => setIsLegalAssistantOpen(true)}
         />
 
         <MenuItem
-          icon="🎓"
+          ionIcon="school"
+          ionIconColor="#F97316"
+          ionIconBg="rgba(249, 115, 22, 0.12)"
           title="Cụm sinh viên & Chợ pass đồ trọ"
           subtitle="Cẩm nang trường ĐH, nhượng trọ & đồ thanh lý sinh viên"
           onPress={() => setIsCampusHubOpen(true)}
         />
 
         <MenuItem
-          icon="🌊"
+          ionIcon="water"
+          ionIconColor="#0284C7"
+          ionIconBg="rgba(2, 132, 199, 0.12)"
           title="Bản đồ cảnh báo ngập lụt mùa mưa"
           subtitle="Tra cứu điểm trũng ngập & rủi ro triều cường đô thị"
           onPress={() => setIsFloodMapOpen(true)}
@@ -270,7 +305,9 @@ export const AuthOnboardingScreen: React.FC = () => {
         </Text>
 
         <MenuItem
-          icon="🛡️"
+          ionIcon="shield-checkmark"
+          ionIconColor="#10B981"
+          ionIconBg="rgba(16, 185, 129, 0.12)"
           title="Xác minh danh tính CCCD (Cấp L2)"
           subtitle={
             currentUser?.verificationLevel === 'L2' || currentUser?.verificationLevel === 'L3'
@@ -281,21 +318,27 @@ export const AuthOnboardingScreen: React.FC = () => {
         />
 
         <MenuItem
-          icon="📡"
+          ionIcon="scan"
+          ionIconColor="#3B82F6"
+          ionIconBg="rgba(59, 130, 246, 0.12)"
           title="Định danh điện tử eKYC (Quét chip NFC)"
           subtitle="Quét thẻ CCCD gắn chip & xác thực khuôn mặt tức thì"
           onPress={() => setIsEkycOpen(true)}
         />
 
         <MenuItem
-          icon="🔒"
+          ionIcon="lock-closed"
+          ionIconColor="#64748B"
+          ionIconBg="rgba(100, 116, 139, 0.12)"
           title="Quyền riêng tư & Quản lý dữ liệu"
           subtitle="Tuân thủ Luật 91/2025/QH15 (Xuất JSON / Xóa tài khoản)"
           onPress={() => setIsDataManagementOpen(true)}
         />
 
         <MenuItem
-          icon="📄"
+          ionIcon="reader"
+          ionIconColor="#14B8A6"
+          ionIconBg="rgba(20, 184, 166, 0.12)"
           title="Điều khoản dịch vụ & Chính sách"
           subtitle="Cam kết minh bạch và phòng ngừa lừa đảo"
           onPress={() => setIsPrivacyPolicyOpen(true)}
@@ -310,7 +353,9 @@ export const AuthOnboardingScreen: React.FC = () => {
 
         {currentUser?.role === 'admin' ? (
           <MenuItem
-            icon="🛡️"
+            ionIcon="shield-half"
+            ionIconColor="#D97706"
+            ionIconBg="rgba(217, 119, 6, 0.12)"
             title="Cổng Quản trị viên (Admin Moderation)"
             subtitle="Kiểm duyệt tin đăng, hồ sơ L2/L3 và báo cáo vi phạm"
             badge={totalAdminTasks > 0 ? `${totalAdminTasks} cần duyệt` : undefined}
@@ -318,7 +363,9 @@ export const AuthOnboardingScreen: React.FC = () => {
           />
         ) : (
           <MenuItem
-            icon="🛡️"
+            ionIcon="shield-half"
+            ionIconColor="#D97706"
+            ionIconBg="rgba(217, 119, 6, 0.12)"
             title="Đăng nhập Cổng Quản trị viên (Admin)"
             subtitle="Xác thực tài khoản quản trị hệ thống Trọ Việt"
             onPress={() => setIsAdminAuthModalOpen(true)}
@@ -327,7 +374,9 @@ export const AuthOnboardingScreen: React.FC = () => {
 
         {currentUser?.role === 'landlord' && (
           <MenuItem
-            icon="➕"
+            ionIcon="add-circle"
+            ionIconColor="#10B981"
+            ionIconBg="rgba(16, 185, 129, 0.12)"
             title="Đăng tin cho thuê mới"
             subtitle="Tạo tin đăng phòng trọ mới tại TP. Đà Nẵng"
             onPress={() => setIsPostOpen(true)}
@@ -335,7 +384,9 @@ export const AuthOnboardingScreen: React.FC = () => {
         )}
 
         <MenuItem
-          icon="🚪"
+          ionIcon="log-out"
+          ionIconColor="#EF4444"
+          ionIconBg="rgba(239, 68, 68, 0.12)"
           title="Đăng xuất"
           isDestructive={true}
           onPress={() => {
@@ -623,6 +674,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
+  },
+  menuIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
   },
   menuIcon: {
     fontSize: 20,

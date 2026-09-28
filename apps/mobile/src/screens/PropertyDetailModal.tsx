@@ -7,10 +7,14 @@ import {
   TouchableOpacity,
   Alert,
   TextInput,
+  Image,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme/ThemeContext';
 import { useApp } from '../context/AppContext';
 import { useResponsiveLayout } from '../utils/responsive';
+import { getListingCoverImage } from '../utils/imageAssets';
 import { Button } from '../components/Button';
 import { ReportModal } from '../components/ReportModal';
 import { ChatRoomModal } from './ChatRoomModal';
@@ -61,6 +65,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
   } = useApp();
 
   const favorited = isFavorite(listing.id);
+  const coverImageUrl = getListingCoverImage(listing);
 
   // Modals state
   const [activeChatConvId, setActiveChatConvId] = useState<string | null>(null);
@@ -172,14 +177,17 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={{ flex: 1, maxWidth: contentMaxWidth, width: '100%', alignSelf: 'center' }}>
-        {/* 1. Large Gallery Header with Back (←) and Heart (♡) Overlay (Section 16) */}
+        {/* 1. Large Gallery Header with Real Photography & Gradient Scrim */}
         <View style={[styles.galleryBox, { backgroundColor: colors.border }]}>
-          <View style={styles.galleryInner}>
-            <Text style={{ fontSize: 48 }}>🏡</Text>
-            <Text style={[styles.galleryPlaceholderText, { color: colors.textSecondary }]}>
-              Hình ảnh thực tế căn phòng
-            </Text>
-          </View>
+          <Image
+            source={{ uri: coverImageUrl }}
+            style={StyleSheet.absoluteFill}
+            resizeMode="cover"
+          />
+          <LinearGradient
+            colors={['rgba(15, 23, 42, 0.45)', 'transparent', 'rgba(15, 23, 42, 0.75)']}
+            style={StyleSheet.absoluteFill}
+          />
 
           {/* Top Overlay Buttons */}
           <View style={[styles.topOverlayRow, { top: Math.max(14, insets.top + 6) }]}>
@@ -187,29 +195,49 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
               style={styles.overlayIconBtn}
               onPress={onClose}
               accessibilityRole="button"
+              accessibilityLabel="Quay lại"
             >
-            <Text style={{ fontSize: 18, color: '#111827' }}>←</Text>
-          </TouchableOpacity>
-
-          <View style={{ flexDirection: 'row', gap: 8 }}>
-            <TouchableOpacity
-              style={styles.overlayIconBtn}
-              onPress={() => toggleFavorite(listing.id)}
-              accessibilityRole="button"
-            >
-              <Text style={{ fontSize: 18 }}>{favorited ? '❤️' : '🤍'}</Text>
+              <Ionicons name="arrow-back" size={20} color="#0F172A" />
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.overlayIconBtn}
-              onPress={() => setIsReportOpen(true)}
-              accessibilityRole="button"
-            >
-              <Text style={{ fontSize: 14 }}>🚩</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <TouchableOpacity
+                style={styles.overlayIconBtn}
+                onPress={() => toggleFavorite(listing.id)}
+                accessibilityRole="button"
+                accessibilityLabel="Lưu yêu thích"
+              >
+                <Ionicons
+                  name={favorited ? 'heart' : 'heart-outline'}
+                  size={20}
+                  color={favorited ? '#EF4444' : '#0F172A'}
+                />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.overlayIconBtn}
+                onPress={() => setIsReportOpen(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Báo cáo"
+              >
+                <Ionicons name="flag-outline" size={18} color="#0F172A" />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Bottom Overlay Info Pill */}
+          <View style={styles.bottomOverlayRow}>
+            <View style={styles.photoCountBadge}>
+              <Ionicons name="images-outline" size={13} color="#FFFFFF" style={{ marginRight: 4 }} />
+              <Text style={styles.photoCountText}>1/5 ảnh thực tế</Text>
+            </View>
+            <View style={[styles.propertyTypeBadge, { backgroundColor: 'rgba(15, 23, 42, 0.75)' }]}>
+              <Text style={styles.propertyTypeText}>
+                {PROPERTY_TYPE_NAMES[listing.propertyType] || 'Phòng trọ'}
+              </Text>
+            </View>
           </View>
         </View>
-      </View>
 
       <ScrollView
         contentContainerStyle={[styles.scrollContent, { paddingBottom: 88 + insets.bottom }]}
@@ -246,18 +274,21 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
           {/* Quick Specifications */}
           <View style={styles.specsRow}>
             <View style={[styles.specPill, { backgroundColor: colors.background, borderColor: colors.border }]}>
+              <Ionicons name="home-outline" size={14} color={colors.primary} style={{ marginRight: 5 }} />
               <Text style={[styles.specText, { color: colors.textPrimary }]}>
-                🏠 {PROPERTY_TYPE_NAMES[listing.propertyType] || 'Phòng trọ'}
+                {PROPERTY_TYPE_NAMES[listing.propertyType] || 'Phòng trọ'}
               </Text>
             </View>
             <View style={[styles.specPill, { backgroundColor: colors.background, borderColor: colors.border }]}>
+              <Ionicons name="resize-outline" size={14} color={colors.primary} style={{ marginRight: 5 }} />
               <Text style={[styles.specText, { color: colors.textPrimary }]}>
-                📐 {formatArea(listing.areaSquareMeters)}
+                {formatArea(listing.areaSquareMeters)}
               </Text>
             </View>
             <View style={[styles.specPill, { backgroundColor: colors.background, borderColor: colors.border }]}>
+              <Ionicons name="bed-outline" size={14} color={colors.primary} style={{ marginRight: 5 }} />
               <Text style={[styles.specText, { color: colors.textPrimary }]}>
-                🚪 1 phòng
+                1 phòng
               </Text>
             </View>
           </View>
@@ -363,8 +394,9 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
             style={[styles.calcTriggerBtn, { borderColor: colors.primary }]}
             onPress={() => setIsCostCalculatorOpen(true)}
           >
+            <Ionicons name="calculator-outline" size={16} color={colors.primary} style={{ marginRight: 6 }} />
             <Text style={[styles.calcTriggerText, { color: colors.primary }]}>
-              🧮 Tính chi phí của tôi
+              Tính chi phí của tôi
             </Text>
           </TouchableOpacity>
         </View>
@@ -378,7 +410,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
             Số {listing.houseNumber} {listing.street}, {listing.wardName}, TP. Đà Nẵng
           </Text>
           <View style={[styles.miniMapPlaceholder, { backgroundColor: colors.background, borderColor: colors.border }]}>
-            <Text style={{ fontSize: 24 }}>📍</Text>
+            <Ionicons name="location-outline" size={24} color={colors.primary} />
             <Text style={[styles.miniMapText, { color: colors.textSecondary }]}>
               Tọa độ: {listing.latitude.toFixed(4)}, {listing.longitude.toFixed(4)}
             </Text>
@@ -388,9 +420,12 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
         {/* 5b. Flood Safety & Monsoon Risk Section (Phase 13) */}
         <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>
-              🌊 An toàn ngập lụt mùa mưa
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons name="water-outline" size={18} color="#0284C7" style={{ marginRight: 6 }} />
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>
+                An toàn ngập lụt mùa mưa
+              </Text>
+            </View>
             <View
               style={{
                 paddingHorizontal: 8,
@@ -429,8 +464,9 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
             style={[styles.calcTriggerBtn, { borderColor: colors.primary }]}
             onPress={() => setIsFloodMapOpen(true)}
           >
+            <Ionicons name="map-outline" size={16} color={colors.primary} style={{ marginRight: 6 }} />
             <Text style={[styles.calcTriggerText, { color: colors.primary }]}>
-              🗺️ Xem bản đồ cảnh báo ngập lụt
+              Xem bản đồ cảnh báo ngập lụt
             </Text>
           </TouchableOpacity>
         </View>
@@ -462,9 +498,13 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
             style={[styles.verifyTriggerBtn, { backgroundColor: colors.background, borderColor: colors.border }]}
             onPress={() => setIsVerificationModalOpen(true)}
           >
-            <Text style={[styles.verifyTriggerText, { color: colors.primary }]}>
-              🛡️ Xem thông tin xác minh →
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons name="shield-checkmark" size={16} color={colors.primary} style={{ marginRight: 6 }} />
+              <Text style={[styles.verifyTriggerText, { color: colors.primary }]}>
+                Xem thông tin xác minh
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.primary} />
           </TouchableOpacity>
         </View>
 
@@ -583,8 +623,9 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
           style={[styles.scheduleBtn, { borderColor: '#10B981', backgroundColor: isDark ? '#064E3B' : '#ECFDF5' }]}
           onPress={() => setIsDepositEscrowOpen(true)}
         >
+          <Ionicons name="shield-checkmark" size={14} color="#059669" style={{ marginRight: 4 }} />
           <Text style={[styles.scheduleBtnText, { color: '#059669', fontWeight: 'bold' }]}>
-            🛡️ Cọc giữ chỗ
+            Cọc giữ chỗ
           </Text>
         </TouchableOpacity>
 
@@ -592,8 +633,9 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
           style={[styles.scheduleBtn, { borderColor: colors.primary }]}
           onPress={() => setIsChecklistOpen(true)}
         >
+          <Ionicons name="calendar-outline" size={14} color={colors.primary} style={{ marginRight: 4 }} />
           <Text style={[styles.scheduleBtnText, { color: colors.primary }]}>
-            📋 Đặt lịch xem
+            Đặt lịch xem
           </Text>
         </TouchableOpacity>
 
@@ -601,7 +643,8 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
           style={[styles.chatBtn, { backgroundColor: colors.primary }]}
           onPress={handleStartChat}
         >
-          <Text style={styles.chatBtnText}>💬 Chat</Text>
+          <Ionicons name="chatbubbles" size={14} color="#FFFFFF" style={{ marginRight: 4 }} />
+          <Text style={styles.chatBtnText}>Chat</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -614,8 +657,9 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
             setShowPhone(!showPhone);
           }}
         >
+          <Ionicons name="call" size={14} color={colors.textPrimary} style={{ marginRight: 4 }} />
           <Text style={[styles.callBtnText, { color: colors.textPrimary }]}>
-            {showPhone ? '0905 123 456' : '📞 Gọi'}
+            {showPhone ? '0905 123 456' : 'Gọi'}
           </Text>
         </TouchableOpacity>
       </View>
@@ -675,10 +719,43 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   galleryBox: {
-    height: 220,
+    height: 250,
     position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
+  },
+  bottomOverlayRow: {
+    position: 'absolute',
+    bottom: 12,
+    left: 14,
+    right: 14,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  photoCountBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  photoCountText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  propertyTypeBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  propertyTypeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
   },
   galleryInner: {
     alignItems: 'center',

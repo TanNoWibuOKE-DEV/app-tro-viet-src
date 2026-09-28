@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
 import { useApp } from '../context/AppContext';
 import { ListingCard } from '../components/ListingCard';
@@ -23,7 +24,7 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({
   onOpenComparison,
   onSelectSavedSearch,
 }) => {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const {
     listings,
     favoriteIds,
@@ -79,9 +80,10 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({
       {/* Comparison Floating Bar if at least 2 items selected */}
       {comparisonIds.length >= 2 && activeTab === 'properties' && (
         <View style={[styles.compareBanner, { backgroundColor: colors.primary }]}>
+          <Ionicons name="git-compare-outline" size={20} color="#FFFFFF" style={{ marginRight: 10 }} />
           <View style={{ flex: 1 }}>
             <Text style={styles.compareBannerTitle}>
-              ⚖️ Đã chọn {comparisonIds.length} phòng để so sánh
+              Đã chọn {comparisonIds.length} phòng để so sánh
             </Text>
             <Text style={styles.compareBannerSub}>
               Đối chiếu chi phí & tiện nghi cạnh nhau
@@ -98,7 +100,9 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({
         <ScrollView contentContainerStyle={styles.scroll}>
           {favoriteListings.length === 0 ? (
             <View style={[styles.emptyBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Text style={{ fontSize: 40, marginBottom: 10 }}>🤍</Text>
+              <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: isDark ? '#1E293B' : '#FEF2F2', justifyContent: 'center', alignItems: 'center', marginBottom: 12 }}>
+                <Ionicons name="heart-outline" size={30} color="#EF4444" />
+              </View>
               <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
                 Chưa có phòng nào được lưu
               </Text>
@@ -123,7 +127,9 @@ export const FavoritesScreen: React.FC<FavoritesScreenProps> = ({
         <ScrollView contentContainerStyle={styles.scroll}>
           {savedSearches.length === 0 ? (
             <View style={[styles.emptyBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <Text style={{ fontSize: 40, marginBottom: 10 }}>🔔</Text>
+              <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: isDark ? '#1E293B' : '#EFF6FF', justifyContent: 'center', alignItems: 'center', marginBottom: 12 }}>
+                <Ionicons name="notifications-outline" size={30} color={colors.primary} />
+              </View>
               <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
                 Chưa có tìm kiếm nào được lưu
               </Text>

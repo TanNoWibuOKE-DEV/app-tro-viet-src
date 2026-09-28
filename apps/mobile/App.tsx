@@ -8,6 +8,8 @@ import {
 } from 'react-native';
 import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { ThemeProvider, useTheme } from './src/theme/ThemeContext';
 import { AppProvider, useApp } from './src/context/AppContext';
 import { useResponsiveLayout } from './src/utils/responsive';
@@ -88,11 +90,11 @@ const MainApp: React.FC = () => {
           onPress={() => setIsCityModalOpen(true)}
           activeOpacity={0.7}
         >
-          <Text style={{ fontSize: 16, marginRight: 4 }}>📍</Text>
+          <Ionicons name="location-sharp" size={17} color={colors.primary} style={{ marginRight: 4 }} />
           <Text style={[styles.locationCityName, { color: colors.textPrimary }]}>
             {selectedCity.name.replace('TP. ', '')}
           </Text>
-          <Text style={[styles.dropdownArrow, { color: colors.textSecondary }]}>▼</Text>
+          <Ionicons name="chevron-down" size={13} color={colors.textSecondary} style={{ marginLeft: 3 }} />
         </TouchableOpacity>
 
         {/* Right Header Actions */}
@@ -103,7 +105,7 @@ const MainApp: React.FC = () => {
             onPress={() => setIsMessagesOpen(true)}
             accessibilityRole="button"
           >
-            <Text style={{ fontSize: 15 }}>💬</Text>
+            <Ionicons name="chatbubbles-outline" size={18} color={colors.textPrimary} />
             {unreadMessagesCount > 0 && (
               <View style={[styles.badgePill, { backgroundColor: colors.error }]}>
                 <Text style={styles.badgePillText}>{unreadMessagesCount}</Text>
@@ -117,7 +119,7 @@ const MainApp: React.FC = () => {
             onPress={() => setIsNotificationsOpen(true)}
             accessibilityRole="button"
           >
-            <Text style={{ fontSize: 15 }}>🔔</Text>
+            <Ionicons name="notifications-outline" size={18} color={colors.textPrimary} />
             {unreadNotificationsCount > 0 && (
               <View style={[styles.badgePill, { backgroundColor: colors.error }]}>
                 <Text style={styles.badgePillText}>{unreadNotificationsCount}</Text>
@@ -131,7 +133,7 @@ const MainApp: React.FC = () => {
             onPress={toggleTheme}
             accessibilityRole="button"
           >
-            <Text style={{ fontSize: 14 }}>{isDark ? '☀️' : '🌙'}</Text>
+            <Ionicons name={isDark ? 'sunny' : 'moon'} size={17} color={isDark ? '#F59E0B' : '#6366F1'} />
           </TouchableOpacity>
         </View>
       </View>
@@ -184,7 +186,11 @@ const MainApp: React.FC = () => {
           onPress={() => setActiveTab('home')}
           accessibilityRole="button"
         >
-          <Text style={{ fontSize: 18 }}>🏠</Text>
+          <Ionicons
+            name={activeTab === 'home' ? 'home' : 'home-outline'}
+            size={22}
+            color={activeTab === 'home' ? colors.primary : colors.textSecondary}
+          />
           <Text
             style={[
               styles.navText,
@@ -203,7 +209,11 @@ const MainApp: React.FC = () => {
           }}
           accessibilityRole="button"
         >
-          <Text style={{ fontSize: 18 }}>🔍</Text>
+          <Ionicons
+            name={activeTab === 'search' ? 'search' : 'search-outline'}
+            size={22}
+            color={activeTab === 'search' ? colors.primary : colors.textSecondary}
+          />
           <Text
             style={[
               styles.navText,
@@ -219,7 +229,11 @@ const MainApp: React.FC = () => {
           onPress={() => setActiveTab('map')}
           accessibilityRole="button"
         >
-          <Text style={{ fontSize: 18 }}>🗺️</Text>
+          <Ionicons
+            name={activeTab === 'map' ? 'map' : 'map-outline'}
+            size={22}
+            color={activeTab === 'map' ? colors.primary : colors.textSecondary}
+          />
           <Text
             style={[
               styles.navText,
@@ -236,7 +250,11 @@ const MainApp: React.FC = () => {
           accessibilityRole="button"
         >
           <View style={styles.iconWithBadge}>
-            <Text style={{ fontSize: 18 }}>❤️</Text>
+            <Ionicons
+              name={activeTab === 'saved' ? 'heart' : 'heart-outline'}
+              size={22}
+              color={activeTab === 'saved' ? colors.primary : colors.textSecondary}
+            />
             {favoriteIds.length > 0 && (
               <View style={[styles.dotBadge, { backgroundColor: colors.primary }]}>
                 <Text style={styles.dotBadgeText}>{favoriteIds.length}</Text>
@@ -258,7 +276,11 @@ const MainApp: React.FC = () => {
           onPress={() => setActiveTab('profile')}
           accessibilityRole="button"
         >
-          <Text style={{ fontSize: 18 }}>👤</Text>
+          <Ionicons
+            name={activeTab === 'profile' ? 'person' : 'person-outline'}
+            size={22}
+            color={activeTab === 'profile' ? colors.primary : colors.textSecondary}
+          />
           <Text
             style={[
               styles.navText,
@@ -276,15 +298,23 @@ const MainApp: React.FC = () => {
           style={[
             styles.floatingCompareBtn,
             {
-              backgroundColor: colors.primary,
               bottom: bottomNavHeight + 12,
             },
           ]}
           onPress={() => setIsComparisonOpen(true)}
+          activeOpacity={0.88}
         >
-          <Text style={styles.floatingCompareText}>
-            ⚖️ So sánh {comparisonIds.length} phòng đã chọn
-          </Text>
+          <LinearGradient
+            colors={['#059669', '#10B981']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={styles.floatingCompareGradient}
+          >
+            <Ionicons name="git-compare-outline" size={17} color="#FFFFFF" style={{ marginRight: 6 }} />
+            <Text style={styles.floatingCompareText}>
+              So sánh {comparisonIds.length} phòng đã chọn
+            </Text>
+          </LinearGradient>
         </TouchableOpacity>
       )}
 
@@ -497,16 +527,21 @@ const styles = StyleSheet.create({
   },
   floatingCompareBtn: {
     position: 'absolute',
-    bottom: 68,
     alignSelf: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
     borderRadius: 24,
     elevation: 6,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
+    overflow: 'hidden',
+  },
+  floatingCompareGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: 24,
   },
   floatingCompareText: {
     color: '#ffffff',

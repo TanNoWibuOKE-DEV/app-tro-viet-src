@@ -1,14 +1,33 @@
 # Trọ Việt — Tiến độ
 
 **Phase hiện tại:** Hoàn tất Phát hành v1.0.0 & Cập nhật Tính năng Quản trị, Dữ liệu Thật & Bản đồ Thực địa
-**Trạng thái:** Đã hoàn thành toàn diện (138/138 tests pass across 34 suites, 0 lỗi TypeScript, APK & Web Build sẵn sàng)
+**Trạng thái:** Đã hoàn thành toàn diện (152/152 tests pass across 41 suites, 0 lỗi TypeScript, APK & Web Build cập nhật tỉ lệ toàn diện)
 
 ## Quyết định đã chốt (Bản cập nhật Mới nhất)
+- **Redesign Toàn Diện Giao Diện Ứng Dụng (Premium Mobile UI, Vector Icons & Dynamic Micro-Animations):**
+  - Tích hợp trọn gói thư viện vector icon chuẩn Expo `@expo/vector-icons` (`Ionicons`, `MaterialCommunityIcons`) và hiệu ứng đổ bóng đa lớp `expo-linear-gradient`.
+  - Thay thế toàn bộ emoji thô sơ bằng hệ thống vector icon sắc nét, chuẩn trải nghiệm cao cấp (Airbnb / Grab / iOS Native):
+    - Header & Navigation (`App.tsx`): Biểu tượng Home, Search, Map, Heart, Person, Location, Chat, Notification, Dark/Light Mode với hiệu ứng Active Tint và dải Gradient nổi bật.
+    - Danh mục & Bộ lọc (`HomeScreen.tsx`, `SearchScreen.tsx`): Banner AI Search Sparkles, các viên lọc danh mục (Phòng trọ, Căn hộ, Nhà nguyên căn, Ở ghép), bộ lọc nâng cao và trạng thái rỗng với icon vòng tròn tinh tế.
+    - Thẻ tin đăng (`ListingCard.tsx`): Ảnh chụp kiến trúc nội thất thực tế (`imageAssets.ts`), lớp phủ Gradient scrim chống lóa chữ, dải băng phân hạng Tin VIP Gradient, huy hiệu L2 Verified xanh ngọc và Điểm tin cậy Trọ Việt.
+    - Chi tiết phòng trọ (`PropertyDetailModal.tsx`): Khung ảnh thực tế sắc nét kèm huy hiệu đếm ảnh, nút quay lại/yêu thích/báo cáo mờ bán trong suốt, hàng thông số kỹ thuật (diện tích, loại phòng, số phòng) có icon vector, thanh công cụ chân trang với nút Cọc giữ chỗ, Đặt lịch xem, Chat và Gọi điện chuẩn native.
+    - Quản lý tài khoản & Cổng quản trị (`AuthOnboardingScreen.tsx`): Menu điều hướng dạng khối màu (Hợp đồng tím Indigo, Hóa đơn xanh Emerald, Bàn giao vàng Amber, Ở ghép hồng Pink, Cụm sinh viên cam Orange, Ngập lụt xanh Sky, Cổng Admin vàng Gold).
+    - Màn hình phòng đã lưu (`FavoritesScreen.tsx`): Tab phân đoạn, thanh so sánh đối chiếu có icon và hộp trạng thái rỗng cao cấp.
+  - Tích hợp các thành phần vi chuyển động phản hồi xúc giác (Micro-Animations):
+    - `AnimatedScalePressable.tsx`: Phản hồi nhún nhẹ lò xo (`Animated.spring` scale 0.965) khi bấm thẻ phòng trọ.
+    - `AnimatedPulseBadge.tsx`: Hiệu ứng thở nhẹ (Pulse loop) cho huy hiệu Xác minh L2 và Tin VIP Kim Cương.
+- **Chuẩn hóa Tỉ lệ Giao diện Đáp ứng Toàn diện (Adaptive Proportions & Safe Area Engine):**
+  - Khắc phục triệt để lỗi tràn/lệch giao diện trên mọi dòng điện thoại (iPhone SE, màn hình tai thỏ Notch, Dynamic Island, Android nốt ruồi đục lỗ, thanh điều hướng cử chỉ hoặc 3 phím cảm ứng Android).
+  - Tích hợp thư viện chuẩn `react-native-safe-area-context` (`SafeAreaProvider`, `useResponsiveLayout`).
+  - Viết bộ công cụ tính toán tỉ lệ đáp ứng `@troviet/shared/utils/scaling.ts` (`scale`, `verticalScale`, `moderateScale`, `responsiveFontSize`, `getScreenClass`, `computeSafeBottomNavHeight`, `computeSafeHeaderPaddingTop`).
+  - Tự động cộng khoảng đệm an toàn `insets.top` cho Header và `insets.bottom` cho thanh điều hướng đáy (`bottomNav`), nút so sánh nổi (`floatingCompareBtn`), thanh công cụ Chi tiết phòng (`bottomBar`), và thanh nhập liệu chat (`inputBar`).
+  - Tự động khóa độ rộng tối đa `maxWidth: 768` căn giữa trên Tablet và Web, giúp bố cục luôn cân đối và sắc nét.
+  - Bổ sung bộ test hồi quy `scaling.test.ts` (14/14 tests mới pass).
 - **Màn hình Đăng nhập Cổng Quản trị viên riêng biệt (`AdminAuthModal.tsx`):** Tách biệt hoàn toàn luồng quản trị viên khỏi luồng đăng nhập thông thường của khách thuê và chủ trọ. Xác thực tài khoản Admin chính thức qua Supabase Auth và danh sách định danh nội bộ có thẩm quyền (`admin@troviet.vn`), tích hợp mã PIN 2FA bảo mật 2 lớp, không cho phép đăng ký tự do ngoài công chúng để ngăn chặn leo thang đặc quyền.
 - **Xóa bỏ toàn bộ Fake/Mock Data (`AppContext.tsx`):** Làm sạch toàn bộ dữ liệu giả lập (`MOCK_LISTINGS`, `MOCK_CONVERSATIONS`, `MOCK_REVIEWS`...), chuyển toàn bộ trạng thái ban đầu về mảng rỗng chuẩn. Tự động đồng bộ và nạp phòng trọ thật được xuất bản (`published`) từ bảng `listings` của Supabase ngay khi ứng dụng khởi chạy.
 - **Bản đồ Thực địa Toàn diện (Real Map via OpenStreetMap & Leaflet):** Thay thế toàn bộ canvas giả lập bằng bản đồ thật OpenStreetMap sử dụng Leaflet.js rendering qua `react-native-webview` trên Android/iOS và `iframe` an toàn trên Web. Hỗ trợ ghim giá tiền thực tế (`2.5tr`), định vị mốc các trường Đại học trọng điểm 3 miền, phóng to/thu nhỏ tương tác mượt mà và tương thích hoàn toàn hai chiều (`postMessage`).
 - **Hoàn thành Đóng gói Ứng dụng Thực tế (Production Builds):**
-  - **Android APK:** Đã build thành công qua EAS Build (`520aa97b-e351-4f7b-ab37-4c030dc8bf1f`), tải trực tiếp về workspace tại `TroViet-v1.0.0.apk` (70.8 MB).
+  - **Android APK (Bản sửa lỗi tỉ lệ):** Đã build thành công qua EAS Build (`dc0cd6fb-47c9-446c-b97b-66941f9f57cb`), tải trực tiếp về workspace tại `TroViet-v1.0.0.apk` (71.7 MB).
   - **Web Production Bundle:** Đã export sạch sẽ qua Metro Bundler tại thư mục `apps/mobile/dist/`.
 - **Bản đồ Cảnh báo Ngập lụt Đô thị Mùa Mưa (Crowdsourced Flood Risk & Monsoon Safety Engine):** Tự động đo lường chỉ số an toàn ngập lụt (`FloodSafetyScore` 0–100) theo khoảng cách thực tế đến các điểm trũng lịch sử và báo cáo cộng đồng tại Đà Nẵng (Đường Mẹ Suốt, Quang Trung), Hà Nội (Trần Thái Tông/Duy Tân, Phùng Khoang), TP.HCM (Làng ĐH Thủ Đức, Đinh Bộ Lĩnh). Thuật toán phân tách rõ rệt giữa phòng tầng trệt (nguy cơ nước tràn) và phòng tầng 2 trở lên (an toàn khô ráo, cộng điểm an toàn +18). Tích hợp thẻ cảnh báo ngập lụt trên `PropertyDetailModal.tsx` và bản đồ cộng đồng `FloodRiskMapModal.tsx`.
 - **Cụm Cung ứng Học đường & Cẩm nang Sinh viên (Campus Community Hub):** Kết nối phòng trọ theo bán kính các cụm trường Đại học trọng điểm (ĐH Bách Khoa, ĐH Kinh Tế, ĐH Duy Tân tại Đà Nẵng; ĐHQG Cầu Giấy, ĐH Bách Khoa tại Hà Nội; ĐHQG Làng ĐH, HUTECH tại TP.HCM). Cung cấp mức giá thuê sinh viên trung bình quanh từng trường và cẩm nang kinh nghiệm thuê trọ thực địa.

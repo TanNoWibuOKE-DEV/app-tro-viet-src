@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
 import { useApp } from '../context/AppContext';
 import { ListingCard } from '../components/ListingCard';
@@ -207,7 +208,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
       {/* Top Search Bar */}
       <View style={[styles.topSearchBar, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <View style={[styles.inputWrapper, { backgroundColor: colors.background, borderColor: colors.border }]}>
-          <Text style={{ fontSize: 16, marginRight: 8 }}>🔍</Text>
+          <Ionicons name="search" size={17} color={colors.textSecondary} style={{ marginRight: 8 }} />
           <TextInput
             style={[styles.input, { color: colors.textPrimary }]}
             placeholder="Khu vực, trường học, địa điểm..."
@@ -219,17 +220,18 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
           />
           {query.length > 0 && (
             <TouchableOpacity onPress={() => setQuery('')} style={{ padding: 4 }}>
-              <Text style={{ color: colors.textSecondary, fontSize: 14 }}>✕</Text>
+              <Ionicons name="close-circle" size={18} color={colors.textSecondary} />
             </TouchableOpacity>
           )}
         </View>
 
         <TouchableOpacity
-          style={[styles.aiBtn, { backgroundColor: colors.primary }]}
+          style={[styles.aiBtn, { backgroundColor: colors.primary, flexDirection: 'row', alignItems: 'center' }]}
           onPress={() => setIsAISearchModalOpen(true)}
           accessibilityRole="button"
         >
-          <Text style={styles.aiBtnText}>✨ AI</Text>
+          <Ionicons name="sparkles" size={13} color="#FFFFFF" style={{ marginRight: 4 }} />
+          <Text style={styles.aiBtnText}>AI</Text>
         </TouchableOpacity>
       </View>
 
@@ -243,17 +245,25 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
               {
                 backgroundColor: activeFilterCount > 0 ? colors.primary : colors.background,
                 borderColor: activeFilterCount > 0 ? colors.primary : colors.border,
+                flexDirection: 'row',
+                alignItems: 'center',
               },
             ]}
             onPress={() => setIsFilterModalOpen(true)}
           >
+            <Ionicons
+              name="options-outline"
+              size={14}
+              color={activeFilterCount > 0 ? '#FFFFFF' : colors.textPrimary}
+              style={{ marginRight: 4 }}
+            />
             <Text
               style={[
                 styles.filterTriggerText,
                 { color: activeFilterCount > 0 ? '#FFFFFF' : colors.textPrimary },
               ]}
             >
-              ⚙️ Bộ lọc {activeFilterCount > 0 ? `(${activeFilterCount})` : ''}
+              Bộ lọc {activeFilterCount > 0 ? `(${activeFilterCount})` : ''}
             </Text>
           </TouchableOpacity>
 
@@ -326,9 +336,12 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
       {aiResult && (
         <View style={[styles.aiChipBox, { backgroundColor: isDark ? '#1a2332' : '#E0F2FE', borderColor: colors.primary }]}>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.aiChipTitle, { color: colors.primary }]}>
-              🤖 Trợ lý AI đã hiểu:
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+              <Ionicons name="sparkles" size={14} color={colors.primary} style={{ marginRight: 5 }} />
+              <Text style={[styles.aiChipTitle, { color: colors.primary, marginBottom: 0 }]}>
+                Trợ lý AI đã hiểu:
+              </Text>
+            </View>
             <Text style={[styles.aiChipText, { color: colors.textPrimary }]}>
               {aiResult.explanation}
             </Text>
@@ -344,9 +357,10 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
         <Text style={[styles.resultsCountText, { color: colors.textPrimary }]}>
           {filteredResults.length} phòng phù hợp
         </Text>
-        <TouchableOpacity style={styles.saveSearchBtn} onPress={handleSaveSearch}>
+        <TouchableOpacity style={[styles.saveSearchBtn, { flexDirection: 'row', alignItems: 'center' }]} onPress={handleSaveSearch}>
+          <Ionicons name="notifications-outline" size={14} color={colors.primary} style={{ marginRight: 4 }} />
           <Text style={[styles.saveSearchText, { color: colors.primary }]}>
-            🔔 Lưu tìm kiếm
+            Lưu tìm kiếm
           </Text>
         </TouchableOpacity>
       </View>
@@ -355,7 +369,9 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
       <ScrollView contentContainerStyle={styles.listContent}>
         {filteredResults.length === 0 ? (
           <View style={[styles.emptyBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={{ fontSize: 40, marginBottom: 12 }}>🔍</Text>
+            <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: isDark ? '#1E293B' : '#F1F5F9', justifyContent: 'center', alignItems: 'center', marginBottom: 14 }}>
+              <Ionicons name="search-outline" size={30} color={colors.textSecondary} />
+            </View>
             <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
               Không có phòng phù hợp
             </Text>
