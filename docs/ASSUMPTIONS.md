@@ -158,3 +158,23 @@ Tài liệu này ghi lại các giả định thiết kế và vận hành khi c
    - Hệ thống tự động tạo mẫu Đơn kiến nghị điều chỉnh tiền điện theo giá nhà nước và Thư đề nghị hoàn trả tiền cọc đúng hạn căn cứ Bộ luật Dân sự 2015 và Luật Nhà ở.
    - Mọi văn bản và tư vấn tự động đều kèm khuyến cáo pháp lý bắt buộc: "Tài liệu mang tính chất hỗ trợ đàm phán nội bộ và tham khảo pháp lý, không thay thế cho phán quyết của Tòa án hoặc tư vấn của Luật sư."
 
+---
+
+## Phase 13 — Cụm Cộng Đồng Sinh Viên, Bản Đồ Cảnh Báo Ngập Lụt & Chợ Sang Nhượng Trọ (Campus Hub, Flood Risk Alerts & Room Transfer)
+
+1. **Cảnh báo Ngập lụt Đô thị Mùa Mưa (Crowdsourced Flood Risk Alerts):**
+   - Dữ liệu ngập lụt được thu thập từ cộng đồng cư dân sinh sống tại khu vực và đối chiếu dữ liệu địa hình các vùng trũng đô thị.
+   - 3 phân cấp ngập lụt thực tế:
+     - `light` (10 - 20 cm): Ngập xâm xấp mắt cá chân, phương tiện di chuyển chậm.
+     - `moderate` (20 - 50 cm): Ngập đến ống pô xe máy, chết máy phương tiện.
+     - `severe` (> 50 cm): Ngập lụt sâu trên nửa mét, nguy cơ ngập phòng trọ tầng trệt và hư hại tài sản.
+   - Điểm cảnh báo đạt từ 2 lượt đồng thuận (upvotes >= 2) sẽ kích hoạt huy hiệu cảnh báo vàng/đỏ trên chi tiết phòng trọ nằm trong bán kính 300 mét.
+
+2. **Sang nhượng Hợp đồng Thuê Phòng (Room Transfers):**
+   - Người thuê sắp chuyển nơi ở được đăng tin tìm người thay thế để nhận lại tiền cọc gốc, giảm thiểu thiệt hại tài chính.
+   - Tin sang nhượng bắt buộc công khai: số tiền cọc cần chuyển giao (integer VND), ngày có thể dọn vào, thời gian hợp đồng còn lại, và xác nhận sự đồng ý từ chủ nhà.
+
+3. **Chợ Thanh lý Đồ dùng Trọ Sinh viên (Student Pass Items):**
+   - Danh mục vật dụng trọ sinh viên: quạt điện, đệm gấp, bàn ghế học tập, tủ lạnh mini, nồi cơm điện, kệ sách/kệ giày.
+   - Sinh viên thanh lý trực tiếp hoặc thanh toán VietQR P2P không qua trung gian thu phí.
+
