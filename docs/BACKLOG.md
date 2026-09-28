@@ -4,13 +4,20 @@ Tài liệu này lưu lại các ý tưởng, tính năng hoặc cải tiến n�
 
 ---
 
-## Ý tưởng tính năng & Đề xuất tương lai
+## Tính năng đã hoàn thành (Phase 5 - Phase 8)
+- [x] **Hệ thống so sánh phòng chuyên sâu (Phase 2 & UI Refactor):** Đã hoàn tất (`PropertyComparisonModal.tsx`).
+- [x] **AI Roommate Matching (Phase 7):** Đã hoàn tất (`RoommateMatchingScreen.tsx`, `calculateRoommateCompatibility`).
+- [x] **Phân tích hợp đồng thuê & cảnh báo bẫy pháp lý (Phase 6):** Đã hoàn tất (`analyzeContractTerms`, `ContractDetailModal.tsx`).
+- [x] **Hóa đơn tiền phòng & VietQR NAPAS 24/7 (Phase 6):** Đã hoàn tất (`calculateMonthlyInvoice`, `generateVietQRLink`, `InvoiceDetailModal.tsx`).
+- [x] **Biên bản bàn giao phòng thực địa & Lịch nhắc tự động (Phase 7):** Đã hoàn tất (`ViewingHandoverModal.tsx`, `checkRentInvoiceReminders`).
+- [x] **Chuẩn bị phát hành Store & EAS Production (Phase 8):** Đã hoàn tất (`app.json`, `eas.json`, `STORE_METADATA.md`).
 
-1. **Hệ thống so sánh phòng chuyên sâu (Phase 5):**
-   - So sánh trực quan tiện ích, chi phí ẩn và khoảng cách tới các trường đại học / văn phòng.
-2. **AI Roommate Matching (Phase 5):**
-   - Ghép bạn cùng phòng dựa trên thói quen sinh hoạt, tính cách và ngân sách.
-3. **Phân tích hợp đồng thuê OCR & cảnh báo bẫy pháp lý (Phase 6):**
-   - Hỗ trợ người thuê quét hợp đồng, giải thích điều khoản phạt cọc và cam kết trách nhiệm.
-4. **Cổng thanh toán tiền trọ tự động (Phase 6):**
-   - Tích hợp cổng thanh toán có bản quyền / đối tác được cấp phép để tự động nhắc và đóng tiền trọ hàng tháng.
+## Ý tưởng tính năng & Đề xuất sau khi phát hành (Post-Launch)
+1. **Push Notifications với APNs & Firebase Cloud Messaging (FCM):**
+   - Đăng ký chứng chỉ Apple APNs và tài khoản Google Cloud FCM để đẩy thông báo ngoại tuyến thời gian thực đến điện thoại khi đóng ứng dụng.
+2. **eKYC CCCD gắn chip bằng NFC:**
+   - Tích hợp SDK eKYC đối tác được Bộ Công An cấp phép (VNPT eKYC / FPT.AI) đọc chip CCCD trực tiếp trên thiết bị di động để nâng cấp tự động lên L2.
+3. **Webhook Đối soát ngân hàng tự động (Auto Bank Reconciliation):**
+   - Kết nối cổng Open Banking của ngân hàng đối tác hoặc Casso / SePAY để tự động gạch nợ hóa đơn khi người thuê quét mã VietQR thành công.
+4. **Mở rộng địa bàn hoạt động:**
+   - Mở rộng tập dữ liệu mặt bằng giá và danh mục hành chính 2 cấp ra Hà Nội, TP. Hồ Chí Minh sau khi vận hành ổn định tại TP. Đà Nẵng.
