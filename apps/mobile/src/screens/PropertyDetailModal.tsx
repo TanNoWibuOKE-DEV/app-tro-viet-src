@@ -18,6 +18,7 @@ import { ViewingChecklistModal } from './ViewingChecklistModal';
 import { LandlordVerificationModal } from './LandlordVerificationModal';
 import { InteractiveCostCalculatorModal } from '../components/InteractiveCostCalculatorModal';
 import { DepositEscrowModal } from './DepositEscrowModal';
+import { FloodRiskMapModal } from './FloodRiskMapModal';
 import {
   ListingSummary,
   formatArea,
@@ -26,6 +27,7 @@ import {
   DEFAULT_CONSUMPTION,
   checkListingPricingAnomaly,
   calculateListingTrustScore,
+  assessPropertyFloodRisk,
   Review,
 } from '@troviet/shared';
 
@@ -68,6 +70,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
   const [isWriteReviewOpen, setIsWriteReviewOpen] = useState(false);
   const [isTrustFactorsOpen, setIsTrustFactorsOpen] = useState(false);
   const [isDepositEscrowOpen, setIsDepositEscrowOpen] = useState(false);
+  const [isFloodMapOpen, setIsFloodMapOpen] = useState(false);
   const [showPhone, setShowPhone] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
@@ -89,6 +92,16 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
 
   // Baseline cost breakdown
   const baselineCost = calculateTotalCosts(listing.costs, DEFAULT_CONSUMPTION);
+
+  // Flood Risk Assessment (Phase 13)
+  const cityCode = listing.provinceCode === '01' ? 'hanoi' : listing.provinceCode === '79' ? 'hcm' : 'danang';
+  const floodRisk = assessPropertyFloodRisk({
+    latitude: listing.latitude,
+    longitude: listing.longitude,
+    street: listing.street,
+    cityCode,
+    floorNumber: 1,
+  });
 
   const avgRating =
     listingReviews.length > 0
@@ -367,6 +380,56 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
           </View>
         </View>
 
+        {/* 5b. Flood Safety & Monsoon Risk Section (Phase 13) */}
+        <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 0 }]}>
+              🌊 An toàn ngập lụt mùa mưa
+            </Text>
+            <View
+              style={{
+                paddingHorizontal: 8,
+                paddingVertical: 3,
+                borderRadius: 6,
+                backgroundColor:
+                  floodRisk.safetyLevel === 'high_risk'
+                    ? isDark ? '#450A0A' : '#FEE2E2'
+                    : floodRisk.safetyLevel === 'moderate_risk'
+                    ? isDark ? '#451A03' : '#FEF3C7'
+                    : isDark ? '#064E3B' : '#DCFCE7',
+              }}
+            >
+              <Text
+                style={{
+                  fontSize: 11,
+                  fontWeight: '800',
+                  color:
+                    floodRisk.safetyLevel === 'high_risk'
+                      ? '#DC2626'
+                      : floodRisk.safetyLevel === 'moderate_risk'
+                      ? '#D97706'
+                      : '#16A34A',
+                }}
+              >
+                {floodRisk.safetyScore}/100 • {floodRisk.safetyLevel === 'high_risk' ? 'Rủi ro ngập' : floodRisk.safetyLevel === 'moderate_risk' ? 'Cần lưu ý' : 'Cao ráo an toàn'}
+              </Text>
+            </View>
+          </View>
+
+          <Text style={{ fontSize: 13, color: colors.textSecondary, lineHeight: 18, marginBottom: 10 }}>
+            {floodRisk.advisoryMessage}
+          </Text>
+
+          <TouchableOpacity
+            style={[styles.calcTriggerBtn, { borderColor: colors.primary }]}
+            onPress={() => setIsFloodMapOpen(true)}
+          >
+            <Text style={[styles.calcTriggerText, { color: colors.primary }]}>
+              🗺️ Xem bản đồ cảnh báo ngập lụt
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         {/* 6. Landlord Module (Section 20) */}
         <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
@@ -545,6 +608,12 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
         visible={isDepositEscrowOpen}
         listing={listing}
         onClose={() => setIsDepositEscrowOpen(false)}
+      />
+
+      <FloodRiskMapModal
+        visible={isFloodMapOpen}
+        onClose={() => setIsFloodMapOpen(false)}
+        initialCityCode={listing.provinceCode === '01' ? 'hanoi' : listing.provinceCode === '79' ? 'hcm' : 'danang'}
       />
 
       <InteractiveCostCalculatorModal

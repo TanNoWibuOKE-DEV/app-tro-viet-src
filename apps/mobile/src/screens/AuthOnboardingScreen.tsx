@@ -24,6 +24,8 @@ import { LandlordPostScreen } from './LandlordPostScreen';
 import { EkycModal } from './EkycModal';
 import { TenantLifeHubModal } from './TenantLifeHubModal';
 import { LegalAssistantModal } from './LegalAssistantModal';
+import { FloodRiskMapModal } from './FloodRiskMapModal';
+import { CampusHubModal } from './CampusHubModal';
 import { UserRole, RentalContract, RentInvoice } from '@troviet/shared';
 
 interface MenuItemProps {
@@ -104,6 +106,8 @@ export const AuthOnboardingScreen: React.FC = () => {
   const [isEkycOpen, setIsEkycOpen] = useState(false);
   const [isTenantLifeHubOpen, setIsTenantLifeHubOpen] = useState(false);
   const [isLegalAssistantOpen, setIsLegalAssistantOpen] = useState(false);
+  const [isFloodMapOpen, setIsFloodMapOpen] = useState(false);
+  const [isCampusHubOpen, setIsCampusHubOpen] = useState(false);
 
   // Admin pending counts
   const pendingListings = listings.filter((l) => l.status === 'pending_review').length;
@@ -261,6 +265,20 @@ export const AuthOnboardingScreen: React.FC = () => {
           subtitle="Kiểm tra biểu giá EVN 6 bậc & Soạn thư đàm phán hoàn cọc"
           onPress={() => setIsLegalAssistantOpen(true)}
         />
+
+        <MenuItem
+          icon="🎓"
+          title="Cụm sinh viên & Chợ pass đồ trọ"
+          subtitle="Cẩm nang trường ĐH, nhượng trọ & đồ thanh lý sinh viên"
+          onPress={() => setIsCampusHubOpen(true)}
+        />
+
+        <MenuItem
+          icon="🌊"
+          title="Bản đồ cảnh báo ngập lụt mùa mưa"
+          subtitle="Tra cứu điểm trũng ngập & rủi ro triều cường đô thị"
+          onPress={() => setIsFloodMapOpen(true)}
+        />
       </View>
 
       {/* 3. Group: Tài khoản & Bảo mật (Section 27) */}
@@ -395,6 +413,20 @@ export const AuthOnboardingScreen: React.FC = () => {
         onClose={() => setIsLegalAssistantOpen(false)}
         tenantName={currentUser?.fullName}
         tenantPhone={currentUser?.phoneNumber}
+      />
+
+      <CampusHubModal
+        visible={isCampusHubOpen}
+        onClose={() => setIsCampusHubOpen(false)}
+        currentUserId={currentUser?.id}
+        currentUserName={currentUser?.fullName}
+        currentUserPhone={currentUser?.phoneNumber}
+      />
+
+      <FloodRiskMapModal
+        visible={isFloodMapOpen}
+        onClose={() => setIsFloodMapOpen(false)}
+        initialCityCode="danang"
       />
 
       {/* Admin Moderation Modal */}
