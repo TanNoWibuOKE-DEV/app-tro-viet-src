@@ -24,6 +24,7 @@ export * from './contract/analysis.js';
 export * from './payment/vietqr.js';
 export * from './payment/reconciliation.js';
 export * from './notifications/push.js';
+export * from './market/multi-city.js';
 export * from './insights/market.js';
 export * from './seed/mock-phase6.js';
 export * from './roommate/matching.js';
