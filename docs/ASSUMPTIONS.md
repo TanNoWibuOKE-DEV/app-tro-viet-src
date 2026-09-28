@@ -111,5 +111,25 @@ Tài liệu này ghi lại các giả định thiết kế và vận hành khi c
    - Tự động tổng hợp doanh thu từ dữ liệu thực tế hóa đơn tháng: Tiền phòng, điện, nước, dịch vụ.
    - Tính toán tỷ lệ lấp đầy phòng (Occupancy Rate %) và tỷ lệ thu tiền đúng hạn (On-Time Collection Rate %).
 
+---
+
+## Phase 11 — Đặt Cọc Ký Quỹ An Toàn & Thương Mại Hóa Dịch Vụ Chủ Trọ
+
+1. **Thời hạn giữ chỗ cọc ký quỹ (Escrow Holding Duration):**
+   - Mặc định thời hạn giữ chỗ là 48 giờ kể từ thời điểm hệ thống ghi nhận thanh toán tiền cọc thành công qua VietQR ký quỹ.
+   - Trong 48h này, tin phòng được chuyển sang trạng thái "Đang giữ chỗ", chặn người khác đặt cọc.
+   - Nếu quá 48h mà người thuê không đến nhận phòng và không phát sinh khiếu nại, cọc được tự động giải ngân cho chủ trọ để bồi thường chi phí cơ hội giữ phòng.
+
+2. **Quy định số tiền cọc giữ phòng:**
+   - Mức cọc giữ phòng do chủ trọ công bố rõ ràng trên tin đăng, nằm trong khoảng từ tối thiểu 200.000 ₫ đến tối đa 1 tháng tiền phòng. Mức mặc định đề xuất là 500.000 ₫.
+   - Cọc giữ phòng sẽ được cấn trừ trực tiếp vào khoản tiền cọc hợp đồng chính thức khi hai bên ký biên bản bàn giao phòng.
+
+3. **Cơ cấu định giá các gói VIP:**
+   - Tin Thường: Miễn phí, thời hạn vĩnh viễn hoặc 30 ngày tự gia hạn.
+   - VIP 1 (Nổi bật khu vực - Viền đồng): 50.000 ₫ / 30 ngày. Tăng hiển thị trong kết quả tìm kiếm cùng phường/xã.
+   - VIP 2 (Top danh mục - Viền bạc): 120.000 ₫ / 30 ngày. Đứng đầu danh mục loại phòng tương ứng.
+   - VIP Kim Cương (Trang chủ & Push - Viền vàng): 250.000 ₫ / 30 ngày. Ghim vị trí nổi bật tại Trang chủ và tự động kích hoạt thông báo đẩy gửi tới người dùng có Saved Search phù hợp.
+
+
 
 
