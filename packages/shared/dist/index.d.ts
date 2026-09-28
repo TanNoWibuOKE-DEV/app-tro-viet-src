@@ -35,3 +35,4 @@ export * from './analytics/financial.js';
 export * from './escrow/deposit.js';
 export * from './monetization/subscriptions.js';
 export * from './services/moving-calculator.js';
+export * from './legal/utility-regulations.js';

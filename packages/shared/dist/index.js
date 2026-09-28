@@ -51,3 +51,4 @@ __exportStar(require("./analytics/financial.js"), exports);
 __exportStar(require("./escrow/deposit.js"), exports);
 __exportStar(require("./monetization/subscriptions.js"), exports);
 __exportStar(require("./services/moving-calculator.js"), exports);
+__exportStar(require("./legal/utility-regulations.js"), exports);
