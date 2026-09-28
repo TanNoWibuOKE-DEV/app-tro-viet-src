@@ -3,23 +3,42 @@
     "name": "Trọ Việt",
     "slug": "troviet",
     "scheme": "troviet",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "description": "Tìm đúng chỗ — Thuê an tâm. Ứng dụng tìm trọ thông minh cho người Việt.",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#10B981"
+    },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "vn.troviet.app"
+      "bundleIdentifier": "vn.troviet.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Trọ Việt cần quyền truy cập camera để chụp ảnh phòng trọ và đối soát CCCD xác minh chủ nhà L2.",
+        "NSPhotoLibraryUsageDescription": "Trọ Việt cần quyền truy cập thư viện ảnh để tải lên ảnh phòng trọ thực tế.",
+        "NSLocationWhenInUseUsageDescription": "Trọ Việt sử dụng vị trí của bạn để tìm kiếm phòng trọ và tính toán khoảng cách quanh bạn."
+      }
     },
     "android": {
       "package": "vn.troviet.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#10B981",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.READ_MEDIA_IMAGES"
+      ],
       "predictiveBackGestureEnabled": false
     },
     "web": {
