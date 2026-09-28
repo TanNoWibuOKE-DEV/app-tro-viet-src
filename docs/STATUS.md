@@ -1,9 +1,12 @@
 # Trọ Việt — Tiến độ
 
-**Phase hiện tại:** Phase 9 — Hoàn thiện Vận hành Thực tế Toàn quốc (Production Scale & Full Operational Suite)
-**Trạng thái:** Đã hoàn thành toàn diện (84/84 tests pass across 25 suites, 0 lỗi TypeScript)
+**Phase hiện tại:** Phase 10 — Nền tảng Doanh nghiệp & Vận hành Chuyên sâu (Enterprise Operations & Identity Intelligence)
+**Trạng thái:** Đã hoàn thành toàn diện (96/96 tests pass across 27 suites, 0 lỗi TypeScript)
 
-## Quyết định đã chốt (Sau Phase 9)
+## Quyết định đã chốt (Sau Phase 10)
+- **Định danh điện tử eKYC CCCD Gắn Chip & Chống giả mạo sinh trắc học (eKYC & Anti-Spoofing):** Xác thực định dạng CCCD 12 chữ số theo quy chuẩn Bộ Công An (mã tỉnh 3 số, thế kỷ/giới tính 1 số, năm sinh 2 số, số ngẫu nhiên 6 số), kiểm tra điều kiện đủ 18 tuổi. Áp dụng chuẩn bảo mật dữ liệu cá nhân theo Luật 91/2025/QH15: không lưu số CCCD thô, chỉ lưu mã băm SHA-256 và che mờ dạng `********1234`. Đánh giá chống giả mạo bằng phát hiện chuyển động sống (Liveness detection), độ tương đồng khuôn mặt (Face match >= 85%) và xác thực tính toàn vẹn chữ ký số chip NFC. Tích hợp luồng trải nghiệm eKYC trực quan qua `EkycModal.tsx` trên tab Cá nhân.
+- **Phân tích tài chính & Quản trị dòng tiền Chủ trọ (Landlord Financial Analytics & Cash Flow Engine):** Đo lường tổng doanh thu dự kiến, số tiền thực thu, công nợ tồn đọng, tỷ lệ thu hồi tiền trọ (`collectionRate`), tỷ lệ lấp đầy phòng (`occupancyRate`). Bóc tách cấu trúc doanh thu chi tiết (tiền thuê phòng, tiền điện, tiền nước, tiền dịch vụ/internet), biểu đồ xu hướng dòng tiền 6 tháng qua và hệ thống cảnh báo người thuê quá hạn cần đốc thúc. Tích hợp tab Phân tích tài chính trên Bảng điều khiển Chủ trọ `LandlordDashboardScreen.tsx`.
+- **Nâng cấp CSDL v7 (Enterprise Schema & Audit):** Migration `20260924000007_phase10_enterprise_v7.sql` và script rollback hoàn chỉnh. Quản lý thiết bị nhận thông báo đẩy (`push_tokens`), lưu trữ nhật ký đối soát ngân hàng mở (`bank_transactions`), quản lý hồ sơ định danh điện tử an toàn (`ekyc_verifications`) với đầy đủ phân quyền Row Level Security (RLS).
 - **Tự động hóa đối soát thanh toán VietQR (Automated VietQR Reconciliation Engine):** Tiếp nhận dữ liệu webhook ngân hàng chuẩn Open Banking / SePAY / Casso, đối soát mã hóa đơn dạng `TRV...` và số tiền chính xác, tự động gạch nợ hóa đơn sang `paid` tức thì, bảo vệ chủ trọ trước tình trạng chuyển thiếu tiền (`partial_payment`). Tích hợp nút Sandbox Test mô phỏng ngay trên modal hóa đơn di động.
 - **Thông báo đẩy ngoại tuyến (Offline Push Notifications):** Chuẩn hóa cấu trúc Expo Push Token, hỗ trợ sinh payload thông báo hệ điều hành cho màn hình khóa/khay hệ thống theo mức độ ưu tiên: Tin nhắn mới (High), Lịch nhắc tiền phòng đến hạn (High), Cảnh báo an toàn lừa đảo (Safety - Max), Xác nhận thanh toán hóa đơn và Hợp đồng sắp hết hạn (Normal).
 - **Mở rộng đa thị trường 3 miền toàn quốc (Multi-City Expansion):** Kích hoạt cả 3 đại đô thị TP. Đà Nẵng, TP. Hà Nội, TP. Hồ Chí Minh với danh mục hành chính 2 cấp theo Luật hiện hành, dữ liệu mặt bằng giá thực tế cho các phường sinh viên trọng điểm (Dịch Vọng Hậu, Láng Thượng, Bách Khoa, Linh Trung Làng ĐH, Phường 25 Bình Thạnh...), bộ chọn thành phố tại Header và bản đồ tọa độ các trường đại học lớn.
@@ -103,10 +106,18 @@
   - Mở rộng đa thị trường 3 miền toàn quốc: Cập nhật danh mục hành chính 2 cấp theo Luật hiện hành cho TP. Hà Nội, TP. Hồ Chí Minh và TP. Đà Nẵng; tích hợp dữ liệu mặt bằng giá và xu hướng 6 tháng cho các cụm phường sinh viên trọng điểm (Dịch Vọng Hậu, Láng Thượng, Bách Khoa, Linh Trung, Phường 25, Bến Nghé...); bổ sung bộ chọn Tỉnh/Thành phố tại Header và các ghim tọa độ trường đại học trên `MapScreen.tsx`.
   - Bộ kiểm thử chất lượng toàn diện: Đạt **84/84 tests pass across 25 suites**, TypeScript sạch 100%.
 
+- **Phase 10 — Nền tảng Doanh nghiệp & Vận hành Chuyên sâu (Enterprise Operations & Identity Intelligence):**
+  - Migration CSDL v7 (`20260924000007_phase10_enterprise_v7.sql` & rollback script): Khởi tạo các bảng `push_tokens`, `bank_transactions`, `ekyc_verifications` kèm các ràng buộc toàn vẹn, chỉ mục hiệu năng cao và chính sách bảo mật phân quyền Row Level Security (RLS) chặt chẽ.
+  - Bộ máy Định danh điện tử eKYC CCCD Gắn Chip & Chống giả mạo (`evaluateEkycVerification`, `validateVietnameseIdCardNumber`, `maskIdCardNumber`, `hashIdCardNumber`): Kiểm tra định dạng 12 chữ số chuẩn Bộ Công An, kiểm tra người dùng >= 18 tuổi, băm mật mã SHA-256 CCCD và che mờ dạng `********1234` tuân thủ Luật 91/2025/QH15, thẩm định chống giả mạo bằng phát hiện sinh trắc sống (Liveness detection) và độ tương quan khuôn mặt (Face match >= 85%).
+  - Bộ máy Phân tích tài chính & Quản trị dòng tiền Chủ trọ (`calculateLandlordFinancialSummary`): Đo lường doanh thu dự kiến, số tiền thực thu, công nợ tồn đọng, tỷ lệ thu hồi tiền trọ (`collectionRate`), tỷ lệ lấp đầy (`occupancyRate`), bóc tách cơ cấu doanh thu (tiền thuê, điện, nước, internet/dịch vụ), biểu đồ xu hướng dòng tiền 6 tháng qua và hệ thống cảnh báo người thuê quá hạn.
+  - Giao diện di động tích hợp: Modal định danh điện tử `EkycModal.tsx` mô phỏng quét vi mạch NFC và kiểm tra sinh trắc sống, tích hợp nút xác thực eKYC ngay tại tab Cá nhân (`AuthOnboardingScreen.tsx`); Bổ sung tab Phân tích tài chính chuyên sâu với biểu đồ phân bổ dòng tiền trên Bảng điều khiển Chủ trọ (`LandlordDashboardScreen.tsx`).
+  - Bộ kiểm thử chất lượng toàn diện: Đạt **96/96 tests pass across 27 suites**, 0 lỗi TypeScript trên toàn bộ Monorepo.
+
 ## Trạng thái dự án
-Toàn bộ **37/37 modules** trong kế hoạch đặc tả [docs/SPEC.md](file:///d:/File_Website/web_tmđt/docs/SPEC.md), giao diện người dùng Mobile UI/UX Clean & Modular, cấu hình phát hành Production Store (Phase 8), và bộ năng lực vận hành thực tế toàn quốc 3 miền (Phase 9) đã được hoàn tất 100%, sẵn sàng triển khai thực địa.
+Toàn bộ **37/37 modules** trong kế hoạch đặc tả [docs/SPEC.md](file:///d:/File_Website/web_tmđt/docs/SPEC.md), giao diện người dùng Mobile UI/UX Clean & Modular, cấu hình phát hành Production Store (Phase 8), bộ năng lực vận hành thực tế toàn quốc 3 miền (Phase 9), và Nền tảng Doanh nghiệp & Vận hành Chuyên sâu (Phase 10) đã được hoàn tất 100%, sẵn sàng triển khai thực địa.
 
 ## Việc nợ & Đề xuất tương lai
 Xem [BACKLOG.md](file:///d:/File_Website/web_tmđt/docs/BACKLOG.md).
+
 
 
