@@ -49,3 +49,4 @@ __exportStar(require("./seed/mock-phase7.js"), exports);
 __exportStar(require("./ekyc/verification.js"), exports);
 __exportStar(require("./analytics/financial.js"), exports);
 __exportStar(require("./escrow/deposit.js"), exports);
+__exportStar(require("./monetization/subscriptions.js"), exports);
