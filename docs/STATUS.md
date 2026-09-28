@@ -1,9 +1,13 @@
 # Trọ Việt — Tiến độ
 
-**Phase hiện tại:** Phase 7 — Ở ghép, Bàn giao thực địa & Tự động hóa (Roommates, Property Handovers & Automation)
-**Trạng thái:** Đã hoàn thành toàn diện (Toàn bộ 37 modules theo SPEC.md đã hoàn tất)
+**Phase hiện tại:** Phase 8 — Chuẩn bị phát hành Store & Bản dựng Production (Store Release Readiness & EAS Production Deployment)
+**Trạng thái:** Đã hoàn thành toàn diện (100% cấu hình Store, EAS Build & Submit, An toàn Dữ liệu theo Luật 91/2025/QH15)
 
-## Quyết định đã chốt (Sau Phase 7)
+## Quyết định đã chốt (Sau Phase 8)
+- **Chuẩn hóa cấu hình phát hành v1.0.0:** `app.json` nâng lên version 1.0.0, buildNumber 1, versionCode 1, package `vn.troviet.app`, bundleIdentifier `vn.troviet.app`. Quyền truy cập thiết bị được tối giản (Camera, Fine Location, Media Library) kèm lý do giải trình minh bạch cho reviewer Apple & Google Play.
+- **Tài sản đồ họa chuẩn Store:** 1024x1024 px cho `icon.png` và `splash-icon.png`, 512x512 px cho Android Adaptive Icon, tuân thủ nguyên tắc không sử dụng góc bo sẵn (store tự bo) và tương phản cao.
+- **Khai báo An toàn dữ liệu (Data Safety) theo Luật 91/2025/QH15:** Mọi dữ liệu thu thập (Vị trí, Liên hệ, Ảnh phòng trọ/hợp đồng, CCCD) đều được mã hóa khi truyền tải (TLS 1.3), lưu trữ an toàn với Supabase RLS, người dùng có toàn quyền xem, xuất và xóa dữ liệu theo Luật Bảo vệ Dữ liệu Cá nhân số 91/2025/QH15.
+- **Tự động hóa EAS Build & EAS Submit:** `eas.json` cấu hình sẵn profile `production` cho Android App Bundle (`.aab`) và submit tự động lên track nội bộ (internal/closed testing) của Google Play Console; scripts được tích hợp vào root `package.json` (`npm run build:aab`, `npm run submit:android`).
 - **Ghép người ở ghép minh bạch & bảo vệ quyền riêng tư (Roommate Matching):** Chấm điểm tương thích minh bạch (`CompatibilityScore` 0–100%) dựa trên thói quen sinh hoạt (giờ giấc, hút thuốc, thú cưng, mức độ sạch sẽ, giới tính, ngân sách); bảo vệ quyền riêng tư bằng cách chỉ hiển thị tên thân mật và kết nối ban đầu hoàn toàn qua In-App Chat.
 - **Biên bản Bàn giao phòng thực địa điện tử (Property Handover):** Lưu trữ chính xác chỉ số công tơ điện và nước ban đầu (kWh, m³) làm căn cứ mốc tính hóa đơn tháng đầu tiên; checklist 10 hạng mục trang thiết bị cơ sở vật chất; cả chủ trọ và người thuê cùng ký xác nhận điện tử.
 - **Tự động hóa lịch nhắc thuê & hóa đơn (Automated Reminders Scheduler):** Tự động phát hiện hóa đơn tiền phòng sắp đến hạn (trước 3 ngày, đúng ngày, quá hạn) kèm liên kết VietQR thanh toán nhanh; tự động nhắc hợp đồng sắp hết hạn trước 30 ngày để hai bên chủ động tái ký hoặc bàn giao phòng.
@@ -83,10 +87,16 @@
   - Chi tiết phòng phân lớp chuẩn (`PropertyDetailModal.tsx`): Ảnh cover lớn, tóm tắt, tiện nghi, bảng chi phí minh bạch kèm nút mở `InteractiveCostCalculatorModal`, vị trí, chủ trọ kèm nút mở `LandlordVerificationModal`, điểm tin cậy, đánh giá từ người thuê, thanh tác vụ dính chân màn hình (Đặt lịch xem phòng, Nhắn tin, Gọi điện).
   - Tab Đã lưu 2 phân đoạn (`FavoritesScreen.tsx`): Phân chia rõ ràng "Phòng đã lưu" và "Tìm kiếm đã lưu".
   - Trung tâm Cá nhân chuẩn hóa (`AuthOnboardingScreen.tsx`): Hồ sơ cá nhân, chuyển đổi chế độ Chủ trọ / Người thuê, danh mục menu quản trị thuê (Hợp đồng, Hóa đơn VietQR, Biên bản bàn giao, Ở ghép, Mặt bằng giá), bảo mật CCCD L2, quyền dữ liệu cá nhân theo Luật 91/2025/QH15.
-  - Đảm bảo 100% không mất bất kỳ tính năng backend/logic nào; 63/63 tests pass; xuất bundle Web và Android thành công 100%.
+- **Phase 8 — Chuẩn bị phát hành Store & Bản dựng Production:**
+  - Nâng cấp `app.json` chuẩn version 1.0.0, buildNumber 1, versionCode 1, package name `vn.troviet.app`. Tối giản các quyền truy cập (Fine Location, Camera, Media Library) và bổ sung lý do minh bạch cho Apple InfoPlist.
+  - Kiểm tra và chuẩn hóa toàn bộ tài sản đồ họa Store: `icon.png` (1024x1024), `splash-icon.png` (1024x1024), `adaptive-icon.png` (512x512).
+  - Hoàn thiện `eas.json` cho bản dựng Production Android App Bundle (`.aab`) với `buildType: "app-bundle"` và tự động submit lên track `internal` của Google Play Console.
+  - Cập nhật tài liệu niêm yết Store [docs/STORE_METADATA.md](file:///d:/File_Website/web_tmđt/docs/STORE_METADATA.md): Tiêu đề, Phụ đề, Mô tả ngắn 80 ký tự, Mô tả chi tiết 4000 ký tự tiếng Việt, Danh sách tài khoản kiểm duyệt App Reviewer (`admin@troviet.vn`, `chutro@troviet.vn`, `nguoidung@troviet.vn`), Bảng kê khai An toàn Dữ liệu (Google Play Data Safety) tuân thủ Luật Bảo vệ Dữ liệu Cá nhân số 91/2025/QH15.
+  - Thêm các lệnh build và submit tiện lợi vào root `package.json` (`npm run build:aab`, `npm run submit:android`).
+  - Kiểm thử chất lượng xuất bản: 100% Typecheck sạch sẽ (0 lỗi), 63/63 tests pass across 22 test suites.
 
 ## Trạng thái dự án
-Toàn bộ **37/37 modules** trong kế hoạch đặc tả [docs/SPEC.md](file:///d:/File_Website/web_tmđt/docs/SPEC.md) cùng giao diện người dùng Mobile UI/UX đã được tái cấu trúc hoàn chỉnh, đạt chuẩn Clean, Modular, Modern, Safe & Smart.
+Toàn bộ **37/37 modules** trong kế hoạch đặc tả [docs/SPEC.md](file:///d:/File_Website/web_tmđt/docs/SPEC.md), giao diện người dùng Mobile UI/UX Clean & Modular, cùng toàn bộ cấu hình phát hành Production Store (Phase 8) đã được hoàn tất 100%, sẵn sàng bàn giao và phát hành.
 
 ## Việc nợ & Đề xuất tương lai
 Xem [BACKLOG.md](file:///d:/File_Website/web_tmđt/docs/BACKLOG.md).
