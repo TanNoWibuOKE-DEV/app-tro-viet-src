@@ -21,6 +21,7 @@ import { RoommateMatchingScreen } from './RoommateMatchingScreen';
 import { ViewingHandoverModal } from './ViewingHandoverModal';
 import { AdminModerationScreen } from './AdminModerationScreen';
 import { LandlordPostScreen } from './LandlordPostScreen';
+import { EkycModal } from './EkycModal';
 import { UserRole, RentalContract, RentInvoice } from '@troviet/shared';
 
 interface MenuItemProps {
@@ -98,6 +99,7 @@ export const AuthOnboardingScreen: React.FC = () => {
   const [isRoommateMatchingOpen, setIsRoommateMatchingOpen] = useState(false);
   const [isHandoverOpen, setIsHandoverOpen] = useState(false);
   const [isL2ModalOpen, setIsL2ModalOpen] = useState(false);
+  const [isEkycOpen, setIsEkycOpen] = useState(false);
 
   // Admin pending counts
   const pendingListings = listings.filter((l) => l.status === 'pending_review').length;
@@ -258,6 +260,13 @@ export const AuthOnboardingScreen: React.FC = () => {
               : 'Gửi hồ sơ định danh nhận huy hiệu xanh'
           }
           onPress={() => setIsL2ModalOpen(true)}
+        />
+
+        <MenuItem
+          icon="📡"
+          title="Định danh điện tử eKYC (Quét chip NFC)"
+          subtitle="Quét thẻ CCCD gắn chip & xác thực khuôn mặt tức thì"
+          onPress={() => setIsEkycOpen(true)}
         />
 
         <MenuItem
@@ -427,6 +436,12 @@ export const AuthOnboardingScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
       </Modal>
+
+      {/* eKYC Chip NFC & Biometrics Modal */}
+      <EkycModal
+        visible={isEkycOpen}
+        onClose={() => setIsEkycOpen(false)}
+      />
     </ScrollView>
   );
 };

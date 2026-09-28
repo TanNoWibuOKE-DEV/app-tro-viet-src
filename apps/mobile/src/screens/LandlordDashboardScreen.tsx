@@ -18,6 +18,7 @@ import {
   formatVND,
   calculateMonthlyInvoice,
   generateVietQRLink,
+  calculateLandlordFinancialSummary,
 } from '@troviet/shared';
 import { ContractDetailModal } from './ContractDetailModal';
 import { InvoiceDetailModal } from './InvoiceDetailModal';
@@ -35,13 +36,31 @@ export const LandlordDashboardScreen: React.FC<LandlordDashboardScreenProps> = (
   const { colors, isDark } = useTheme();
   const { contracts, invoices, createInvoice } = useApp();
 
-  const [activeTab, setActiveTab] = useState<'contracts' | 'invoices'>('contracts');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'contracts' | 'invoices'>('analytics');
 
   // Modals state
   const [selectedContract, setSelectedContract] = useState<RentalContract | null>(null);
   const [selectedInvoice, setSelectedInvoice] = useState<RentInvoice | null>(null);
   const [showAreaInsights, setShowAreaInsights] = useState(false);
   const [showCreateInvoiceModal, setShowCreateInvoiceModal] = useState(false);
+
+  // Financial analytics calculation
+  const financialSummary = useMemo(() => {
+    return calculateLandlordFinancialSummary({
+      landlordId: 'u-landlord-1',
+      contracts,
+      invoices,
+      totalManagedRooms: Math.max(contracts.length + 1, 4),
+      periodMonthYear: '10/2026',
+    });
+  }, [contracts, invoices]);
+
+  const handleExportFinancialReport = () => {
+    Alert.alert(
+      '📊 Báo cáo Tài chính Chủ trọ',
+      `[Tháng 10/2026]\n\n• Doanh thu dự kiến: ${formatVND(financialSummary.totalExpectedRevenue)}\n• Thực thu đã về: ${formatVND(financialSummary.totalCollectedRevenue)}\n• Chưa thu / Công nợ: ${formatVND(financialSummary.totalPendingRevenue + financialSummary.totalOverdueRevenue)}\n• Tỷ lệ lấp đầy: ${financialSummary.occupancyRatePercent}%\n• Tỷ lệ thu đúng hạn: ${financialSummary.onTimeCollectionRatePercent}%\n\nDữ liệu đã sẵn sàng để xuất báo cáo kế toán.`
+    );
+  };
 
   // New Invoice form state
   const [newInvContractId, setNewInvContractId] = useState<string>(contracts[0]?.id || '');
@@ -174,6 +193,23 @@ export const LandlordDashboardScreen: React.FC<LandlordDashboardScreenProps> = (
           {/* Navigation Tabs */}
           <View style={[styles.tabBar, { backgroundColor: isDark ? '#1F2937' : '#F1F3F4' }]}>
             <TouchableOpacity
+              onPress={() => setActiveTab('analytics')}
+              style={[
+                styles.tabBtn,
+                activeTab === 'analytics' && { backgroundColor: colors.card, shadowColor: '#000', elevation: 2 },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.tabText,
+                  { color: activeTab === 'analytics' ? colors.primary : colors.textSecondary, fontWeight: activeTab === 'analytics' ? '700' : '500' },
+                ]}
+              >
+                📊 Tài chính
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
               onPress={() => setActiveTab('contracts')}
               style={[
                 styles.tabBtn,
@@ -207,6 +243,86 @@ export const LandlordDashboardScreen: React.FC<LandlordDashboardScreenProps> = (
               </Text>
             </TouchableOpacity>
           </View>
+
+          {/* Analytics Tab Content */}
+          {activeTab === 'analytics' && (
+            <View>
+              {/* Financial Summary Cards */}
+              <View style={[styles.finCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={styles.finHeaderRow}>
+                  <Text style={[styles.finHeading, { color: colors.textPrimary }]}>Dòng tiền tháng {financialSummary.periodMonthYear}</Text>
+                  <TouchableOpacity onPress={handleExportFinancialReport} style={[styles.exportBtn, { borderColor: colors.primary }]}>
+                    <Text style={[styles.exportBtnText, { color: colors.primary }]}>📥 Báo cáo</Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.finGrid}>
+                  <View style={[styles.finTile, { backgroundColor: colors.background }]}>
+                    <Text style={[styles.finTileLabel, { color: colors.textSecondary }]}>Thực thu đã về</Text>
+                    <Text style={[styles.finTileVal, { color: '#137333' }]}>{formatVND(financialSummary.totalCollectedRevenue)}</Text>
+                    <Text style={[styles.finTileSub, { color: colors.textSecondary }]}>Đã gạch nợ VietQR</Text>
+                  </View>
+
+                  <View style={[styles.finTile, { backgroundColor: colors.background }]}>
+                    <Text style={[styles.finTileLabel, { color: colors.textSecondary }]}>Chưa thu / Nợ</Text>
+                    <Text style={[styles.finTileVal, { color: '#B06000' }]}>{formatVND(financialSummary.totalPendingRevenue + financialSummary.totalOverdueRevenue)}</Text>
+                    <Text style={[styles.finTileSub, { color: colors.textSecondary }]}>{financialSummary.overdueAlerts.length} hóa đơn quá hạn</Text>
+                  </View>
+
+                  <View style={[styles.finTile, { backgroundColor: colors.background }]}>
+                    <Text style={[styles.finTileLabel, { color: colors.textSecondary }]}>Tỷ lệ lấp đầy</Text>
+                    <Text style={[styles.finTileVal, { color: colors.primary }]}>{financialSummary.occupancyRatePercent}%</Text>
+                    <Text style={[styles.finTileSub, { color: colors.textSecondary }]}>{financialSummary.occupiedRooms}/{financialSummary.totalRooms} phòng đã thuê</Text>
+                  </View>
+
+                  <View style={[styles.finTile, { backgroundColor: colors.background }]}>
+                    <Text style={[styles.finTileLabel, { color: colors.textSecondary }]}>Đúng hạn</Text>
+                    <Text style={[styles.finTileVal, { color: '#00897B' }]}>{financialSummary.onTimeCollectionRatePercent}%</Text>
+                    <Text style={[styles.finTileSub, { color: colors.textSecondary }]}>Chỉ số uy tín thu</Text>
+                  </View>
+                </View>
+              </View>
+
+              {/* Revenue Breakdown */}
+              <View style={[styles.finCard, { backgroundColor: colors.card, borderColor: colors.border, marginTop: 12 }]}>
+                <Text style={[styles.finHeading, { color: colors.textPrimary, marginBottom: 12 }]}>Cơ cấu nguồn thu dự kiến</Text>
+                
+                <View style={styles.breakdownRow}>
+                  <Text style={[styles.breakdownKey, { color: colors.textPrimary }]}>🏠 Tiền thuê phòng:</Text>
+                  <Text style={[styles.breakdownVal, { color: colors.textPrimary }]}>{formatVND(financialSummary.breakdown.rentAmount)}</Text>
+                </View>
+                <View style={styles.breakdownRow}>
+                  <Text style={[styles.breakdownKey, { color: colors.textPrimary }]}>💡 Tiền điện công tơ:</Text>
+                  <Text style={[styles.breakdownVal, { color: colors.textPrimary }]}>{formatVND(financialSummary.breakdown.electricityAmount)}</Text>
+                </View>
+                <View style={styles.breakdownRow}>
+                  <Text style={[styles.breakdownKey, { color: colors.textPrimary }]}>💧 Tiền nước sinh hoạt:</Text>
+                  <Text style={[styles.breakdownVal, { color: colors.textPrimary }]}>{formatVND(financialSummary.breakdown.waterAmount)}</Text>
+                </View>
+                <View style={styles.breakdownRow}>
+                  <Text style={[styles.breakdownKey, { color: colors.textPrimary }]}>📶 Internet & Dịch vụ:</Text>
+                  <Text style={[styles.breakdownVal, { color: colors.textPrimary }]}>{formatVND(financialSummary.breakdown.serviceAmount)}</Text>
+                </View>
+              </View>
+
+              {/* 6-Month Trend */}
+              <View style={[styles.finCard, { backgroundColor: colors.card, borderColor: colors.border, marginTop: 12 }]}>
+                <Text style={[styles.finHeading, { color: colors.textPrimary, marginBottom: 12 }]}>Xu hướng doanh thu 6 tháng gần nhất</Text>
+                {financialSummary.trend6Months.map((item) => {
+                  const percent = item.expectedAmount > 0 ? Math.min(100, Math.round((item.collectedAmount / item.expectedAmount) * 100)) : 0;
+                  return (
+                    <View key={item.monthYear} style={styles.trendRow}>
+                      <Text style={[styles.trendMonth, { color: colors.textSecondary }]}>{item.monthYear}</Text>
+                      <View style={[styles.trendBarBg, { backgroundColor: isDark ? '#1F2937' : '#E2E8F0' }]}>
+                        <View style={[styles.trendBarFill, { width: `${percent}%`, backgroundColor: colors.primary }]} />
+                      </View>
+                      <Text style={[styles.trendVal, { color: colors.textPrimary }]}>{formatVND(item.collectedAmount)}</Text>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          )}
 
           {/* Contracts Tab Content */}
           {activeTab === 'contracts' && (
@@ -654,5 +770,93 @@ const styles = StyleSheet.create({
   inputSub: {
     fontSize: 11,
     marginBottom: 4,
+  },
+  finCard: {
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 16,
+  },
+  finHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  finHeading: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  exportBtn: {
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+  },
+  exportBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  finGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  finTile: {
+    width: '48%',
+    borderRadius: 10,
+    padding: 12,
+  },
+  finTileLabel: {
+    fontSize: 11.5,
+    marginBottom: 4,
+  },
+  finTileVal: {
+    fontSize: 16,
+    fontWeight: '800',
+    marginBottom: 2,
+  },
+  finTileSub: {
+    fontSize: 10.5,
+  },
+  breakdownRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#E2E8F0',
+  },
+  breakdownKey: {
+    fontSize: 13,
+  },
+  breakdownVal: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  trendRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    gap: 8,
+  },
+  trendMonth: {
+    width: 60,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  trendBarBg: {
+    flex: 1,
+    height: 10,
+    borderRadius: 5,
+    overflow: 'hidden',
+  },
+  trendBarFill: {
+    height: '100%',
+    borderRadius: 5,
+  },
+  trendVal: {
+    width: 90,
+    fontSize: 11.5,
+    fontWeight: '700',
+    textAlign: 'right',
   },
 });
