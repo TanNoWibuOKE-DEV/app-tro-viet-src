@@ -37,3 +37,5 @@ export * from './monetization/subscriptions.js';
 export * from './services/moving-calculator.js';
 export * from './legal/utility-regulations.js';
 export * from './community/flood-risk.js';
+export * from './community/campus.js';
+export * from './community/transfer-pass.js';

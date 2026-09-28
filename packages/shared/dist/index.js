@@ -53,3 +53,5 @@ __exportStar(require("./monetization/subscriptions.js"), exports);
 __exportStar(require("./services/moving-calculator.js"), exports);
 __exportStar(require("./legal/utility-regulations.js"), exports);
 __exportStar(require("./community/flood-risk.js"), exports);
+__exportStar(require("./community/campus.js"), exports);
+__exportStar(require("./community/transfer-pass.js"), exports);
