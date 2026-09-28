@@ -22,6 +22,8 @@ import { ViewingHandoverModal } from './ViewingHandoverModal';
 import { AdminModerationScreen } from './AdminModerationScreen';
 import { LandlordPostScreen } from './LandlordPostScreen';
 import { EkycModal } from './EkycModal';
+import { TenantLifeHubModal } from './TenantLifeHubModal';
+import { LegalAssistantModal } from './LegalAssistantModal';
 import { UserRole, RentalContract, RentInvoice } from '@troviet/shared';
 
 interface MenuItemProps {
@@ -100,6 +102,8 @@ export const AuthOnboardingScreen: React.FC = () => {
   const [isHandoverOpen, setIsHandoverOpen] = useState(false);
   const [isL2ModalOpen, setIsL2ModalOpen] = useState(false);
   const [isEkycOpen, setIsEkycOpen] = useState(false);
+  const [isTenantLifeHubOpen, setIsTenantLifeHubOpen] = useState(false);
+  const [isLegalAssistantOpen, setIsLegalAssistantOpen] = useState(false);
 
   // Admin pending counts
   const pendingListings = listings.filter((l) => l.status === 'pending_review').length;
@@ -243,6 +247,20 @@ export const AuthOnboardingScreen: React.FC = () => {
           subtitle="Biểu đồ xu hướng giá 6 tháng tại các phường"
           onPress={() => setIsAreaInsightsOpen(true)}
         />
+
+        <MenuItem
+          icon="🚚"
+          title="Tiện ích sinh hoạt & Chuyển trọ"
+          subtitle="Dự toán chuyển trọ, dọn phòng & sửa chữa điện nước"
+          onPress={() => setIsTenantLifeHubOpen(true)}
+        />
+
+        <MenuItem
+          icon="⚖️"
+          title="Trợ lý pháp lý & Đối soát giá điện nước"
+          subtitle="Kiểm tra biểu giá EVN 6 bậc & Soạn thư đàm phán hoàn cọc"
+          onPress={() => setIsLegalAssistantOpen(true)}
+        />
       </View>
 
       {/* 3. Group: Tài khoản & Bảo mật (Section 27) */}
@@ -363,6 +381,20 @@ export const AuthOnboardingScreen: React.FC = () => {
       <ViewingHandoverModal
         visible={isHandoverOpen}
         onClose={() => setIsHandoverOpen(false)}
+      />
+
+      <TenantLifeHubModal
+        visible={isTenantLifeHubOpen}
+        onClose={() => setIsTenantLifeHubOpen(false)}
+        tenantId={currentUser?.id}
+        tenantName={currentUser?.fullName}
+      />
+
+      <LegalAssistantModal
+        visible={isLegalAssistantOpen}
+        onClose={() => setIsLegalAssistantOpen(false)}
+        tenantName={currentUser?.fullName}
+        tenantPhone={currentUser?.phoneNumber}
       />
 
       {/* Admin Moderation Modal */}
