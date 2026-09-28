@@ -1,9 +1,13 @@
 # Trọ Việt — Tiến độ
 
-**Phase hiện tại:** Phase 10 — Nền tảng Doanh nghiệp & Vận hành Chuyên sâu (Enterprise Operations & Identity Intelligence)
-**Trạng thái:** Đã hoàn thành toàn diện (96/96 tests pass across 27 suites, 0 lỗi TypeScript)
+**Phase hiện tại:** Phase 11 — Đặt Cọc Ký Quỹ An Toàn & Thương Mại Hóa Dịch Vụ Chủ Trọ (Secure Deposit Escrow & Landlord Monetization)
+**Trạng thái:** Đã hoàn thành toàn diện (113/113 tests pass across 29 suites, 0 lỗi TypeScript)
 
-## Quyết định đã chốt (Sau Phase 10)
+## Quyết định đã chốt (Sau Phase 11)
+- **Giao thức Đặt cọc ký quỹ an toàn 48h (Secure Deposit Escrow Protocol):** Bảo vệ người thuê trước rủi ro lừa đảo cọc ảo hoặc mất cọc oan uổng; bảo vệ chủ trọ khỏi việc giữ phòng cho khách không nghiêm túc. Tiền cọc chuyển vào tài khoản ký quỹ trung gian đảm bảo qua VietQR Napas với mã cọc `DEP...`. Khoản cọc được khóa 48 giờ và chỉ giải ngân cho chủ trọ khi người thuê xác nhận đã đến xem thực tế và ký biên bản bàn giao phòng, hoặc hoàn tiền 100% khi phát sinh khiếu nại phòng sai sự thật. Tích hợp màn hình `DepositEscrowModal.tsx` ngay tại Chi tiết phòng.
+- **Thương mại hóa & Hệ thống Tin VIP Chủ trọ (Landlord VIP Subscriptions & Monetization):** Hiện thực hóa mô hình doanh thu với 4 phân cấp tin rõ ràng: Tin thường (Miễn phí), VIP 1 (Nổi bật khu vực - Viền đồng, 50.000 ₫/30 ngày), VIP 2 (Top danh mục - Viền bạc, 120.000 ₫/30 ngày), VIP Kim Cương (Ghim trang chủ & Đẩy push thông báo - Viền xanh/vàng, 250.000 ₫/30 ngày). Kích hoạt gói tức thì qua VietQR mã `PKG...` và tích hợp `ListingPromotionModal.tsx` trên Bảng điều khiển Chủ trọ.
+- **Thuật toán Xếp hạng Ưu tiên Tin đăng (Listing Ranking Score):** Kết hợp hài hòa giữa Điểm tin cậy cốt lõi (Trust/Safety) và hệ số nhân của gói VIP (`searchRankingMultiplier` 1.0 -> 2.6) cùng độ tươi mới của tin đăng, đảm bảo trải nghiệm tìm kiếm công bằng, an toàn và tối ưu doanh thu.
+- **Nâng cấp CSDL v8:** Migration `20260924000008_phase11_escrow_subscriptions.sql` và script rollback hoàn chỉnh. Quản lý hồ sơ ký quỹ cọc (`deposit_escrows`), quản lý gói cước chủ trọ (`landlord_subscriptions`) với đầy đủ chính sách RLS.
 - **Định danh điện tử eKYC CCCD Gắn Chip & Chống giả mạo sinh trắc học (eKYC & Anti-Spoofing):** Xác thực định dạng CCCD 12 chữ số theo quy chuẩn Bộ Công An (mã tỉnh 3 số, thế kỷ/giới tính 1 số, năm sinh 2 số, số ngẫu nhiên 6 số), kiểm tra điều kiện đủ 18 tuổi. Áp dụng chuẩn bảo mật dữ liệu cá nhân theo Luật 91/2025/QH15: không lưu số CCCD thô, chỉ lưu mã băm SHA-256 và che mờ dạng `********1234`. Đánh giá chống giả mạo bằng phát hiện chuyển động sống (Liveness detection), độ tương đồng khuôn mặt (Face match >= 85%) và xác thực tính toàn vẹn chữ ký số chip NFC. Tích hợp luồng trải nghiệm eKYC trực quan qua `EkycModal.tsx` trên tab Cá nhân.
 - **Phân tích tài chính & Quản trị dòng tiền Chủ trọ (Landlord Financial Analytics & Cash Flow Engine):** Đo lường tổng doanh thu dự kiến, số tiền thực thu, công nợ tồn đọng, tỷ lệ thu hồi tiền trọ (`collectionRate`), tỷ lệ lấp đầy phòng (`occupancyRate`). Bóc tách cấu trúc doanh thu chi tiết (tiền thuê phòng, tiền điện, tiền nước, tiền dịch vụ/internet), biểu đồ xu hướng dòng tiền 6 tháng qua và hệ thống cảnh báo người thuê quá hạn cần đốc thúc. Tích hợp tab Phân tích tài chính trên Bảng điều khiển Chủ trọ `LandlordDashboardScreen.tsx`.
 - **Nâng cấp CSDL v7 (Enterprise Schema & Audit):** Migration `20260924000007_phase10_enterprise_v7.sql` và script rollback hoàn chỉnh. Quản lý thiết bị nhận thông báo đẩy (`push_tokens`), lưu trữ nhật ký đối soát ngân hàng mở (`bank_transactions`), quản lý hồ sơ định danh điện tử an toàn (`ekyc_verifications`) với đầy đủ phân quyền Row Level Security (RLS).
@@ -113,8 +117,15 @@
   - Giao diện di động tích hợp: Modal định danh điện tử `EkycModal.tsx` mô phỏng quét vi mạch NFC và kiểm tra sinh trắc sống, tích hợp nút xác thực eKYC ngay tại tab Cá nhân (`AuthOnboardingScreen.tsx`); Bổ sung tab Phân tích tài chính chuyên sâu với biểu đồ phân bổ dòng tiền trên Bảng điều khiển Chủ trọ (`LandlordDashboardScreen.tsx`).
   - Bộ kiểm thử chất lượng toàn diện: Đạt **96/96 tests pass across 27 suites**, 0 lỗi TypeScript trên toàn bộ Monorepo.
 
+- **Phase 11 — Đặt Cọc Ký Quỹ An Toàn & Thương Mại Hóa Dịch Vụ Chủ Trọ (Secure Deposit Escrow & Landlord Monetization):**
+  - Migration CSDL v8 (`20260924000008_phase11_escrow_subscriptions.sql` & rollback script): Khởi tạo các bảng `deposit_escrows`, `landlord_subscriptions` kèm các ràng buộc toàn vẹn, chỉ mục hiệu năng cao và phân quyền bảo mật RLS chặt chẽ.
+  - Bộ máy Giao thức Ký quỹ cọc an toàn (`createDepositEscrow`, `releaseDepositEscrow`, `disputeDepositEscrow`, `resolveDisputedEscrow`, `checkEscrowExpiry`): Khóa giữ tiền cọc 48h trên tài khoản trung gian đảm bảo qua VietQR với cú pháp `DEP...`, tự động giải ngân cho chủ trọ khi người thuê xác nhận đã đến xem và ký biên bản bàn giao, hoặc hoàn tiền 100% khi khiếu nại phòng sai sự thật.
+  - Bộ máy Gói dịch vụ VIP & Xếp hạng ưu tiên (`SUBSCRIPTION_PLANS`, `createSubscriptionOrder`, `calculateListingRankingScore`, `activateSubscriptionPayment`): Quản lý 4 phân cấp tin (Tin thường, VIP 1 Đồng, VIP 2 Bạc, VIP Kim Cương) với hệ số xếp hạng x1.0 - x2.6, sinh mã thanh toán VietQR `PKG...`.
+  - Giao diện di động tích hợp: Modal Đặt cọc giữ phòng an toàn `DepositEscrowModal.tsx` trên màn hình Chi tiết phòng; Modal Nâng cấp tin VIP `ListingPromotionModal.tsx` trên Bảng điều khiển Chủ trọ; Huy hiệu VIP lấp lánh và thuật toán sắp xếp ưu tiên tin VIP trên Trang chủ `HomeScreen.tsx` và thẻ phòng `ListingCard.tsx`.
+  - Bộ kiểm thử chất lượng toàn diện: Đạt **113/113 tests pass across 29 suites**, 0 lỗi TypeScript trên toàn bộ Monorepo.
+
 ## Trạng thái dự án
-Toàn bộ **37/37 modules** trong kế hoạch đặc tả [docs/SPEC.md](file:///d:/File_Website/web_tmđt/docs/SPEC.md), giao diện người dùng Mobile UI/UX Clean & Modular, cấu hình phát hành Production Store (Phase 8), bộ năng lực vận hành thực tế toàn quốc 3 miền (Phase 9), và Nền tảng Doanh nghiệp & Vận hành Chuyên sâu (Phase 10) đã được hoàn tất 100%, sẵn sàng triển khai thực địa.
+Toàn bộ **37/37 modules** trong kế hoạch đặc tả [docs/SPEC.md](file:///d:/File_Website/web_tmđt/docs/SPEC.md), giao diện người dùng Mobile UI/UX Clean & Modular, cấu hình phát hành Production Store (Phase 8), bộ năng lực vận hành thực tế toàn quốc 3 miền (Phase 9), Nền tảng Doanh nghiệp & Vận hành Chuyên sâu (Phase 10), và Đặt Cọc Ký Quỹ An Toàn & Thương Mại Hóa Dịch Vụ Chủ Trọ (Phase 11) đã được hoàn tất 100%, sẵn sàng triển khai thực địa.
 
 ## Việc nợ & Đề xuất tương lai
 Xem [BACKLOG.md](file:///d:/File_Website/web_tmđt/docs/BACKLOG.md).
