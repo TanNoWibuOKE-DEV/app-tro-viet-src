@@ -1,9 +1,13 @@
 # Trọ Việt — Tiến độ
 
-**Phase hiện tại:** Phase 12 — Hệ Sinh Thái Tiện Ích Sinh Hoạt & Trợ Lý Pháp Lý Trọ (Tenant Life Hub & Legal Concierge)
-**Trạng thái:** Đã hoàn thành toàn diện (126/126 tests pass across 31 suites, 0 lỗi TypeScript)
+**Phase hiện tại:** Phase 13 — Cụm Cộng Đồng Sinh Viên, Bản Đồ Cảnh Báo Ngập Lụt & Chợ Sang Nhượng Trọ (Campus Hub, Flood Risk Alerts & Room Transfer)
+**Trạng thái:** Đã hoàn thành toàn diện (135/135 tests pass across 33 suites, 0 lỗi TypeScript)
 
-## Quyết định đã chốt (Sau Phase 12)
+## Quyết định đã chốt (Sau Phase 13)
+- **Bản đồ Cảnh báo Ngập lụt Đô thị Mùa Mưa (Crowdsourced Flood Risk & Monsoon Safety Engine):** Tự động đo lường chỉ số an toàn ngập lụt (`FloodSafetyScore` 0–100) theo khoảng cách thực tế đến các điểm trũng lịch sử và báo cáo cộng đồng tại Đà Nẵng (Đường Mẹ Suốt, Quang Trung), Hà Nội (Trần Thái Tông/Duy Tân, Phùng Khoang), TP.HCM (Làng ĐH Thủ Đức, Đinh Bộ Lĩnh). Thuật toán phân tách rõ rệt giữa phòng tầng trệt (nguy cơ nước tràn) và phòng tầng 2 trở lên (an toàn khô ráo, cộng điểm an toàn +18). Tích hợp thẻ cảnh báo ngập lụt trên `PropertyDetailModal.tsx` và bản đồ cộng đồng `FloodRiskMapModal.tsx`.
+- **Cụm Cung ứng Học đường & Cẩm nang Sinh viên (Campus Community Hub):** Kết nối phòng trọ theo bán kính các cụm trường Đại học trọng điểm (ĐH Bách Khoa, ĐH Kinh Tế, ĐH Duy Tân tại Đà Nẵng; ĐHQG Cầu Giấy, ĐH Bách Khoa tại Hà Nội; ĐHQG Làng ĐH, HUTECH tại TP.HCM). Cung cấp mức giá thuê sinh viên trung bình quanh từng trường và cẩm nang kinh nghiệm thuê trọ thực địa.
+- **Sàn Sang Nhượng Trọ & Chợ Pass Đồ Sinh Viên (Room Transfers & Pass Marketplace):** Hỗ trợ khách thuê đổi chỗ ở sang nhượng hợp đồng trọ để thu hồi tiền cọc gốc minh bạch (mã `TRF...`). Chợ đồ dùng sinh viên thanh lý / tặng miễn phí (quạt điện, đệm gấp, bàn học, tủ lạnh mini) với mã `PASS...` và trạng thái còn hàng/đã bán.
+- **Nâng cấp CSDL v10:** Migration `20260924000010_phase13_campus_community.sql` và script rollback hoàn chỉnh. Quản lý điểm ngập lụt (`flood_risk_reports`), tin sang nhượng (`room_transfers`), đồ thanh lý sinh viên (`student_pass_items`) với đầy đủ phân quyền Row Level Security (RLS).
 - **Máy tính & Dự toán Chuyển trọ Minh bạch (Moving Calculator Engine):** Chuẩn hóa biểu cước 3 nhóm phương tiện di chuyển phòng trọ: Xe ba gác máy (150.000 ₫/4km đầu, 18.000 ₫/km thêm), Xe tải nhỏ 750kg (250.000 ₫/4km đầu, 22.000 ₫/km thêm), Xe tải lớn 1.25 tấn (380.000 ₫/4km đầu, 28.000 ₫/km thêm). Tính toán chính xác phụ phí khiêng vác thang bộ (50.000 ₫/tầng lầu khi không có thang máy), phụ phí bốc xếp trọn gói 2 đầu và phụ thu thiết bị cồng kềnh (tủ lạnh lớn, máy giặt, giường tủ tháo ráp, két sắt). Tích hợp màn hình `TenantLifeHubModal.tsx` và cơ chế sinh mã đặt chỗ `SRV...`.
 - **Hệ thống Tiện ích Sinh hoạt Trọ (Tenant Life Services):** Đặt lịch nhanh dịch vụ vệ sinh phòng trọ (tẩy ố sàn, lau kính, khử mùi), sửa chữa điện nước & chống rò rỉ, bảo dưỡng máy lạnh nạp gas và giặt sấy lấy liền với các đội thợ địa phương đã xác minh danh tính.
 - **Biểu giá Nhà nước & Định mức Điện Sinh hoạt EVN (Utility Regulations Engine):** Áp dụng chuẩn biểu giá bán lẻ điện sinh hoạt 6 bậc thang chính thức của EVN theo Quyết định 2941/QĐ-BCT và Thông tư 09/2023/TT-BCT (cứ 4 người thuê tính 1 định mức hộ gia đình). Tự động nhân cấp định mức theo số lượng khách thuê và đối soát số tiền điện chênh lệch nộp thừa so với biểu giá nhà nước.
@@ -137,8 +141,15 @@
   - Giao diện di động tích hợp: Modal Tiện ích sinh hoạt & Chuyển trọ `TenantLifeHubModal.tsx` và Modal Trợ lý pháp lý & Đối soát giá điện nước `LegalAssistantModal.tsx` tích hợp trực tiếp vào tab Cá nhân `AuthOnboardingScreen.tsx`.
   - Bộ kiểm thử chất lượng toàn diện: Đạt **126/126 tests pass across 31 suites**, 0 lỗi TypeScript trên toàn bộ Monorepo.
 
+- **Phase 13 — Cụm Cộng Đồng Sinh Viên, Bản Đồ Cảnh Báo Ngập Lụt & Chợ Sang Nhượng Trọ (Campus Hub, Flood Risk Alerts & Room Transfer):**
+  - Migration CSDL v10 (`20260924000010_phase13_campus_community.sql` & rollback script): Khởi tạo các bảng `flood_risk_reports`, `room_transfers`, `student_pass_items` kèm các chỉ mục hiệu năng cao và phân quyền bảo mật RLS tuyệt đối.
+  - Bộ máy Cảnh báo Ngập lụt Đô thị (`assessPropertyFloodRisk`, `createFloodReport`, `upvoteFloodReport`): Phân tích điểm trũng lịch sử mùa mưa và báo cáo cộng đồng, đo lường điểm an toàn ngập lụt (`FloodSafetyScore` 0–100), phân cấp rõ ràng rủi ro ngập phòng trệt vs an toàn tầng lầu.
+  - Bộ máy Cụm Trường Đại học & Sang nhượng trọ / Pass đồ (`getCampusesByCity`, `findNearestCampus`, `createRoomTransfer`, `calculateTransferSavings`, `createStudentPassItem`, `filterPassItems`): Hỗ trợ sinh viên định vị trọ quanh trường, nhượng lại hợp đồng trọ thu hồi cọc gốc và chợ đồ dùng sinh viên thanh lý/cho tặng.
+  - Giao diện di động tích hợp: Modal Cảnh báo ngập lụt `FloodRiskMapModal.tsx` và Modal Cụm sinh viên & Chợ pass đồ `CampusHubModal.tsx`, tích hợp thẻ an toàn ngập lụt trên Chi tiết phòng `PropertyDetailModal.tsx` và menu cá nhân `AuthOnboardingScreen.tsx`.
+  - Bộ kiểm thử chất lượng toàn diện: Đạt **135/135 tests pass across 33 suites**, 0 lỗi TypeScript trên toàn bộ Monorepo.
+
 ## Trạng thái dự án
-Toàn bộ kế hoạch đặc tả [docs/SPEC.md](file:///d:/File_Website/web_tmđt/docs/SPEC.md), cấu hình phát hành Production Store (Phase 8), bộ năng lực vận hành thực tế toàn quốc 3 miền (Phase 9), Nền tảng Doanh nghiệp (Phase 10), Đặt Cọc Ký Quỹ An Toàn & Thương Mại Hóa (Phase 11), và Hệ Sinh Thái Tiện Ích Sinh Hoạt & Trợ Lý Pháp Lý Trọ (Phase 12) đã được hoàn tất 100%, sẵn sàng phục vụ cộng đồng thuê trọ Việt Nam.
+Toàn bộ kế hoạch đặc tả [docs/SPEC.md](file:///d:/File_Website/web_tmđt/docs/SPEC.md), cấu hình phát hành Production Store (Phase 8), bộ năng lực vận hành thực tế toàn quốc 3 miền (Phase 9), Nền tảng Doanh nghiệp (Phase 10), Đặt Cọc Ký Quỹ An Toàn & Thương Mại Hóa (Phase 11), Hệ Sinh Thái Tiện Ích Sinh Hoạt & Trợ Lý Pháp Lý (Phase 12), và Cụm Cộng Đồng Sinh Viên, Bản Đồ Cảnh Báo Ngập Lụt & Chợ Sang Nhượng Trọ (Phase 13) đã được hoàn tất 100%, sẵn sàng phục vụ cộng đồng thuê trọ Việt Nam.
 
 ## Việc nợ & Đề xuất tương lai
 Xem [BACKLOG.md](file:///d:/File_Website/web_tmđt/docs/BACKLOG.md).
