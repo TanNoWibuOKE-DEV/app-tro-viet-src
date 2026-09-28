@@ -2,7 +2,7 @@ import React from 'react';
 import { TouchableOpacity, View, Text, StyleSheet } from 'react-native';
 import { useTheme } from '../theme/ThemeContext';
 import { useApp } from '../context/AppContext';
-import { ListingSummary, formatVND, formatArea } from '@troviet/shared';
+import { ListingSummary, formatVND, formatArea, SUBSCRIPTION_PLANS } from '@troviet/shared';
 
 interface ListingCardProps {
   listing: ListingSummary;
@@ -21,6 +21,11 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, onPress }) =>
   const { isFavorite, toggleFavorite } = useApp();
   const favorited = isFavorite(listing.id);
 
+  const vipPlan =
+    listing.vipTier && listing.vipTier !== 'free'
+      ? SUBSCRIPTION_PLANS[listing.vipTier]
+      : null;
+
   const isVerified =
     listing.landlordVerificationLevel === 'L2' ||
     listing.landlordVerificationLevel === 'L3';
@@ -36,7 +41,8 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, onPress }) =>
         styles.card,
         {
           backgroundColor: colors.card,
-          borderColor: colors.border,
+          borderColor: vipPlan ? vipPlan.color : colors.border,
+          borderWidth: vipPlan ? 1.5 : 1,
         },
       ]}
       onPress={onPress}
@@ -51,6 +57,15 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, onPress }) =>
             {PROPERTY_TYPE_NAMES[listing.propertyType] || 'Phòng trọ'}
           </Text>
         </View>
+
+        {/* VIP Badge (Top Left) */}
+        {vipPlan && (
+          <View style={[styles.vipBadge, { backgroundColor: vipPlan.color }]}>
+            <Text style={styles.vipBadgeText}>
+              {vipPlan.badgeIcon} {vipPlan.badge}
+            </Text>
+          </View>
+        )}
 
         {/* Favorite Heart Button (Top Right) */}
         <TouchableOpacity
@@ -151,6 +166,25 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 2,
     elevation: 2,
+  },
+  vipBadge: {
+    position: 'absolute',
+    top: 10,
+    left: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    zIndex: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  vipBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: 'bold',
   },
   pendingTag: {
     position: 'absolute',

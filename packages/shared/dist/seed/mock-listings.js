@@ -42,6 +42,7 @@ exports.MOCK_LISTINGS = [
             serviceCost: 30000,
         },
         createdAt: '2026-09-20T08:00:00Z',
+        vipTier: 'vip_diamond',
     },
     {
         id: 'l-002',
@@ -84,6 +85,7 @@ exports.MOCK_LISTINGS = [
             serviceCost: 100000,
         },
         createdAt: '2026-09-22T09:30:00Z',
+        vipTier: 'vip_silver',
     },
     {
         id: 'l-003',

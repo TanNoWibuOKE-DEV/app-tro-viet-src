@@ -17,6 +17,7 @@ import { ChatRoomModal } from './ChatRoomModal';
 import { ViewingChecklistModal } from './ViewingChecklistModal';
 import { LandlordVerificationModal } from './LandlordVerificationModal';
 import { InteractiveCostCalculatorModal } from '../components/InteractiveCostCalculatorModal';
+import { DepositEscrowModal } from './DepositEscrowModal';
 import {
   ListingSummary,
   formatArea,
@@ -66,6 +67,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
   const [isCostCalculatorOpen, setIsCostCalculatorOpen] = useState(false);
   const [isWriteReviewOpen, setIsWriteReviewOpen] = useState(false);
   const [isTrustFactorsOpen, setIsTrustFactorsOpen] = useState(false);
+  const [isDepositEscrowOpen, setIsDepositEscrowOpen] = useState(false);
   const [showPhone, setShowPhone] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
@@ -495,7 +497,17 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
       </ScrollView>
 
       {/* 9. Fixed Bottom Bar (Section 23) */}
+      {/* 9. Fixed Bottom Bar (Section 23) */}
       <View style={[styles.bottomBar, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
+        <TouchableOpacity
+          style={[styles.scheduleBtn, { borderColor: '#10B981', backgroundColor: isDark ? '#064E3B' : '#ECFDF5' }]}
+          onPress={() => setIsDepositEscrowOpen(true)}
+        >
+          <Text style={[styles.scheduleBtnText, { color: '#059669', fontWeight: 'bold' }]}>
+            🛡️ Cọc giữ chỗ
+          </Text>
+        </TouchableOpacity>
+
         <TouchableOpacity
           style={[styles.scheduleBtn, { borderColor: colors.primary }]}
           onPress={() => setIsChecklistOpen(true)}
@@ -509,7 +521,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
           style={[styles.chatBtn, { backgroundColor: colors.primary }]}
           onPress={handleStartChat}
         >
-          <Text style={styles.chatBtnText}>💬 Nhắn tin</Text>
+          <Text style={styles.chatBtnText}>💬 Chat</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -529,6 +541,12 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
       </View>
 
       {/* Sub-modals */}
+      <DepositEscrowModal
+        visible={isDepositEscrowOpen}
+        listing={listing}
+        onClose={() => setIsDepositEscrowOpen(false)}
+      />
+
       <InteractiveCostCalculatorModal
         visible={isCostCalculatorOpen}
         onClose={() => setIsCostCalculatorOpen(false)}

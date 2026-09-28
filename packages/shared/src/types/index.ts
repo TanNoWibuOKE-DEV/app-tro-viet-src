@@ -201,6 +201,7 @@ export interface ListingSummary {
   costs: ListingCosts;
   status: ListingStatus;
   createdAt: string;
+  vipTier?: 'free' | 'vip_bronze' | 'vip_silver' | 'vip_diamond';
 }
 
 // 5. Phase 3: Chat, Reviews, Reports, and Notifications

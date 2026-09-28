@@ -41,6 +41,7 @@ export const MOCK_LISTINGS: ListingSummary[] = [
       serviceCost: 30000,
     },
     createdAt: '2026-09-20T08:00:00Z',
+    vipTier: 'vip_diamond',
   },
   {
     id: 'l-002',
@@ -83,6 +84,7 @@ export const MOCK_LISTINGS: ListingSummary[] = [
       serviceCost: 100000,
     },
     createdAt: '2026-09-22T09:30:00Z',
+    vipTier: 'vip_silver',
   },
   {
     id: 'l-003',

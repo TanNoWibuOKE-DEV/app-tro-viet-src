@@ -19,10 +19,12 @@ import {
   calculateMonthlyInvoice,
   generateVietQRLink,
   calculateLandlordFinancialSummary,
+  ListingSummary,
 } from '@troviet/shared';
 import { ContractDetailModal } from './ContractDetailModal';
 import { InvoiceDetailModal } from './InvoiceDetailModal';
 import { AreaInsightsModal } from './AreaInsightsModal';
+import { ListingPromotionModal } from './ListingPromotionModal';
 
 interface LandlordDashboardScreenProps {
   visible: boolean;
@@ -34,13 +36,14 @@ export const LandlordDashboardScreen: React.FC<LandlordDashboardScreenProps> = (
   onClose,
 }) => {
   const { colors, isDark } = useTheme();
-  const { contracts, invoices, createInvoice } = useApp();
+  const { contracts, invoices, createInvoice, listings } = useApp();
 
   const [activeTab, setActiveTab] = useState<'analytics' | 'contracts' | 'invoices'>('analytics');
 
   // Modals state
   const [selectedContract, setSelectedContract] = useState<RentalContract | null>(null);
   const [selectedInvoice, setSelectedInvoice] = useState<RentInvoice | null>(null);
+  const [selectedListingForPromotion, setSelectedListingForPromotion] = useState<ListingSummary | null>(null);
   const [showAreaInsights, setShowAreaInsights] = useState(false);
   const [showCreateInvoiceModal, setShowCreateInvoiceModal] = useState(false);
 
@@ -159,9 +162,17 @@ export const LandlordDashboardScreen: React.FC<LandlordDashboardScreenProps> = (
             <Text style={[styles.closeText, { color: colors.primary }]}>← Đóng</Text>
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>Quản lý phòng & Hợp đồng</Text>
-          <TouchableOpacity onPress={() => setShowAreaInsights(true)} style={styles.insightsBtn}>
-            <Text style={[styles.insightsBtnText, { color: colors.primary }]}>📊 Thị trường</Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <TouchableOpacity
+              onPress={() => setSelectedListingForPromotion(listings[0] || null)}
+              style={styles.vipBtn}
+            >
+              <Text style={styles.vipBtnText}>💎 Gói VIP</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setShowAreaInsights(true)} style={styles.insightsBtn}>
+              <Text style={[styles.insightsBtnText, { color: colors.primary }]}>📊 Thị trường</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -564,6 +575,14 @@ export const LandlordDashboardScreen: React.FC<LandlordDashboardScreenProps> = (
             </ScrollView>
           </View>
         </Modal>
+
+        {selectedListingForPromotion && (
+          <ListingPromotionModal
+            visible={selectedListingForPromotion !== null}
+            listing={selectedListingForPromotion}
+            onClose={() => setSelectedListingForPromotion(null)}
+          />
+        )}
       </View>
     </Modal>
   );
@@ -593,6 +612,17 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 17,
     fontWeight: '700',
+  },
+  vipBtn: {
+    backgroundColor: '#3B82F6',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+  },
+  vipBtnText: {
+    color: '#FFF',
+    fontSize: 13,
+    fontWeight: 'bold',
   },
   insightsBtn: {
     paddingVertical: 6,

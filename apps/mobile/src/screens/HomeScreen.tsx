@@ -11,7 +11,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { useApp } from '../context/AppContext';
 import { ListingCard } from '../components/ListingCard';
 import { AISearchModal } from './AISearchModal';
-import { PropertyType } from '@troviet/shared';
+import { PropertyType, calculateListingRankingScore } from '@troviet/shared';
 
 const POPULAR_AREAS = [
   { label: 'Hải Châu (Đà Nẵng)', query: 'hai chau' },
@@ -51,13 +51,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     [listings]
   );
 
-  // Filter by category
+  // Filter by category and sort by VIP ranking score
   const filteredListings = useMemo(() => {
-    return publishedListings.filter((l) => {
+    const list = publishedListings.filter((l) => {
       if (selectedCategory !== 'all' && l.propertyType !== selectedCategory) {
         return false;
       }
       return true;
+    });
+
+    return [...list].sort((a, b) => {
+      const scoreA = calculateListingRankingScore(80, a.vipTier, a.createdAt);
+      const scoreB = calculateListingRankingScore(80, b.vipTier, b.createdAt);
+      return scoreB - scoreA;
     });
   }, [publishedListings, selectedCategory]);
 

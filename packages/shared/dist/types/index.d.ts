@@ -159,6 +159,7 @@ export interface ListingSummary {
     costs: ListingCosts;
     status: ListingStatus;
     createdAt: string;
+    vipTier?: 'free' | 'vip_bronze' | 'vip_silver' | 'vip_diamond';
 }
 export interface Conversation {
     id: string;
