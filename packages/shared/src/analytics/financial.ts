@@ -104,11 +104,11 @@ export function calculateLandlordFinancialSummary(
     }
 
     // Breakdown calculation
-    breakdown.rentAmount += Math.round(inv.monthlyRent);
-    breakdown.electricityAmount += Math.round(inv.electricityCost || 0);
-    breakdown.waterAmount += Math.round(inv.waterCost || 0);
+    breakdown.rentAmount += Math.round(inv.rentAmount || 0);
+    breakdown.electricityAmount += Math.round(inv.electricityAmount || 0);
+    breakdown.waterAmount += Math.round(inv.waterAmount || 0);
     breakdown.serviceAmount += Math.round(
-      (inv.internetCost || 0) + (inv.parkingCost || 0) + (inv.serviceCost || 0) + (inv.otherCost || 0)
+      (inv.internetAmount || 0) + (inv.serviceAmount || 0)
     );
 
     // Overdue check

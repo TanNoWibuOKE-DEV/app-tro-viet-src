@@ -46,3 +46,5 @@ __exportStar(require("./roommate/matching.js"), exports);
 __exportStar(require("./handover/checklist.js"), exports);
 __exportStar(require("./scheduler/reminders.js"), exports);
 __exportStar(require("./seed/mock-phase7.js"), exports);
+__exportStar(require("./ekyc/verification.js"), exports);
+__exportStar(require("./analytics/financial.js"), exports);
