@@ -22,19 +22,21 @@ interface Landmark {
   longitude: number;
 }
 
-const DA_NANG_LANDMARKS: Landmark[] = [
-  { id: 'all', name: '📍 Toàn Đà Nẵng', latitude: 16.060, longitude: 108.210 },
-  { id: 'duytan', name: '🎓 ĐH Duy Tân', latitude: 16.0728, longitude: 108.2215 },
-  { id: 'bachkhoa', name: '📚 ĐH Bách Khoa', latitude: 16.0760, longitude: 108.1510 },
+const POPULAR_LANDMARKS: Landmark[] = [
+  { id: 'all_dn', name: '📍 Đà Nẵng', latitude: 16.060, longitude: 108.210 },
+  { id: 'duytan', name: '🎓 ĐH Duy Tân (ĐN)', latitude: 16.0728, longitude: 108.2215 },
   { id: 'mykhe', name: '🏖️ Biển Mỹ Khê', latitude: 16.0601, longitude: 108.2464 },
-  { id: 'caurong', name: '🌉 Cầu Rồng', latitude: 16.0611, longitude: 108.2272 },
+  { id: 'dhqg_hn', name: '🎓 ĐHQG Hà Nội', latitude: 21.0368, longitude: 105.7874 },
+  { id: 'ftu_hn', name: '🏛️ ĐH Ngoại Thương (HN)', latitude: 21.0245, longitude: 105.8089 },
+  { id: 'dhqg_hcm', name: '🎓 Làng ĐH (TP.HCM)', latitude: 10.8703, longitude: 106.7782 },
+  { id: 'hutech_hcm', name: '🏢 ĐH HUTECH (HCM)', latitude: 10.8016, longitude: 106.7138 },
 ];
 
 export const MapScreen: React.FC = () => {
   const { colors, isDark } = useTheme();
   const { listings, setSelectedListing } = useApp();
 
-  const [selectedLandmark, setSelectedLandmark] = useState<Landmark>(DA_NANG_LANDMARKS[0]);
+  const [selectedLandmark, setSelectedLandmark] = useState<Landmark>(POPULAR_LANDMARKS[0]);
   const [activePinListing, setActivePinListing] = useState<ListingSummary | null>(null);
 
   const publishedListings = useMemo(
@@ -65,10 +67,10 @@ export const MapScreen: React.FC = () => {
       {/* Top Header / Landmark Selector */}
       <View style={[styles.topHeader, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-          Bản đồ phòng trọ Đà Nẵng
+          Bản đồ tọa độ phòng trọ
         </Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.landmarkScroll}>
-          {DA_NANG_LANDMARKS.map((lm) => {
+          {POPULAR_LANDMARKS.map((lm) => {
             const active = selectedLandmark.id === lm.id;
             return (
               <TouchableOpacity
@@ -105,7 +107,7 @@ export const MapScreen: React.FC = () => {
         {/* Map Grid Texture / Background */}
         <View style={styles.gridLayer}>
           <Text style={[styles.mapWatermark, { color: colors.textSecondary }]}>
-            BẢN ĐỒ TỌA ĐỘ TRỌ VIỆT · TP. ĐÀ NẴNG
+            BẢN ĐỒ TỌA ĐỘ TRỌ VIỆT
           </Text>
         </View>
 

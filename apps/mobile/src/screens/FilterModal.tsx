@@ -38,11 +38,20 @@ export const PRICE_OPTIONS = [
 ];
 
 export const WARDS_OPTIONS = [
-  { code: 'all', name: 'Toàn thành phố Đà Nẵng' },
-  { code: '48_HAICHAU1', name: 'Phường Hải Châu I' },
-  { code: '48_PHUOCMY', name: 'Phường Phước Mỹ (Mỹ Khê)' },
-  { code: '48_HOAKHANHBAC', name: 'Phường Hòa Khánh Bắc' },
-  { code: '48_HOACUONGNAM', name: 'Phường Hòa Cường Nam' },
+  { code: 'all', name: 'Tất cả khu vực' },
+  // TP. Đà Nẵng
+  { code: '48_HAICHAU1', name: 'Hải Châu I (Đà Nẵng)' },
+  { code: '48_PHUOCMY', name: 'Phước Mỹ - Mỹ Khê (Đà Nẵng)' },
+  { code: '48_HOAKHANHBAC', name: 'Hòa Khánh Bắc (Đà Nẵng)' },
+  { code: '48_HOACUONGNAM', name: 'Hòa Cường Nam (Đà Nẵng)' },
+  // TP. Hà Nội
+  { code: '01_DICHVONGHAU', name: 'Dịch Vọng Hậu - Cầu Giấy (Hà Nội)' },
+  { code: '01_LANGTHUONG', name: 'Láng Thượng - Đống Đa (Hà Nội)' },
+  { code: '01_BACHKHOA', name: 'Bách Khoa - Hai Bà Trưng (Hà Nội)' },
+  // TP. Hồ Chí Minh
+  { code: '79_LINHTRUNG', name: 'Linh Trung - Thủ Đức (TP.HCM)' },
+  { code: '79_PHUONG25', name: 'Phường 25 - Bình Thạnh (TP.HCM)' },
+  { code: '79_BENNGHE', name: 'Bến Nghé - Quận 1 (TP.HCM)' },
 ];
 
 export const ROOM_TYPE_OPTIONS: Array<{ type: PropertyType | 'all'; label: string }> = [

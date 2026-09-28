@@ -12,7 +12,12 @@ import {
 import { useTheme } from '../theme/ThemeContext';
 import { useApp } from '../context/AppContext';
 import { Button } from '../components/Button';
-import { RentInvoice, formatVND } from '@troviet/shared';
+import {
+  RentInvoice,
+  formatVND,
+  createMockBankTransaction,
+  reconcileBankTransaction,
+} from '@troviet/shared';
 
 interface InvoiceDetailModalProps {
   visible: boolean;
@@ -58,6 +63,32 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
         },
       ]
     );
+  };
+
+  const handleSimulateBankWebhook = () => {
+    // Generate simulated bank transaction matching this invoice
+    const mockTx = createMockBankTransaction({
+      invoiceCode: invoice.id,
+      amount: invoice.totalAmount,
+      senderName: invoice.tenantName || 'KHÁCH THUÊ TRỌ VIỆT',
+    });
+
+    const reconciliation = reconcileBankTransaction(mockTx, {
+      invoiceId: invoice.id,
+      invoiceCode: invoice.id,
+      totalAmount: invoice.totalAmount,
+      currentStatus: invoice.status,
+    });
+
+    if (reconciliation.outcome === 'settled_full' || reconciliation.outcome === 'over_payment') {
+      markInvoicePaid(invoice.id);
+      Alert.alert(
+        '⚡ Đối soát thành công (Webhook Ngân hàng)',
+        `[Mô phỏng VietQR NAPAS 24/7]\n\n• Mã giao dịch: #${mockTx.id}\n• Số tiền: ${formatVND(mockTx.amountIn)}\n• Trạng thái: Hóa đơn đã được tự động gạch nợ sang ĐÃ THANH TOÁN!\n\n${reconciliation.userFacingMessage}`
+      );
+    } else {
+      Alert.alert('Kết quả đối soát', reconciliation.userFacingMessage);
+    }
   };
 
   return (
@@ -219,6 +250,21 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
                 onPress={handleConfirmPayment}
                 variant="primary"
               />
+              <TouchableOpacity
+                style={[
+                  styles.sandboxBtn,
+                  {
+                    backgroundColor: isDark ? '#1E293B' : '#EFF6FF',
+                    borderColor: colors.primary,
+                  },
+                ]}
+                onPress={handleSimulateBankWebhook}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.sandboxBtnText, { color: colors.primary }]}>
+                  ⚡ Thử nghiệm gạch nợ tự động (Sandbox VietQR)
+                </Text>
+              </TouchableOpacity>
             </View>
           )}
         </ScrollView>
@@ -404,5 +450,18 @@ const styles = StyleSheet.create({
   actionContainer: {
     marginTop: 4,
     marginBottom: 20,
+    gap: 10,
+  },
+  sandboxBtn: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sandboxBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
   },
 });

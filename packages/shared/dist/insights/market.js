@@ -103,30 +103,177 @@ exports.DA_NANG_AREA_INSIGHTS = {
             'Rất phù hợp cho sinh viên khối đại học phía Nam và giảng viên, nhân viên văn phòng',
         ],
     },
+    // ==========================================
+    // THÀNH PHỐ HÀ NỘI
+    // ==========================================
+    '01_DICHVONGHAU': {
+        wardCode: '01_DICHVONGHAU',
+        wardName: 'Phường Dịch Vọng Hậu',
+        districtLegacyName: 'Quận Cầu Giấy, Hà Nội',
+        roomAvgRent: 3500000,
+        apartmentAvgRent: 7500000,
+        priceHistory: [
+            { month: '05/2026', roomRentAvg: 3300000, apartmentRentAvg: 7200000 },
+            { month: '06/2026', roomRentAvg: 3400000, apartmentRentAvg: 7300000 },
+            { month: '07/2026', roomRentAvg: 3500000, apartmentRentAvg: 7400000 },
+            { month: '08/2026', roomRentAvg: 3600000, apartmentRentAvg: 7500000 },
+            { month: '09/2026', roomRentAvg: 3500000, apartmentRentAvg: 7500000 },
+            { month: '10/2026', roomRentAvg: 3500000, apartmentRentAvg: 7500000 },
+        ],
+        trend: 'stable',
+        changePercent: 6.0,
+        summary: 'Khu vực tập trung sinh viên và văn phòng đông đảo bậc nhất Hà Nội, nhiều loại hình CCMN và phòng trọ tiện nghi.',
+        highlights: [
+            'Gần cụm ĐHQG, ĐH Sư Phạm, HV Báo Chí & Tuyên Truyền',
+            'Đầy đủ chợ Nhà Xanh, siêu thị và tuyến Metro Nhổn - Ga Hà Nội',
+            'Nhu cầu thuê luôn đạt đỉnh quanh năm',
+        ],
+    },
+    '01_LANGTHUONG': {
+        wardCode: '01_LANGTHUONG',
+        wardName: 'Phường Láng Thượng',
+        districtLegacyName: 'Quận Đống Đa, Hà Nội',
+        roomAvgRent: 3800000,
+        apartmentAvgRent: 8000000,
+        priceHistory: [
+            { month: '05/2026', roomRentAvg: 3600000, apartmentRentAvg: 7700000 },
+            { month: '06/2026', roomRentAvg: 3700000, apartmentRentAvg: 7800000 },
+            { month: '07/2026', roomRentAvg: 3800000, apartmentRentAvg: 8000000 },
+            { month: '08/2026', roomRentAvg: 3900000, apartmentRentAvg: 8100000 },
+            { month: '09/2026', roomRentAvg: 3800000, apartmentRentAvg: 8000000 },
+            { month: '10/2026', roomRentAvg: 3800000, apartmentRentAvg: 8000000 },
+        ],
+        trend: 'increasing',
+        changePercent: 5.5,
+        summary: 'Trung tâm quận Đống Đa, kết nối nhanh tới các bệnh viện lớn và cụm đại học danh tiếng.',
+        highlights: [
+            'Gần ĐH Ngoại Thương, HV Ngoại Giao, ĐH Luật',
+            'Nhiều bệnh viện lớn: Nhi TW, Phụ Sản Hà Nội',
+            'Căn hộ dịch vụ cao cấp và studio cho người đi làm',
+        ],
+    },
+    '01_BACHKHOA': {
+        wardCode: '01_BACHKHOA',
+        wardName: 'Phường Bách Khoa',
+        districtLegacyName: 'Quận Hai Bà Trưng, Hà Nội',
+        roomAvgRent: 3200000,
+        apartmentAvgRent: 6800000,
+        priceHistory: [
+            { month: '05/2026', roomRentAvg: 3100000, apartmentRentAvg: 6600000 },
+            { month: '06/2026', roomRentAvg: 3150000, apartmentRentAvg: 6700000 },
+            { month: '07/2026', roomRentAvg: 3200000, apartmentRentAvg: 6800000 },
+            { month: '08/2026', roomRentAvg: 3300000, apartmentRentAvg: 6900000 },
+            { month: '09/2026', roomRentAvg: 3200000, apartmentRentAvg: 6800000 },
+            { month: '10/2026', roomRentAvg: 3200000, apartmentRentAvg: 6800000 },
+        ],
+        trend: 'stable',
+        changePercent: 3.2,
+        summary: 'Tam giác vàng đại học Bách - Kinh - Xây, chi phí sinh hoạt hợp lý cho sinh viên.',
+        highlights: [
+            'Cực kỳ thuận tiện cho sinh viên Bách Khoa, Kinh tế Quốc Dân, Xây Dựng',
+            'Ẩm thực đường phố phong phú, giá bình dân',
+            'Nhiều nhà trọ truyền thống và căn hộ mini cải tạo mới',
+        ],
+    },
+    // ==========================================
+    // THÀNH PHỐ HỒ CHÍ MINH
+    // ==========================================
+    '79_LINHTRUNG': {
+        wardCode: '79_LINHTRUNG',
+        wardName: 'Phường Linh Trung',
+        districtLegacyName: 'Thành phố Thủ Đức, TP.HCM',
+        roomAvgRent: 2200000,
+        apartmentAvgRent: 4500000,
+        priceHistory: [
+            { month: '05/2026', roomRentAvg: 2100000, apartmentRentAvg: 4300000 },
+            { month: '06/2026', roomRentAvg: 2150000, apartmentRentAvg: 4400000 },
+            { month: '07/2026', roomRentAvg: 2200000, apartmentRentAvg: 4500000 },
+            { month: '08/2026', roomRentAvg: 2250000, apartmentRentAvg: 4550000 },
+            { month: '09/2026', roomRentAvg: 2200000, apartmentRentAvg: 4500000 },
+            { month: '10/2026', roomRentAvg: 2200000, apartmentRentAvg: 4500000 },
+        ],
+        trend: 'stable',
+        changePercent: 4.7,
+        summary: 'Thủ phủ sinh viên TP.HCM với Làng Đại học Quốc gia, giá thuê mềm nhất phân khúc đô thị lớn.',
+        highlights: [
+            'Trực tiếp phục vụ Làng Đại học Quốc gia (ĐHQG TP.HCM), ĐH Nông Lâm, SPKT',
+            'Không gian thoáng đãng, nhiều cây xanh, chi phí ăn uống rất rẻ',
+            'Tuyến Metro Bến Thành - Suối Tiên kết nối nhanh vào trung tâm',
+        ],
+    },
+    '79_PHUONG25': {
+        wardCode: '79_PHUONG25',
+        wardName: 'Phường 25',
+        districtLegacyName: 'Quận Bình Thạnh, TP.HCM',
+        roomAvgRent: 3800000,
+        apartmentAvgRent: 7200000,
+        priceHistory: [
+            { month: '05/2026', roomRentAvg: 3600000, apartmentRentAvg: 6900000 },
+            { month: '06/2026', roomRentAvg: 3700000, apartmentRentAvg: 7000000 },
+            { month: '07/2026', roomRentAvg: 3800000, apartmentRentAvg: 7200000 },
+            { month: '08/2026', roomRentAvg: 3850000, apartmentRentAvg: 7300000 },
+            { month: '09/2026', roomRentAvg: 3800000, apartmentRentAvg: 7200000 },
+            { month: '10/2026', roomRentAvg: 3800000, apartmentRentAvg: 7200000 },
+        ],
+        trend: 'increasing',
+        changePercent: 5.5,
+        summary: 'Khu vực cửa ngõ Đông Bắc Sài Gòn, tập trung nhiều trường đại học tư thục và công lập lớn.',
+        highlights: [
+            'Gần ĐH HUTECH, Ngoại Thương CS2, Giao Thông Vận Tải',
+            'Vị trí chiến lược: 5 phút qua Quận 1, 5 phút qua TP. Thủ Đức',
+            'Đa dạng phòng trọ full nội thất, studio ban công',
+        ],
+    },
+    '79_BENNGHE': {
+        wardCode: '79_BENNGHE',
+        wardName: 'Phường Bến Nghé',
+        districtLegacyName: 'Quận 1, TP.HCM',
+        roomAvgRent: 5500000,
+        apartmentAvgRent: 12000000,
+        priceHistory: [
+            { month: '05/2026', roomRentAvg: 5300000, apartmentRentAvg: 11500000 },
+            { month: '06/2026', roomRentAvg: 5400000, apartmentRentAvg: 11800000 },
+            { month: '07/2026', roomRentAvg: 5500000, apartmentRentAvg: 12000000 },
+            { month: '08/2026', roomRentAvg: 5500000, apartmentRentAvg: 12000000 },
+            { month: '09/2026', roomRentAvg: 5500000, apartmentRentAvg: 12000000 },
+            { month: '10/2026', roomRentAvg: 5500000, apartmentRentAvg: 12000000 },
+        ],
+        trend: 'stable',
+        changePercent: 3.7,
+        summary: 'Trái tim sôi động của TP.HCM, phân khúc căn hộ dịch vụ và phòng studio cao cấp cho chuyên gia.',
+        highlights: [
+            'Ngay trung tâm hành chính, phố đi bộ Nguyễn Huệ, Landmark 81',
+            'Tiện ích 5 sao bao quanh: trung tâm thương mại, nhà hàng, metro',
+            'An ninh tối đa, thích hợp người có thu nhập cao',
+        ],
+    },
 };
 /**
- * Returns market insights for a specific ward in Da Nang.
+ * Returns market insights for a specific ward in Vietnam.
  */
 function getWardAreaInsight(wardCode) {
     return (exports.DA_NANG_AREA_INSIGHTS[wardCode] || {
         wardCode,
-        wardName: 'Khu vực Đà Nẵng',
-        districtLegacyName: 'TP. Đà Nẵng',
-        roomAvgRent: 2400000,
-        apartmentAvgRent: 4800000,
+        wardName: 'Khu vực trọng điểm',
+        districtLegacyName: 'Việt Nam',
+        roomAvgRent: 2800000,
+        apartmentAvgRent: 5500000,
         priceHistory: [
-            { month: '05/2026', roomRentAvg: 2350000, apartmentRentAvg: 4700000 },
-            { month: '10/2026', roomRentAvg: 2400000, apartmentRentAvg: 4800000 },
+            { month: '05/2026', roomRentAvg: 2700000, apartmentRentAvg: 5300000 },
+            { month: '10/2026', roomRentAvg: 2800000, apartmentRentAvg: 5500000 },
         ],
         trend: 'stable',
-        changePercent: 2.1,
-        summary: 'Mặt bằng chung toàn thành phố Đà Nẵng với giá cả ổn định và minh bạch.',
+        changePercent: 3.0,
+        summary: 'Mặt bằng chung khu vực đô thị với giá cả ổn định và minh bạch.',
         highlights: ['Giá cả ổn định', 'Nhiều lựa chọn phòng trọ và căn hộ mini'],
     });
 }
 /**
- * Returns all active ward market insights.
+ * Returns all active ward market insights, optionally filtered by city code ('48', '01', '79').
  */
-function getAllAreaInsights() {
-    return Object.values(exports.DA_NANG_AREA_INSIGHTS);
+function getAllAreaInsights(cityCode) {
+    const all = Object.values(exports.DA_NANG_AREA_INSIGHTS);
+    if (!cityCode)
+        return all;
+    return all.filter((w) => w.wardCode.startsWith(cityCode));
 }

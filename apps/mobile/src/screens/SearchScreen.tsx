@@ -342,7 +342,7 @@ export const SearchScreen: React.FC<SearchScreenProps> = ({
       {/* Results Header: Count & Save */}
       <View style={[styles.resultsHeader, { borderBottomColor: colors.border }]}>
         <Text style={[styles.resultsCountText, { color: colors.textPrimary }]}>
-          {filteredResults.length} phòng tại TP. Đà Nẵng
+          {filteredResults.length} phòng phù hợp
         </Text>
         <TouchableOpacity style={styles.saveSearchBtn} onPress={handleSaveSearch}>
           <Text style={[styles.saveSearchText, { color: colors.primary }]}>

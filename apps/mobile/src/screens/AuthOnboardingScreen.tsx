@@ -237,7 +237,7 @@ export const AuthOnboardingScreen: React.FC = () => {
 
         <MenuItem
           icon="📊"
-          title="Mặt bằng giá thị trường Đà Nẵng"
+          title="Mặt bằng giá thị trường các khu vực"
           subtitle="Biểu đồ xu hướng giá 6 tháng tại các phường"
           onPress={() => setIsAreaInsightsOpen(true)}
         />

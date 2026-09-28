@@ -27,9 +27,9 @@ import { APP_NAME } from '@troviet/shared';
 type TabKey = 'home' | 'search' | 'map' | 'saved' | 'profile';
 
 const SUPPORTED_CITIES = [
-  { code: 'danang', name: 'TP. Đà Nẵng', active: true },
-  { code: 'hanoi', name: 'TP. Hà Nội', active: false },
-  { code: 'hcm', name: 'TP. Hồ Chí Minh', active: false },
+  { code: 'danang', name: 'TP. Đà Nẵng', provinceCode: '48', active: true },
+  { code: 'hanoi', name: 'TP. Hà Nội', provinceCode: '01', active: true },
+  { code: 'hcm', name: 'TP. Hồ Chí Minh', provinceCode: '79', active: true },
 ];
 
 const MainApp: React.FC = () => {

@@ -60,10 +60,11 @@ export const AreaInsightsModal: React.FC<AreaInsightsModalProps> = ({
 
         <ScrollView contentContainerStyle={styles.scrollContent}>
           {/* Ward selector chips */}
-          <Text style={[styles.filterHeading, { color: colors.textSecondary }]}>Chọn phường / khu vực tại TP. Đà Nẵng:</Text>
+          <Text style={[styles.filterHeading, { color: colors.textSecondary }]}>Chọn phường / khu vực trọng điểm:</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScroll}>
             {allInsights.map((item) => {
               const isSelected = item.wardCode === selectedWardCode;
+              const cityTag = item.wardCode.startsWith('01') ? 'HN' : item.wardCode.startsWith('79') ? 'HCM' : 'ĐN';
               return (
                 <TouchableOpacity
                   key={item.wardCode}
@@ -82,7 +83,7 @@ export const AreaInsightsModal: React.FC<AreaInsightsModalProps> = ({
                       { color: isSelected ? '#FFFFFF' : colors.textPrimary, fontWeight: isSelected ? '700' : '500' },
                     ]}
                   >
-                    {item.wardName}
+                    {item.wardName.replace('Phường ', '')} ({cityTag})
                   </Text>
                 </TouchableOpacity>
               );
@@ -149,7 +150,7 @@ export const AreaInsightsModal: React.FC<AreaInsightsModalProps> = ({
 
           {/* Utility Baselines */}
           <View style={[styles.sectionCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>⚡ Khung giá điện & nước tham chiếu tại Đà Nẵng</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>⚡ Khung giá điện & nước tham chiếu</Text>
             <View style={styles.utilityItem}>
               <Text style={[styles.utilityLabel, { color: colors.textPrimary }]}>💡 Điện sinh hoạt:</Text>
               <Text style={[styles.utilityVal, { color: colors.textSecondary }]}>3.000 - 3.800 đ/kWh (đồng hồ riêng)</Text>

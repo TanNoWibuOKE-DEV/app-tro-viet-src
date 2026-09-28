@@ -14,11 +14,12 @@ import { AISearchModal } from './AISearchModal';
 import { PropertyType } from '@troviet/shared';
 
 const POPULAR_AREAS = [
-  { label: 'Hải Châu (Trung tâm)', query: 'hai chau' },
-  { label: 'Phước Mỹ (Gần biển)', query: 'phuoc my' },
-  { label: 'Hòa Khánh Bắc (ĐH Bách Khoa)', query: 'hoa khanh bac' },
-  { label: 'Hòa Cường Nam', query: 'hoa cuong nam' },
-  { label: 'ĐH Duy Tân', query: 'duy tan' },
+  { label: 'Hải Châu (Đà Nẵng)', query: 'hai chau' },
+  { label: 'Phước Mỹ (Mỹ Khê ĐN)', query: 'phuoc my' },
+  { label: 'Cầu Giấy (ĐHQG Hà Nội)', query: 'cau giay' },
+  { label: 'Chùa Láng (Ngoại Thương HN)', query: 'chua lang' },
+  { label: 'Thủ Đức (Làng ĐH TP.HCM)', query: 'thu duc' },
+  { label: 'Bình Thạnh (HUTECH HCM)', query: 'binh thanh' },
 ];
 
 const PROPERTY_CATEGORIES: Array<{ type: PropertyType | 'all'; label: string }> = [
@@ -234,7 +235,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       {/* Section: Khu vực phổ biến */}
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.textPrimary, marginBottom: 12 }]}>
-          Khu vực phổ biến tại TP. Đà Nẵng
+          Khu vực & Trường Đại học phổ biến
         </Text>
         <View style={styles.areasGrid}>
           {POPULAR_AREAS.map((area) => (

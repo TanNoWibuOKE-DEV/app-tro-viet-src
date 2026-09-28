@@ -24,10 +24,10 @@ export interface WardAreaInsight {
 }
 export declare const DA_NANG_AREA_INSIGHTS: Record<string, WardAreaInsight>;
 /**
- * Returns market insights for a specific ward in Da Nang.
+ * Returns market insights for a specific ward in Vietnam.
  */
 export declare function getWardAreaInsight(wardCode: string): WardAreaInsight;
 /**
- * Returns all active ward market insights.
+ * Returns all active ward market insights, optionally filtered by city code ('48', '01', '79').
  */
-export declare function getAllAreaInsights(): WardAreaInsight[];
+export declare function getAllAreaInsights(cityCode?: string): WardAreaInsight[];
