@@ -1,9 +1,15 @@
 # Trọ Việt — Tiến độ
 
-**Phase hiện tại:** Phase 13 — Cụm Cộng Đồng Sinh Viên, Bản Đồ Cảnh Báo Ngập Lụt & Chợ Sang Nhượng Trọ (Campus Hub, Flood Risk Alerts & Room Transfer)
-**Trạng thái:** Đã hoàn thành toàn diện (135/135 tests pass across 33 suites, 0 lỗi TypeScript)
+**Phase hiện tại:** Hoàn tất Phát hành v1.0.0 & Cập nhật Tính năng Quản trị, Dữ liệu Thật & Bản đồ Thực địa
+**Trạng thái:** Đã hoàn thành toàn diện (138/138 tests pass across 34 suites, 0 lỗi TypeScript, APK & Web Build sẵn sàng)
 
-## Quyết định đã chốt (Sau Phase 13)
+## Quyết định đã chốt (Bản cập nhật Mới nhất)
+- **Màn hình Đăng nhập Cổng Quản trị viên riêng biệt (`AdminAuthModal.tsx`):** Tách biệt hoàn toàn luồng quản trị viên khỏi luồng đăng nhập thông thường của khách thuê và chủ trọ. Xác thực tài khoản Admin chính thức qua Supabase Auth và danh sách định danh nội bộ có thẩm quyền (`admin@troviet.vn`), tích hợp mã PIN 2FA bảo mật 2 lớp, không cho phép đăng ký tự do ngoài công chúng để ngăn chặn leo thang đặc quyền.
+- **Xóa bỏ toàn bộ Fake/Mock Data (`AppContext.tsx`):** Làm sạch toàn bộ dữ liệu giả lập (`MOCK_LISTINGS`, `MOCK_CONVERSATIONS`, `MOCK_REVIEWS`...), chuyển toàn bộ trạng thái ban đầu về mảng rỗng chuẩn. Tự động đồng bộ và nạp phòng trọ thật được xuất bản (`published`) từ bảng `listings` của Supabase ngay khi ứng dụng khởi chạy.
+- **Bản đồ Thực địa Toàn diện (Real Map via OpenStreetMap & Leaflet):** Thay thế toàn bộ canvas giả lập bằng bản đồ thật OpenStreetMap sử dụng Leaflet.js rendering qua `react-native-webview` trên Android/iOS và `iframe` an toàn trên Web. Hỗ trợ ghim giá tiền thực tế (`2.5tr`), định vị mốc các trường Đại học trọng điểm 3 miền, phóng to/thu nhỏ tương tác mượt mà và tương thích hoàn toàn hai chiều (`postMessage`).
+- **Hoàn thành Đóng gói Ứng dụng Thực tế (Production Builds):**
+  - **Android APK:** Đã build thành công qua EAS Build (`520aa97b-e351-4f7b-ab37-4c030dc8bf1f`), tải trực tiếp về workspace tại `TroViet-v1.0.0.apk` (70.8 MB).
+  - **Web Production Bundle:** Đã export sạch sẽ qua Metro Bundler tại thư mục `apps/mobile/dist/`.
 - **Bản đồ Cảnh báo Ngập lụt Đô thị Mùa Mưa (Crowdsourced Flood Risk & Monsoon Safety Engine):** Tự động đo lường chỉ số an toàn ngập lụt (`FloodSafetyScore` 0–100) theo khoảng cách thực tế đến các điểm trũng lịch sử và báo cáo cộng đồng tại Đà Nẵng (Đường Mẹ Suốt, Quang Trung), Hà Nội (Trần Thái Tông/Duy Tân, Phùng Khoang), TP.HCM (Làng ĐH Thủ Đức, Đinh Bộ Lĩnh). Thuật toán phân tách rõ rệt giữa phòng tầng trệt (nguy cơ nước tràn) và phòng tầng 2 trở lên (an toàn khô ráo, cộng điểm an toàn +18). Tích hợp thẻ cảnh báo ngập lụt trên `PropertyDetailModal.tsx` và bản đồ cộng đồng `FloodRiskMapModal.tsx`.
 - **Cụm Cung ứng Học đường & Cẩm nang Sinh viên (Campus Community Hub):** Kết nối phòng trọ theo bán kính các cụm trường Đại học trọng điểm (ĐH Bách Khoa, ĐH Kinh Tế, ĐH Duy Tân tại Đà Nẵng; ĐHQG Cầu Giấy, ĐH Bách Khoa tại Hà Nội; ĐHQG Làng ĐH, HUTECH tại TP.HCM). Cung cấp mức giá thuê sinh viên trung bình quanh từng trường và cẩm nang kinh nghiệm thuê trọ thực địa.
 - **Sàn Sang Nhượng Trọ & Chợ Pass Đồ Sinh Viên (Room Transfers & Pass Marketplace):** Hỗ trợ khách thuê đổi chỗ ở sang nhượng hợp đồng trọ để thu hồi tiền cọc gốc minh bạch (mã `TRF...`). Chợ đồ dùng sinh viên thanh lý / tặng miễn phí (quạt điện, đệm gấp, bàn học, tủ lạnh mini) với mã `PASS...` và trạng thái còn hàng/đã bán.
