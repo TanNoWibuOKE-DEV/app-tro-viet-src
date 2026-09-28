@@ -128,8 +128,33 @@ Tài liệu này ghi lại các giả định thiết kế và vận hành khi c
    - Tin Thường: Miễn phí, thời hạn vĩnh viễn hoặc 30 ngày tự gia hạn.
    - VIP 1 (Nổi bật khu vực - Viền đồng): 50.000 ₫ / 30 ngày. Tăng hiển thị trong kết quả tìm kiếm cùng phường/xã.
    - VIP 2 (Top danh mục - Viền bạc): 120.000 ₫ / 30 ngày. Đứng đầu danh mục loại phòng tương ứng.
-   - VIP Kim Cương (Trang chủ & Push - Viền vàng): 250.000 ₫ / 30 ngày. Ghim vị trí nổi bật tại Trang chủ và tự động kích hoạt thông báo đẩy gửi tới người dùng có Saved Search phù hợp.
+   - VIP Kim Cương (Trang chủ & Push - Viền vàng): 250.000 ₫ / 30 ngày. Ghim vị trí nổi bật tại Trang chủ và tự động kích hoạt thông báo đẩy gửi tới người dùng có Saved Search phù hợp.---
 
+## Phase 12 — Hệ Sinh Thái Tiện Ích Sinh Hoạt & Trợ Lý Pháp Lý Trọ (Tenant Life Hub & Legal Concierge)
 
+1. **Dịch vụ Tiện ích Sinh hoạt & Chuyển dọn (Tenant Life Hub):**
+   - Trọ Việt đóng vai trò kết nối nhu cầu chuyển dọn trọ, vệ sinh dọn phòng và sửa chữa điện nước cho khách thuê.
+   - Bảng giá dự toán chuyển trọ minh bạch theo cự ly và phương tiện:
+     - Xe ba gác máy (phù hợp ngõ hẻm nhỏ): 150.000 ₫ (4km đầu), 18.000 ₫/km tiếp theo.
+     - Xe tải nhỏ 750kg: 250.000 ₫ (4km đầu), 22.000 ₫/km tiếp theo.
+     - Xe tải lớn 1.250kg: 380.000 ₫ (4km đầu), 28.000 ₫/km tiếp theo.
+     - Phụ phí thang bộ không có thang máy: 50.000 ₫ / tầng lầu.
+     - Phụ phí bốc xếp trọn gói: 100.000 ₫ (xe ba gác), 150.000 ₫ (xe 750kg), 200.000 ₫ (xe 1.250kg).
+   - Chi phí thực tế thanh toán trực tiếp hoặc qua VietQR cho đối tác vận chuyển sau khi nghiệm thu công việc.
 
+2. **Biểu giá Điện & Quy định Nhà nước (Utility Regulations & Dispute Engine):**
+   - Áp dụng biểu giá bán lẻ điện sinh hoạt 6 bậc thang chính thức của EVN (Quyết định số 2941/QĐ-BCT):
+     - Bậc 1 (0 - 50 kWh): 1.893 ₫/kWh
+     - Bậc 2 (51 - 100 kWh): 1.956 ₫/kWh
+     - Bậc 3 (101 - 200 kWh): 2.271 ₫/kWh
+     - Bậc 4 (201 - 300 kWh): 2.860 ₫/kWh
+     - Bậc 5 (301 - 400 kWh): 3.197 ₫/kWh
+     - Bậc 6 (từ 401 kWh trở lên): 3.302 ₫/kWh
+   - Ngưỡng cảnh báo thu vượt định mức:
+     - Theo Thông tư 09/2023/TT-BCT và Nghị định 134/2013/NĐ-CP (sửa đổi bởi Nghị định 17/2022/NĐ-CP), hành vi thu tiền điện của người thuê nhà cao hơn giá quy định bị phạt tiền từ 20.000.000 ₫ đến 30.000.000 ₫.
+     - Mức thu tiền điện cào bằng > 4.000 ₫/kWh hoặc tiền nước sinh hoạt > 35.000 ₫/m³ được hệ thống gắn nhãn cảnh báo vượt giá quy định và đề xuất giải pháp đối thoại.
+
+3. **Trợ lý Pháp lý & Soạn thảo Văn bản Tranh chấp (Legal Concierge):**
+   - Hệ thống tự động tạo mẫu Đơn kiến nghị điều chỉnh tiền điện theo giá nhà nước và Thư đề nghị hoàn trả tiền cọc đúng hạn căn cứ Bộ luật Dân sự 2015 và Luật Nhà ở.
+   - Mọi văn bản và tư vấn tự động đều kèm khuyến cáo pháp lý bắt buộc: "Tài liệu mang tính chất hỗ trợ đàm phán nội bộ và tham khảo pháp lý, không thay thế cho phán quyết của Tòa án hoặc tư vấn của Luật sư."
 
