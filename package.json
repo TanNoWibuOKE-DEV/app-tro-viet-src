@@ -18,6 +18,8 @@
     "build:android": "npm run build:android --workspace=apps/mobile",
     "build:ios": "npm run build:ios --workspace=apps/mobile",
     "build:apk": "cd apps/mobile && npx eas-cli build -p android --profile preview",
+    "build:aab": "cd apps/mobile && npx eas-cli build -p android --profile production",
+    "submit:android": "cd apps/mobile && npx eas-cli submit -p android --profile production",
     "postinstall": "npm run build --workspace=@troviet/shared"
   },
   "keywords": [
