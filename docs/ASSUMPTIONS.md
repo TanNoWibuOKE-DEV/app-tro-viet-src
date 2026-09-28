@@ -94,4 +94,22 @@ Tài liệu này ghi lại các giả định thiết kế và vận hành khi c
    - Bổ sung dữ liệu mặt bằng giá thực tế cho các phường sinh viên trọng điểm tại Hà Nội và TP.HCM vào Area Insights Engine.
    - Cho phép người dùng chuyển đổi thị trường linh hoạt ngay tại Header `📍 Đà Nẵng | Hà Nội | TP. Hồ Chí Minh`.
 
+---
+
+## Phase 10 — Nền tảng Doanh nghiệp & Vận hành Chuyên sâu (Enterprise Operations & Identity Intelligence)
+
+1. **Hạ tầng CSDL v7 & Rollback Script:**
+   - Bổ sung các bảng lưu trữ bền vững: `push_tokens`, `bank_transactions`, `ekyc_verifications`.
+   - Bật RLS tuyệt đối cho tất cả các bảng mới; người dùng chỉ có quyền xem/sửa token và hồ sơ eKYC của chính mình; chủ trọ chỉ xem được giao dịch thanh toán liên quan đến hóa đơn của mình.
+
+2. **Quy trình eKYC & Bảo vệ dữ liệu CCCD (Luật 91/2025/QH15):**
+   - Số định danh cá nhân 12 số được kiểm tra tính hợp lệ cấu trúc (mã tỉnh/thành khai sinh, mã thế kỷ & giới tính, năm sinh), kiểm tra đủ 18 tuổi.
+   - Dữ liệu CCCD được băm an toàn (`id_card_number_hash`) khi lưu trữ; không lưu ảnh khuôn mặt thô chưa mã hóa.
+   - Hỗ trợ mô phỏng luồng quét chip NFC và nhận diện chuyển động (liveness detection) để nâng cấp hồ sơ L2 tức thời.
+
+3. **Phân tích Tài chính & Dòng tiền Chủ trọ (Landlord Financial Analytics):**
+   - Tự động tổng hợp doanh thu từ dữ liệu thực tế hóa đơn tháng: Tiền phòng, điện, nước, dịch vụ.
+   - Tính toán tỷ lệ lấp đầy phòng (Occupancy Rate %) và tỷ lệ thu tiền đúng hạn (On-Time Collection Rate %).
+
+
 
