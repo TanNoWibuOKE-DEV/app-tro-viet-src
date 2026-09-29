@@ -22,16 +22,20 @@ export function getFriendlyErrorMessage(code: string | undefined): string {
   return ERROR_MESSAGES[code] || ERROR_MESSAGES.GENERIC_ERROR;
 }
 
-// Brand Colors & Design Tokens
+// Brand Colors & Design Tokens (Aligned with Reference UI - Trust Pine Teal)
 export const COLORS = {
   light: {
-    primary: '#10B981',       // Emerald/Green - Trust, Fresh, Safe
-    primaryHover: '#059669',
-    background: '#F9FAFB',    // Neutral light
+    primary: '#085F56',       // Pine Dark Teal - Trust, Stability, Vietnamese rental standard
+    primaryHover: '#064E46',
+    primaryLight: '#E6F4F1',  // Soft minty teal background
+    primarySubtle: '#EDF5F3',
+    background: '#F8FAFC',    // Soft clean light background
     card: '#FFFFFF',
-    textPrimary: '#111827',
-    textSecondary: '#6B7280',
-    border: '#E5E7EB',
+    textPrimary: '#0F172A',
+    textSecondary: '#64748B',
+    border: '#E2E8F0',
+    accentBlue: '#E0F2FE',    // Light sky blue chip
+    accentBlueText: '#0284C7',
     badgeL1: '#DBEAFE',       // Light blue
     badgeL1Text: '#1E40AF',
     badgeL2: '#D1FAE5',       // Light green
@@ -39,16 +43,20 @@ export const COLORS = {
     warning: '#F59E0B',
     danger: '#EF4444',
     error: '#EF4444',
-    success: '#10B981',
+    success: '#085F56',
   },
   dark: {
     primary: '#10B981',
     primaryHover: '#34D399',
+    primaryLight: '#064E3B',
+    primarySubtle: '#0F2922',
     background: '#0F172A',    // Slate dark
     card: '#1E293B',
     textPrimary: '#F9FAFB',
     textSecondary: '#94A3B8',
     border: '#334155',
+    accentBlue: '#1E3A8A',
+    accentBlueText: '#93C5FD',
     badgeL1: '#1E3A8A',
     badgeL1Text: '#93C5FD',
     badgeL2: '#064E3B',

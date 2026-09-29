@@ -6,101 +6,144 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  Image,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
 import { useApp } from '../context/AppContext';
-import { ListingCard } from '../components/ListingCard';
+import { useResponsiveLayout } from '../utils/responsive';
+import { getListingCoverImage } from '../utils/imageAssets';
 import { AISearchModal } from './AISearchModal';
-import { AnimatedScalePressable } from '../components/AnimatedScalePressable';
-import { PropertyType, calculateListingRankingScore } from '@troviet/shared';
-
-const POPULAR_AREAS = [
-  { label: 'Hải Châu', university: 'ĐH Kỹ Thuật Y Dược', city: 'Đà Nẵng', query: 'hai chau' },
-  { label: 'Ngũ Hành Sơn', university: 'ĐH Kinh Tế (ĐUE)', city: 'Đà Nẵng', query: 'ngu hanh son' },
-  { label: 'Cầu Giấy', university: 'ĐHQG & Sư Phạm HN', city: 'Hà Nội', query: 'cau giay' },
-  { label: 'Đống Đa', university: 'ĐH Ngoại Thương (FTU)', city: 'Hà Nội', query: 'dong da' },
-  { label: 'Thủ Đức', university: 'Làng ĐH Quốc Gia', city: 'TP.HCM', query: 'thu duc' },
-  { label: 'Bình Thạnh', university: 'ĐH HUTECH & GTVT', city: 'TP.HCM', query: 'binh thanh' },
-];
-
-interface CategoryItem {
-  type: PropertyType | 'all';
-  label: string;
-  icon: keyof typeof Ionicons.glyphMap;
-}
-
-const PROPERTY_CATEGORIES: CategoryItem[] = [
-  { type: 'all', label: 'Tất cả', icon: 'apps-outline' },
-  { type: 'room', label: 'Phòng trọ', icon: 'bed-outline' },
-  { type: 'apartment', label: 'Căn hộ mini', icon: 'business-outline' },
-  { type: 'house', label: 'Nhà nguyên căn', icon: 'home-outline' },
-  { type: 'shared', label: 'Ở ghép', icon: 'people-outline' },
-];
+import { FilterModal, FilterState } from './FilterModal';
+import { ListingSummary, formatVND } from '@troviet/shared';
 
 interface HomeScreenProps {
   onNavigateToSearch: (query?: string) => void;
+  onOpenMap?: () => void;
   selectedCity?: string;
   onOpenCitySelector?: () => void;
+  onSelectProperty?: (listing: ListingSummary) => void;
 }
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
   onNavigateToSearch,
-  selectedCity,
+  onOpenMap,
+  onOpenCitySelector,
+  onSelectProperty,
 }) => {
   const { colors, isDark } = useTheme();
-  const { listings, setSelectedListing, userPreferences } = useApp();
+  const { listings, setSelectedListing, isFavorite, toggleFavorite } = useApp();
+  const { contentMaxWidth } = useResponsiveLayout();
 
   const [searchInput, setSearchInput] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<PropertyType | 'all'>('all');
+  const [selectedRadius, setSelectedRadius] = useState<string>('near_me');
+  const [selectedQuickTag, setSelectedQuickTag] = useState<string | null>(null);
   const [isAISearchModalOpen, setIsAISearchModalOpen] = useState(false);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+
+  // Dynamic greeting according to local time
+  const currentHour = new Date().getHours();
+  const greeting =
+    currentHour < 12
+      ? 'Chào buổi sáng ☀️'
+      : currentHour < 18
+      ? 'Chào buổi chiều 🌤️'
+      : 'Chào buổi tối 👋';
 
   const publishedListings = useMemo(
     () => listings.filter((l) => l.status === 'published'),
     [listings]
   );
 
-  // Filter by category and sort by VIP ranking score
-  const filteredListings = useMemo(() => {
-    const list = publishedListings.filter((l) => {
-      if (selectedCategory !== 'all' && l.propertyType !== selectedCategory) {
-        return false;
-      }
-      return true;
-    });
+  const radiusPills = [
+    { key: 'near_me', label: 'Gần tôi', hasPin: true },
+    { key: '1km', label: '1 km', hasPin: false },
+    { key: '3km', label: '3 km', hasPin: false },
+    { key: '5km', label: '5 km', hasPin: false },
+    { key: '10km', label: '10 km', hasPin: false },
+  ];
 
-    return [...list].sort((a, b) => {
-      const scoreA = calculateListingRankingScore(80, a.vipTier, a.createdAt);
-      const scoreB = calculateListingRankingScore(80, b.vipTier, b.createdAt);
-      return scoreB - scoreA;
-    });
-  }, [publishedListings, selectedCategory]);
+  const quickFeaturePills = [
+    { key: 'under3m', label: '💰 Dưới 3 triệu', query: 'Dưới 3 triệu' },
+    { key: 'ac', label: '❄️ Có máy lạnh', query: 'Máy lạnh' },
+    { key: 'loft', label: '⚡ Có gác lửng', query: 'Gác lửng' },
+    { key: 'free_parking', label: '🛵 Free gửi xe', query: 'Gửi xe' },
+    { key: 'free_time', label: '🚪 Giờ giấc tự do', query: 'Tự do' },
+  ];
 
-  // Verified listings
-  const verifiedListings = useMemo(
-    () =>
-      publishedListings.filter(
-        (l) => l.landlordVerificationLevel === 'L2' || l.landlordVerificationLevel === 'L3'
-      ),
-    [publishedListings]
-  );
+  // Sample data fallback with realistic Vietnamese rental information
+  const nearbyListings = useMemo(() => {
+    if (publishedListings.length >= 2) return publishedListings.slice(0, 4);
+    return [
+      {
+        id: 'demo-near-1',
+        title: 'Studio ban công Nguyễn Văn Linh',
+        district: 'Quận 7',
+        distance: '850m',
+        rating: '4.9 (23)',
+        tags: 'Máy lạnh • Gác • 24/7',
+        price: 3500000,
+        statusLabel: 'Còn trống',
+        imageUrl:
+          'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=600&q=80',
+      },
+      {
+        id: 'demo-near-2',
+        title: 'Căn hộ mini Lê Văn Lương',
+        district: 'Nhà Bè',
+        distance: '1.2 km',
+        rating: '4.8 (19)',
+        tags: 'Full nội thất • Bếp riêng',
+        price: 3800000,
+        statusLabel: 'Còn trống',
+        imageUrl:
+          'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=600&q=80',
+      },
+    ];
+  }, [publishedListings]);
 
-  // Recommended for user based on preferences
-  const recommendedListings = useMemo(() => {
-    if (!userPreferences) return publishedListings.slice(0, 3);
-    const prefs = userPreferences;
-    const scored = publishedListings.filter((l) => {
-      if (prefs.preferredPropertyTypes && !prefs.preferredPropertyTypes.includes(l.propertyType)) {
-        return false;
-      }
-      if (prefs.maxPrice && l.monthlyRent > prefs.maxPrice) {
-        return false;
-      }
-      return true;
-    });
-    return scored.length > 0 ? scored.slice(0, 3) : publishedListings.slice(0, 3);
-  }, [publishedListings, userPreferences]);
+  // Featured student highlight
+  const studentHighlight = {
+    id: 'demo-student-1',
+    campusDistance: 'Cách TĐT 500m',
+    bikeFree: 'Free xe máy',
+    title: 'Ký túc xá dịch vụ & Phòng khép kín D1',
+    subtitle: 'Khu an ninh cao, camera 24/7, có bảo vệ',
+    price: 2100000,
+    priceNote: 'Giá trọn gói sinh viên',
+    imageUrl:
+      'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=600&q=80',
+  };
+
+  // Newly posted listings
+  const newlyPosted = [
+    {
+      id: 'demo-new-1',
+      title: 'Phòng đúc nguyên căn Trần Xuân Soạn',
+      address: 'Gần cầu Kênh Tẻ, tiện sang Q4, Q1',
+      price: 3200000,
+      area: '20m²',
+      badge1: 'Chủ nhà xác thực',
+      badge2: '0đ phụ phí ẩn',
+      badge2Color: '#D97706',
+      badge2Bg: '#FEF3C7',
+      imageUrl:
+        'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=600&q=80',
+    },
+    {
+      id: 'demo-new-2',
+      title: 'Phòng full nội thất cao cấp Huỳnh Tấn Phát',
+      address: 'Gần ngã 4 Phú Thuận, view thoáng...',
+      price: 4100000,
+      area: '25m²',
+      badge1: 'Chủ nhà xác thực',
+      badge2: 'Cửa vân tay',
+      badge2Color: '#0284C7',
+      badge2Bg: '#E0F2FE',
+      imageUrl:
+        'https://images.unsplash.com/photo-1598928506311-c55ded91a20c?auto=format&fit=crop&w=600&q=80',
+    },
+  ];
 
   const handleSearchSubmit = () => {
     if (searchInput.trim().length > 0) {
@@ -110,19 +153,49 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     }
   };
 
-  const handleAISearchPrompt = (prompt: string) => {
-    onNavigateToSearch(prompt);
+  const handleSelectListingItem = (id: string) => {
+    const found = publishedListings.find((l) => l.id === id);
+    if (found) {
+      setSelectedListing(found);
+      onSelectProperty?.(found);
+    } else if (publishedListings.length > 0) {
+      setSelectedListing(publishedListings[0]);
+      onSelectProperty?.(publishedListings[0]);
+    }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-      {/* Modern Search Hero Card */}
-      <View style={[styles.searchEntryCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <View style={[styles.searchBar, { backgroundColor: colors.background, borderColor: colors.border }]}>
-          <Ionicons name="search" size={19} color={colors.primary} style={{ marginRight: 8 }} />
+      <View style={{ maxWidth: contentMaxWidth, width: '100%', alignSelf: 'center' }}>
+        {/* Top Greeting Section */}
+        <View style={styles.greetingRow}>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.greetingTitle, { color: colors.textPrimary }]}>
+              {greeting}
+            </Text>
+            <Text style={[styles.greetingSub, { color: colors.textSecondary }]}>
+              Tìm trọ minh bạch, tiện nghi quanh bạn
+            </Text>
+          </View>
+
+          {/* University location pill */}
+          <TouchableOpacity
+            style={[styles.univPill, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={onOpenCitySelector}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="location" size={13} color="#EF4444" style={{ marginRight: 4 }} />
+            <Text style={[styles.univText, { color: colors.textPrimary }]}>ĐH FPT TP.HCM</Text>
+            <Ionicons name="chevron-down" size={12} color={colors.textSecondary} style={{ marginLeft: 3 }} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Search Bar Input */}
+        <View style={[styles.searchBar, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Ionicons name="search" size={18} color={colors.textSecondary} style={{ marginRight: 8 }} />
           <TextInput
             style={[styles.searchInput, { color: colors.textPrimary }]}
-            placeholder="Bạn muốn tìm phòng ở đâu, giá bao nhiêu?"
+            placeholder="Bạn muốn tìm trọ ở đâu?"
             placeholderTextColor={colors.textSecondary}
             value={searchInput}
             onChangeText={setSearchInput}
@@ -134,222 +207,379 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <Ionicons name="close-circle" size={16} color={colors.textSecondary} />
             </TouchableOpacity>
           )}
+
           <TouchableOpacity
-            style={[styles.searchBtn, { backgroundColor: colors.primary }]}
-            onPress={handleSearchSubmit}
-            accessibilityRole="button"
+            style={[styles.filterBtn, { backgroundColor: '#EFF6FF' }]}
+            onPress={() => setIsFilterModalOpen(true)}
+            accessibilityLabel="Bộ lọc nâng cao"
           >
-            <Text style={styles.searchBtnText}>Tìm</Text>
+            <Ionicons name="options-outline" size={16} color="#085F56" />
+            <View style={styles.filterDotBadge} />
           </TouchableOpacity>
         </View>
 
-        {/* AI Search Prompt Entry with Gradient Background */}
-        <AnimatedScalePressable
-          style={styles.aiEntryWrapper}
-          onPress={() => setIsAISearchModalOpen(true)}
-        >
-          <LinearGradient
-            colors={isDark ? ['#064E3B', '#0F172A'] : ['#ECFDF5', '#F0FDF4']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={[styles.aiEntryBanner, { borderColor: '#10B981' }]}
-          >
-            <View style={styles.aiIconBadge}>
-              <Ionicons name="sparkles" size={18} color="#059669" />
-            </View>
-            <View style={{ flex: 1, marginLeft: 10 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={[styles.aiEntryTitle, { color: isDark ? '#A7F3D0' : '#047857' }]}>
-                  Tìm phòng thông minh bằng AI
-                </Text>
-                <View style={styles.newTag}>
-                  <Text style={styles.newTagText}>MỚI</Text>
-                </View>
-              </View>
-              <Text style={[styles.aiEntrySub, { color: colors.textSecondary }]}>
-                "Dưới 3tr gần ĐH Bách Khoa có gác lửng, giờ tự do"
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color="#059669" />
-          </LinearGradient>
-        </AnimatedScalePressable>
-      </View>
+        {/* BÁN KÍNH QUÉT PHÒNG Bar */}
+        <View style={styles.radiusHeaderRow}>
+          <Text style={styles.radiusHeaderTitle}>BÁN KÍNH QUÉT PHÒNG</Text>
+          <TouchableOpacity style={styles.gpsLocationRow} onPress={onOpenMap}>
+            <Ionicons name="locate-outline" size={13} color="#085F56" style={{ marginRight: 3 }} />
+            <Text style={styles.gpsLocationText}>Vị trí GPS chuẩn</Text>
+          </TouchableOpacity>
+        </View>
 
-      {/* Property Category Filter Pills */}
-      <View style={styles.categoryRow}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryScroll}>
-          {PROPERTY_CATEGORIES.map((cat) => {
-            const isActive = selectedCategory === cat.type;
+        {/* Horizontal Radius Pills */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.radiusPillsScroll}
+        >
+          {radiusPills.map((pill) => {
+            const isActive = selectedRadius === pill.key;
             return (
-              <AnimatedScalePressable
-                key={cat.type}
+              <TouchableOpacity
+                key={pill.key}
                 style={[
-                  styles.categoryPill,
+                  styles.radiusChip,
                   {
-                    backgroundColor: isActive ? colors.primary : colors.card,
-                    borderColor: isActive ? colors.primary : colors.border,
+                    backgroundColor: isActive ? '#E6F4F1' : colors.card,
+                    borderColor: isActive ? '#085F56' : colors.border,
                   },
                 ]}
-                onPress={() => setSelectedCategory(cat.type)}
+                onPress={() => setSelectedRadius(pill.key)}
+                activeOpacity={0.7}
               >
-                <Ionicons
-                  name={cat.icon}
-                  size={16}
-                  color={isActive ? '#FFFFFF' : colors.textSecondary}
-                  style={{ marginRight: 6 }}
-                />
+                {pill.hasPin && (
+                  <Ionicons name="location" size={13} color="#EF4444" style={{ marginRight: 4 }} />
+                )}
                 <Text
                   style={[
-                    styles.categoryText,
-                    { color: isActive ? '#FFFFFF' : colors.textPrimary },
+                    styles.radiusChipText,
+                    { color: isActive ? '#085F56' : colors.textPrimary, fontWeight: isActive ? '800' : '600' },
                   ]}
                 >
-                  {cat.label}
+                  {pill.label}
                 </Text>
-              </AnimatedScalePressable>
+              </TouchableOpacity>
             );
           })}
         </ScrollView>
-      </View>
 
-      {/* Section: Phòng dành cho bạn */}
-      {recommendedListings.length > 0 && (
-        <View style={styles.section}>
-          <View style={styles.sectionHeader}>
+        {/* Feature Filter Pills */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.quickFeaturesScroll}
+        >
+          {quickFeaturePills.map((tag) => {
+            const isActive = selectedQuickTag === tag.key;
+            return (
+              <TouchableOpacity
+                key={tag.key}
+                style={[
+                  styles.quickFeatureChip,
+                  {
+                    backgroundColor: isActive ? '#085F56' : colors.card,
+                    borderColor: isActive ? '#085F56' : colors.border,
+                  },
+                ]}
+                onPress={() => {
+                  setSelectedQuickTag(isActive ? null : tag.key);
+                  onNavigateToSearch(tag.query);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text
+                  style={[
+                    styles.quickFeatureText,
+                    { color: isActive ? '#FFFFFF' : colors.textPrimary },
+                  ]}
+                >
+                  {tag.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+
+        {/* SECTION 1: Phòng gần bạn */}
+        <View style={styles.sectionWrap}>
+          <View style={styles.sectionTitleRow}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Ionicons name="flame" size={18} color="#EF4444" style={{ marginRight: 6 }} />
+              <View style={styles.sectionAccentBar} />
               <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-                Gợi ý dành riêng cho bạn
+                Phòng gần bạn
               </Text>
             </View>
             <TouchableOpacity onPress={() => onNavigateToSearch()}>
-              <Text style={[styles.seeAllText, { color: colors.primary }]}>Xem tất cả</Text>
+              <Text style={styles.seeAllText}>Xem tất cả &gt;</Text>
             </TouchableOpacity>
           </View>
-          {recommendedListings.map((listing) => (
-            <ListingCard
-              key={`rec-${listing.id}`}
-              listing={listing}
-              onPress={() => setSelectedListing(listing)}
-            />
-          ))}
-        </View>
-      )}
 
-      {/* Section: Phòng mới đăng */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Ionicons name="flash-outline" size={18} color="#F59E0B" style={{ marginRight: 6 }} />
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              Phòng mới đăng
-            </Text>
-          </View>
-          <Text style={[styles.badgeCount, { color: colors.textSecondary }]}>
-            {filteredListings.length} phòng
-          </Text>
+          {/* Horizontal Carousel */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.carouselScroll}
+          >
+            {nearbyListings.map((item: any) => {
+              const favorited = isFavorite(item.id);
+              return (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[styles.carouselCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                  onPress={() => handleSelectListingItem(item.id)}
+                  activeOpacity={0.88}
+                >
+                  {/* Photo with Overlay Badges */}
+                  <View style={styles.cardImageWrap}>
+                    <Image source={{ uri: item.imageUrl }} style={styles.cardImage} resizeMode="cover" />
+                    {/* Distance Pill */}
+                    <View style={styles.distanceBadge}>
+                      <Ionicons name="walk-outline" size={11} color="#FFFFFF" style={{ marginRight: 2 }} />
+                      <Text style={styles.distanceBadgeText}>{item.distance}</Text>
+                    </View>
+                    {/* Heart Button */}
+                    <TouchableOpacity
+                      style={styles.heartCircle}
+                      onPress={() => toggleFavorite(item.id)}
+                      accessibilityLabel="Lưu yêu thích"
+                    >
+                      <Ionicons
+                        name={favorited ? 'heart' : 'heart-outline'}
+                        size={16}
+                        color={favorited ? '#EF4444' : '#0F172A'}
+                      />
+                    </TouchableOpacity>
+                    {/* Rating Pill */}
+                    <View style={styles.ratingPill}>
+                      <Ionicons name="star" size={11} color="#F59E0B" style={{ marginRight: 2 }} />
+                      <Text style={styles.ratingPillText}>{item.rating}</Text>
+                    </View>
+                  </View>
+
+                  {/* Card Content */}
+                  <View style={styles.cardContent}>
+                    <View style={styles.cardDistrictRow}>
+                      <Ionicons name="business-outline" size={11} color={colors.textSecondary} style={{ marginRight: 3 }} />
+                      <Text style={[styles.cardDistrictText, { color: colors.textSecondary }]}>
+                        {item.district}
+                      </Text>
+                    </View>
+
+                    <Text style={[styles.cardTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                      {item.title}
+                    </Text>
+
+                    <Text style={[styles.cardTags, { color: colors.textSecondary }]} numberOfLines={1}>
+                      {item.tags}
+                    </Text>
+
+                    <View style={styles.cardPriceRow}>
+                      <Text style={[styles.cardPriceValue, { color: '#085F56' }]}>
+                        {formatVND(item.price)}
+                      </Text>
+                      <View style={styles.vacantBadge}>
+                        <Text style={styles.vacantBadgeText}>{item.statusLabel}</Text>
+                      </View>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
         </View>
 
-        {filteredListings.length === 0 ? (
-          <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={[styles.emptyIconCircle, { backgroundColor: isDark ? '#1E293B' : '#F1F5F9' }]}>
-              <Ionicons name="home-outline" size={32} color={colors.textSecondary} />
+        {/* SECTION 2: Được sinh viên quan tâm */}
+        <View style={styles.sectionWrap}>
+          <View style={styles.sectionTitleRow}>
+            <View>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={styles.sectionAccentBar} />
+                <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                  Được sinh viên quan tâm
+                </Text>
+              </View>
+              <Text style={[styles.sectionSubText, { color: colors.textSecondary }]}>
+                Khu vực gần ĐH Tôn Đức Thắng & ĐH FPT
+              </Text>
             </View>
-            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>
-              Chưa có tin phòng trọ nào
-            </Text>
-            <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
-              Hệ thống đang ở trạng thái dữ liệu sạch. Hãy là người đầu tiên đăng tin hoặc nạp dữ liệu từ CSDL!
-            </Text>
           </View>
-        ) : (
-          filteredListings.map((listing) => (
-            <ListingCard
-              key={listing.id}
-              listing={listing}
-              onPress={() => setSelectedListing(listing)}
-            />
-          ))
-        )}
-      </View>
 
-      {/* Section: Phòng đã xác minh */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Ionicons name="shield-checkmark" size={18} color="#10B981" style={{ marginRight: 6 }} />
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              Phòng đã xác minh an toàn
-            </Text>
-          </View>
-        </View>
-        <Text style={[styles.sectionSub, { color: colors.textSecondary }]}>
-          Chủ nhà đã được đối soát CCCD chip và giấy tờ thực địa (Trust Score ≥ 80).
-        </Text>
-
-        {verifiedListings.length === 0 ? (
-          <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Ionicons name="shield-outline" size={28} color={colors.textSecondary} style={{ marginBottom: 6 }} />
-            <Text style={[styles.emptySub, { color: colors.textSecondary }]}>
-              Chưa có phòng trọ nào đạt chứng nhận xác minh L2/L3.
-            </Text>
-          </View>
-        ) : (
-          verifiedListings.map((listing) => (
-            <ListingCard
-              key={`verified-${listing.id}`}
-              listing={listing}
-              onPress={() => setSelectedListing(listing)}
-            />
-          ))
-        )}
-      </View>
-
-      {/* Section: Cụm Trường Đại học & Khu vực phổ biến */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Ionicons name="school-outline" size={18} color={colors.primary} style={{ marginRight: 6 }} />
-            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
-              Cụm Làng Đại Học & Khu Trọng Điểm
-            </Text>
-          </View>
-        </View>
-        <View style={styles.areasGrid}>
-          {POPULAR_AREAS.map((area) => (
-            <AnimatedScalePressable
-              key={area.query}
-              style={[styles.areaCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={() => onNavigateToSearch(area.query)}
-            >
-              <View style={styles.areaHeaderRow}>
-                <Ionicons name="location-sharp" size={14} color={colors.primary} />
-                <Text style={[styles.areaCityBadge, { color: colors.textSecondary }]}>
-                  {area.city}
-                </Text>
+          {/* Student Banner Card */}
+          <TouchableOpacity
+            style={[styles.studentCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => handleSelectListingItem(studentHighlight.id)}
+            activeOpacity={0.9}
+          >
+            {/* Top Badges Row */}
+            <View style={styles.studentTopRow}>
+              <View style={{ flexDirection: 'row', gap: 6 }}>
+                <View style={[styles.studentTag, { backgroundColor: '#E0F2FE' }]}>
+                  <Ionicons name="school-outline" size={11} color="#0284C7" style={{ marginRight: 3 }} />
+                  <Text style={[styles.studentTagText, { color: '#0284C7' }]}>
+                    {studentHighlight.campusDistance}
+                  </Text>
+                </View>
+                <View style={[styles.studentTag, { backgroundColor: '#CCFBF1' }]}>
+                  <Ionicons name="bicycle-outline" size={11} color="#0F766E" style={{ marginRight: 3 }} />
+                  <Text style={[styles.studentTagText, { color: '#0F766E' }]}>
+                    {studentHighlight.bikeFree}
+                  </Text>
+                </View>
               </View>
-              <Text style={[styles.areaTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                {area.label}
+
+              <TouchableOpacity onPress={() => toggleFavorite(studentHighlight.id)}>
+                <Ionicons
+                  name={isFavorite(studentHighlight.id) ? 'heart' : 'heart-outline'}
+                  size={18}
+                  color={isFavorite(studentHighlight.id) ? '#EF4444' : '#64748B'}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={[styles.studentTitle, { color: colors.textPrimary }]}>
+              {studentHighlight.title}
+            </Text>
+
+            <View style={styles.studentSubRow}>
+              <Ionicons name="shield-checkmark-outline" size={13} color="#085F56" style={{ marginRight: 4 }} />
+              <Text style={[styles.studentSub, { color: colors.textSecondary }]}>
+                {studentHighlight.subtitle}
               </Text>
-              <Text style={[styles.areaUniversity, { color: colors.primary }]} numberOfLines={1}>
-                {area.university}
-              </Text>
-              <View style={styles.areaActionRow}>
-                <Text style={[styles.areaSub, { color: colors.textSecondary }]}>
-                  Khám phá
+            </View>
+
+            <View style={styles.studentFooterRow}>
+              <View>
+                <Text style={[styles.studentPricePrompt, { color: colors.textSecondary }]}>
+                  {studentHighlight.priceNote}
                 </Text>
-                <Ionicons name="arrow-forward" size={12} color={colors.textSecondary} />
+                <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+                  <Text style={[styles.studentPriceValue, { color: '#085F56' }]}>
+                    {formatVND(studentHighlight.price)}
+                  </Text>
+                  <Text style={[styles.studentPriceUnit, { color: colors.textSecondary }]}>/người/tháng</Text>
+                </View>
               </View>
-            </AnimatedScalePressable>
-          ))}
+
+              <TouchableOpacity
+                style={styles.studentCtaBtn}
+                onPress={() => handleSelectListingItem(studentHighlight.id)}
+              >
+                <Text style={styles.studentCtaText}>Xem chi tiết</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        {/* SECTION 3: Phòng mới đăng */}
+        <View style={styles.sectionWrap}>
+          <View style={styles.sectionTitleRow}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={styles.sectionAccentBar} />
+              <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>
+                Phòng mới đăng
+              </Text>
+            </View>
+            <Text style={[styles.timeAgoHint, { color: colors.textSecondary }]}>
+              Vừa cập nhật 10 phút trước
+            </Text>
+          </View>
+
+          {/* Vertical Compact Listing Items */}
+          <View style={styles.newlyPostedList}>
+            {newlyPosted.map((item) => {
+              const favorited = isFavorite(item.id);
+              return (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[styles.newPostCard, { backgroundColor: colors.card, borderColor: colors.border }]}
+                  onPress={() => handleSelectListingItem(item.id)}
+                  activeOpacity={0.88}
+                >
+                  {/* Left Thumbnail with Area Tag */}
+                  <View style={styles.newPostThumbWrap}>
+                    <Image source={{ uri: item.imageUrl }} style={styles.newPostThumb} resizeMode="cover" />
+                    <View style={styles.areaBadge}>
+                      <Text style={styles.areaBadgeText}>{item.area}</Text>
+                    </View>
+                  </View>
+
+                  {/* Right Content */}
+                  <View style={styles.newPostContent}>
+                    <View style={styles.newPostBadgeRow}>
+                      <View style={styles.verifiedMiniTag}>
+                        <Ionicons name="checkmark-circle" size={10} color="#085F56" style={{ marginRight: 2 }} />
+                        <Text style={styles.verifiedMiniText}>{item.badge1}</Text>
+                      </View>
+                      <View style={[styles.customMiniTag, { backgroundColor: item.badge2Bg }]}>
+                        <Text style={[styles.customMiniText, { color: item.badge2Color }]}>
+                          {item.badge2}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <Text style={[styles.newPostTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                      {item.title}
+                    </Text>
+
+                    <View style={styles.newPostAddressRow}>
+                      <Ionicons name="location" size={11} color="#EF4444" style={{ marginRight: 2 }} />
+                      <Text style={[styles.newPostAddress, { color: colors.textSecondary }]} numberOfLines={1}>
+                        {item.address}
+                      </Text>
+                    </View>
+
+                    <View style={styles.newPostFooterRow}>
+                      <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+                        <Text style={[styles.newPostPrice, { color: '#085F56' }]}>
+                          {formatVND(item.price)}
+                        </Text>
+                        <Text style={[styles.newPostPeriod, { color: colors.textSecondary }]}>/tháng</Text>
+                      </View>
+
+                      <TouchableOpacity
+                        onPress={() => toggleFavorite(item.id)}
+                        style={styles.newPostHeartBtn}
+                        accessibilityLabel="Lưu"
+                      >
+                        <Ionicons
+                          name={favorited ? 'heart' : 'heart-outline'}
+                          size={17}
+                          color={favorited ? '#EF4444' : '#64748B'}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
       </View>
 
-      {/* Dedicated AI Search Modal */}
+      {/* Sub-modals */}
       <AISearchModal
         visible={isAISearchModalOpen}
         onClose={() => setIsAISearchModalOpen(false)}
-        onSearch={handleAISearchPrompt}
+        onSearch={(query) => onNavigateToSearch(query)}
+      />
+
+      <FilterModal
+        visible={isFilterModalOpen}
+        onClose={() => setIsFilterModalOpen(false)}
+        filters={{
+          priceIndex: 0,
+          wardCode: 'all',
+          propertyType: 'all',
+          amenityCodes: [],
+          conditions: [],
+        }}
+        totalMatching={publishedListings.length}
+        onReset={() => {}}
+        onApply={(filterCriteria: FilterState) => {
+          setIsFilterModalOpen(false);
+          onNavigateToSearch();
+        }}
       />
     </ScrollView>
   );
@@ -360,196 +590,433 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 90,
   },
-  searchEntryCard: {
+  greetingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  greetingTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+  },
+  greetingSub: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+  univPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1,
-    padding: 16,
-    marginBottom: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  univText: {
+    fontSize: 11,
+    fontWeight: '700',
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
+    height: 48,
     borderRadius: 14,
     borderWidth: 1,
     paddingHorizontal: 12,
-    height: 48,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 13,
+    fontWeight: '600',
     height: '100%',
   },
-  searchBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 10,
-  },
-  searchBtnText: {
-    color: '#FFFFFF',
-    fontWeight: '800',
-    fontSize: 13,
-  },
-  aiEntryWrapper: {
-    marginTop: 12,
-    borderRadius: 14,
-    overflow: 'hidden',
-  },
-  aiEntryBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderRadius: 14,
-    borderWidth: 1,
-  },
-  aiIconBadge: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+  filterBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
+    position: 'relative',
   },
-  aiEntryTitle: {
-    fontSize: 13,
-    fontWeight: '800',
+  filterDotBadge: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#085F56',
   },
-  newTag: {
-    marginLeft: 6,
-    backgroundColor: '#EF4444',
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-    borderRadius: 4,
-  },
-  newTagText: {
-    color: '#FFFFFF',
-    fontSize: 9,
-    fontWeight: '900',
-  },
-  aiEntrySub: {
-    fontSize: 11,
-    marginTop: 2,
-  },
-  categoryRow: {
-    marginBottom: 20,
-  },
-  categoryScroll: {
-    gap: 8,
-  },
-  categoryPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: 20,
-    borderWidth: 1,
-  },
-  categoryText: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionHeader: {
+  radiusHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 8,
+  },
+  radiusHeaderTitle: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#64748B',
+    letterSpacing: 0.5,
+  },
+  gpsLocationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  gpsLocationText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#085F56',
+  },
+  radiusPillsScroll: {
+    gap: 8,
+    marginBottom: 12,
+  },
+  radiusChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  radiusChipText: {
+    fontSize: 12,
+  },
+  quickFeaturesScroll: {
+    gap: 8,
+    marginBottom: 20,
+  },
+  quickFeatureChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  quickFeatureText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  sectionWrap: {
+    marginBottom: 24,
+  },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  sectionAccentBar: {
+    width: 4,
+    height: 16,
+    borderRadius: 2,
+    backgroundColor: '#085F56',
+    marginRight: 8,
   },
   sectionTitle: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '800',
     letterSpacing: -0.3,
   },
-  sectionSub: {
-    fontSize: 12,
-    marginBottom: 12,
-    lineHeight: 17,
+  sectionSubText: {
+    fontSize: 11,
+    marginTop: 2,
+    marginLeft: 12,
   },
   seeAllText: {
-    fontSize: 13,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#085F56',
+  },
+  timeAgoHint: {
+    fontSize: 11,
+  },
+  carouselScroll: {
+    gap: 12,
+  },
+  carouselCard: {
+    width: 220,
+    borderRadius: 16,
+    borderWidth: 1,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+  cardImageWrap: {
+    height: 130,
+    width: '100%',
+    position: 'relative',
+  },
+  cardImage: {
+    width: '100%',
+    height: '100%',
+  },
+  distanceBadge: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  distanceBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
     fontWeight: '700',
   },
-  badgeCount: {
-    fontSize: 12,
+  heartCircle: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  ratingPill: {
+    position: 'absolute',
+    bottom: 8,
+    left: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  ratingPillText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#1E293B',
+  },
+  cardContent: {
+    padding: 10,
+  },
+  cardDistrictRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 3,
+  },
+  cardDistrictText: {
+    fontSize: 10,
     fontWeight: '600',
   },
-  areasGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
+  cardTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    marginBottom: 3,
   },
-  areaCard: {
-    width: '48.5%',
-    padding: 12,
-    borderRadius: 14,
+  cardTags: {
+    fontSize: 11,
+    marginBottom: 8,
+  },
+  cardPriceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  cardPriceValue: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  vacantBadge: {
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  vacantBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#0284C7',
+  },
+  studentCard: {
+    padding: 14,
+    borderRadius: 16,
     borderWidth: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 3,
-    elevation: 1,
+    elevation: 2,
   },
-  areaHeaderRow: {
+  studentTopRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 4,
-  },
-  areaCityBadge: {
-    fontSize: 10,
-    fontWeight: '700',
-    marginLeft: 2,
-    textTransform: 'uppercase',
-  },
-  areaTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    marginBottom: 2,
-  },
-  areaUniversity: {
-    fontSize: 11,
-    fontWeight: '600',
     marginBottom: 8,
   },
-  areaActionRow: {
+  studentTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
   },
-  areaSub: {
-    fontSize: 11,
-    fontWeight: '500',
+  studentTagText: {
+    fontSize: 10,
+    fontWeight: '700',
   },
-  emptyCard: {
-    padding: 24,
-    borderRadius: 16,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginVertical: 8,
-  },
-  emptyIconCircle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  emptyTitle: {
-    fontSize: 15,
+  studentTitle: {
+    fontSize: 14,
     fontWeight: '800',
     marginBottom: 4,
-    textAlign: 'center',
   },
-  emptySub: {
+  studentSubRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  studentSub: {
+    fontSize: 11,
+  },
+  studentFooterRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  studentPricePrompt: {
+    fontSize: 10,
+    fontWeight: '500',
+  },
+  studentPriceValue: {
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  studentPriceUnit: {
+    fontSize: 10,
+    marginLeft: 2,
+  },
+  studentCtaBtn: {
+    backgroundColor: '#085F56',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  studentCtaText: {
+    color: '#FFFFFF',
     fontSize: 12,
-    lineHeight: 18,
-    textAlign: 'center',
+    fontWeight: '700',
+  },
+  newlyPostedList: {
+    gap: 12,
+  },
+  newPostCard: {
+    flexDirection: 'row',
+    padding: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  newPostThumbWrap: {
+    width: 86,
+    height: 86,
+    borderRadius: 10,
+    overflow: 'hidden',
+    position: 'relative',
+    marginRight: 10,
+  },
+  newPostThumb: {
+    width: '100%',
+    height: '100%',
+  },
+  areaBadge: {
+    position: 'absolute',
+    bottom: 4,
+    left: 4,
+    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  areaBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '700',
+  },
+  newPostContent: {
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  newPostBadgeRow: {
+    flexDirection: 'row',
+    gap: 6,
+  },
+  verifiedMiniTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E6F4F1',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  verifiedMiniText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#085F56',
+  },
+  customMiniTag: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  customMiniText: {
+    fontSize: 9,
+    fontWeight: '700',
+  },
+  newPostTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    marginVertical: 2,
+  },
+  newPostAddressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  newPostAddress: {
+    fontSize: 11,
+  },
+  newPostFooterRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  newPostPrice: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  newPostPeriod: {
+    fontSize: 10,
+  },
+  newPostHeartBtn: {
+    padding: 2,
   },
 });

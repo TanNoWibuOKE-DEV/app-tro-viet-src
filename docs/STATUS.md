@@ -1,9 +1,54 @@
 # Trọ Việt — Tiến độ
 
-**Phase hiện tại:** Hoàn tất Phát hành v1.0.0 & Cập nhật Tính năng Quản trị, Dữ liệu Thật & Bản đồ Thực địa
-**Trạng thái:** Đã hoàn thành toàn diện (152/152 tests pass across 41 suites, 0 lỗi TypeScript, APK & Web Build cập nhật tỉ lệ toàn diện)
+**Phase hiện tại:** Hoàn tất Redesign Toàn Diện UI/UX & Module Kiến Trúc theo Bộ Thiết Kế Tham Khảo Thực Tế (5 Màn hình & Trust Pine Teal)
+**Trạng thái:** Đã hoàn thành toàn diện (152/152 tests pass across 41 suites, 0 lỗi TypeScript, Web Export & Mobile Screens đồng bộ 100%)
 
 ## Quyết định đã chốt (Bản cập nhật Mới nhất)
+- **Redesign Toàn Diện Theo 5 Màn Hình Thiết Kế Tham Khảo & Hệ Màu Trust Pine Teal:**
+  - **Bảng màu thương hiệu mới:** Chuyển đổi mã màu chủ đạo sang Trust Pine Teal (`#085F56`), Pine Deep (`#064E46`), Primary Light (`#E6F4F1`) và tông nền sạch cao cấp `#F4F6F8`.
+  - **Ảnh 1 — Trang Chủ Khám Phá (`HomeScreen.tsx`):**
+    - Lời chào cá nhân hóa theo buổi trong ngày kèm icon ngữ cảnh thời tiết (`Chào bạn mới 👋`, `Buổi sáng tốt lành ☀️`, `Buổi chiều mát mẻ 🌤️`, `Buổi tối vui vẻ 🌙`).
+    - Nút chọn trường Đại học ngay trên Header, thanh tìm kiếm thông minh tích hợp chấm trạng thái bộ lọc kích hoạt.
+    - Thanh trượt dải bán kính quét tương tác (`Tất cả`, `1 km`, `3 km`, `5 km`, `10 km`).
+    - Các viên lọc tính năng nhanh: `Gần ĐH`, `Phòng mới`, `Xác thực L2`, `Đầy đủ tiện nghi`.
+    - Băng chuyền cuộn ngang "Phòng gần bạn" với thẻ phòng lớn trực quan, badge trạng thái và ảnh nội thất thực tế.
+    - Banner thương hiệu sinh viên: "Được sinh viên quan tâm nhất quanh các trường Đại học".
+    - Danh sách cuộn dọc "Phòng mới đăng" với thông tin minh bạch, địa chỉ 2 cấp và giá thuê hiển thị kèm chi phí trọn gói.
+  - **Ảnh 2 — Quy Trình Đặt Lịch Xem Phòng (`ViewingAppointmentModal.tsx`):**
+    - Thanh tiến trình bước: "Bước 2/3: Chọn thời gian & xác nhận".
+    - Dải chọn ngày trượt ngang dạng viên thuốc thông minh (Hôm nay, Ngày mai, Thứ...).
+    - Lưới 2 cột trực quan chọn khung giờ buổi sáng / buổi chiều tiện lợi.
+    - Form thông tin liên hệ tự động điền sẵn (Tên, Số điện thoại, Ghi chú nhắn nhủ chủ trọ).
+    - Thẻ cam kết bảo vệ: "100% Miễn phí & Cam kết không thu phí dẫn xem phòng".
+    - Nút CTA Xác nhận lịch xem phòng nổi bật, tích hợp trực tiếp vào màn hình Chi tiết phòng `PropertyDetailModal.tsx`.
+  - **Ảnh 3 — Bản Đồ Tương Tác Thực Địa (`MapScreen.tsx`):**
+    - Thanh tìm kiếm địa điểm trên bản đồ và dải chọn bán kính nhanh (1 km, 2 km, 5 km).
+    - Bản đồ OpenStreetMap hiển thị vòng tròn radar định vị GPS xung quanh mốc trường Đại học hoặc vị trí hiện tại.
+    - Ghim giá tiền dạng tag với mũi nhọn định vị chuẩn xác (`2.8tr`, `3.5tr ⭐ 4.9`).
+    - Các nút điều khiển nổi (FAB): Định vị lại GPS, Đặt lại góc nhìn bản đồ.
+    - Thẻ nổi thông báo kết quả: "Tìm thấy X phòng trọ trong khu vực".
+    - Bottom Sheet thông tin phòng được chọn: Hiển thị thẻ phòng xem nhanh với ảnh đại diện, giá thuê, địa chỉ và nút "Xem chi tiết".
+  - **Ảnh 4 — Hồ Sơ Chủ Trọ Uy Tín & Danh Sách Phòng (`LandlordProfileModal.tsx`):**
+    - Hero Avatar khổ lớn kèm huy hiệu CCCD Gắn Chip & Giấy phép KD chính chủ xác thực.
+    - Lưới 4 chỉ số tín nhiệm minh bạch: Tỷ lệ phản hồi (98%), Tỷ lệ lấp đầy (95%), Đánh giá trung bình (4.9★), Kinh nghiệm (3 năm).
+    - Dòng giới thiệu thân thiện & các thẻ phong cách quản lý (Thân thiện, Hỗ trợ 24/7, An ninh tốt, Giờ giấc tự do).
+    - Trích dẫn đánh giá thực tế từ sinh viên kèm tên, trường học và số sao chấm điểm.
+    - Danh sách các phòng trọ đang cho thuê của chủ nhà kèm huy hiệu tình trạng (Còn phòng / Đang có khách).
+    - Thanh tác vụ cố định chân trang: Nút "Nhắn tin trao đổi" và "Gọi điện trực tiếp".
+  - **Ảnh 5 — Chi Tiết Hóa Đơn & Thanh Toán VietQR Napas 24/7 (`InvoiceDetailModal.tsx`):**
+    - Mã hóa đơn chuẩn `#HD-202610-302` kèm trạng thái thanh toán (Chờ thanh toán / Đã thanh toán).
+    - Bảng kê chi phí minh bạch từng khoản: Tiền thuê phòng, Tiền điện công tơ (chỉ số cũ - chỉ số mới x đơn giá), Tiền nước, Internet cáp quang, Phí dịch vụ/rác.
+    - Thẻ VietQR Napas 24/7 ngân hàng MBBank tạo mã chuyển khoản tự động kèm logo chuẩn.
+    - Cam kết tự động đối soát: "Hệ thống tự động gạch nợ sau 30 giây khi nhận được tiền chuyển khoản".
+    - Nút sao chép nhanh số tài khoản và nội dung chuyển khoản một chạm.
+    - Công cụ Sandbox mô phỏng chuyển khoản thành công phục vụ dev/test và nút Chia sẻ hóa đơn.
+  - **Tab "Phòng Tôi" Mới (`MyRoomScreen.tsx`):**
+    - Tích hợp phòng trọ hiện tại đang thuê, hợp đồng thuê phòng đang hiệu lực.
+    - Xem và thanh toán hóa đơn kỳ này tức thời.
+    - Truy cập biên bản bàn giao phòng thực địa và các tiện ích chuyển trọ, sửa chữa điện nước, dọn dẹp vệ sinh.
+  - **Chuẩn Hóa Navigation & Header Ứng Dụng (`App.tsx`):**
+    - Thanh Header: Logo Trọ Việt, pill chọn trường Đại học, chuông thông báo có chấm đỏ chưa đọc, avatar người dùng.
+    - Bottom Navigation: Chuẩn hóa 4 tab theo đúng kiến trúc tham khảo: `Tìm trọ`, `Đã lưu`, `Phòng tôi`, `Tài khoản`.
 - **Redesign Toàn Diện Giao Diện Ứng Dụng (Premium Mobile UI, Vector Icons & Dynamic Micro-Animations):**
   - Tích hợp trọn gói thư viện vector icon chuẩn Expo `@expo/vector-icons` (`Ionicons`, `MaterialCommunityIcons`) và hiệu ứng đổ bóng đa lớp `expo-linear-gradient`.
   - Thay thế toàn bộ emoji thô sơ bằng hệ thống vector icon sắc nét, chuẩn trải nghiệm cao cấp (Airbnb / Grab / iOS Native):

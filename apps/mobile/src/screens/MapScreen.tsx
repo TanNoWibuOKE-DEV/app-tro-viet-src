@@ -6,70 +6,52 @@ import {
   StyleSheet,
   ScrollView,
   Platform,
+  TextInput,
+  Image,
 } from 'react-native';
 import { WebView } from 'react-native-webview';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme/ThemeContext';
 import { useApp } from '../context/AppContext';
+import { useResponsiveLayout } from '../utils/responsive';
+import { getListingCoverImage } from '../utils/imageAssets';
 import {
   ListingSummary,
   formatVND,
   formatArea,
-  calculateHaversineDistance,
 } from '@troviet/shared';
 
-interface Landmark {
-  id: string;
-  name: string;
-  latitude: number;
-  longitude: number;
+interface MapScreenProps {
+  onBackToHome?: () => void;
 }
 
-const POPULAR_LANDMARKS: Landmark[] = [
-  { id: 'all_dn', name: '📍 Đà Nẵng', latitude: 16.060, longitude: 108.210 },
-  { id: 'duytan', name: '🎓 ĐH Duy Tân (ĐN)', latitude: 16.0728, longitude: 108.2215 },
-  { id: 'bachkhoa_dn', name: '🎓 ĐH Bách Khoa (ĐN)', latitude: 16.0738, longitude: 108.1498 },
-  { id: 'kinhte_dn', name: '🎓 ĐH Kinh Tế (ĐN)', latitude: 16.0502, longitude: 108.2346 },
-  { id: 'mykhe', name: '🏖️ Biển Mỹ Khê', latitude: 16.0601, longitude: 108.2464 },
-  { id: 'dhqg_hn', name: '🎓 ĐHQG Hà Nội', latitude: 21.0368, longitude: 105.7874 },
-  { id: 'ftu_hn', name: '🏛️ ĐH Ngoại Thương (HN)', latitude: 21.0245, longitude: 105.8089 },
-  { id: 'dhqg_hcm', name: '🎓 Làng ĐH (TP.HCM)', latitude: 10.8703, longitude: 106.7782 },
-  { id: 'hutech_hcm', name: '🏢 ĐH HUTECH (HCM)', latitude: 10.8016, longitude: 106.7138 },
-];
-
-export const MapScreen: React.FC = () => {
+export const MapScreen: React.FC<MapScreenProps> = ({ onBackToHome }) => {
   const { colors, isDark } = useTheme();
-  const { listings, setSelectedListing } = useApp();
+  const { insets, contentMaxWidth } = useResponsiveLayout();
+  const { listings, setSelectedListing, isFavorite, toggleFavorite } = useApp();
 
-  const [selectedLandmark, setSelectedLandmark] = useState<Landmark>(POPULAR_LANDMARKS[0]);
+  const [activeRadius, setActiveRadius] = useState<string>('3km');
+  const [searchQuery, setSearchQuery] = useState('Khu vực ĐH Tôn Đức Thắng');
   const [activePinListingId, setActivePinListingId] = useState<string | null>(null);
+  const [mapLayer, setMapLayer] = useState<'standard' | 'satellite'>('standard');
+  const [showBusRoutes, setShowBusRoutes] = useState(false);
 
   const publishedListings = useMemo(
     () => listings.filter((l) => l.status === 'published'),
     [listings]
   );
 
-  // Compute distance of each listing to current active landmark
-  const listingsWithDistance = useMemo(() => {
-    return publishedListings
-      .map((item) => {
-        const distanceKm = calculateHaversineDistance(
-          { latitude: selectedLandmark.latitude, longitude: selectedLandmark.longitude },
-          { latitude: item.latitude, longitude: item.longitude }
-        );
-        return {
-          ...item,
-          distanceKm,
-        };
-      })
-      .sort((a, b) => a.distanceKm - b.distanceKm);
-  }, [publishedListings, selectedLandmark]);
-
+  // Default active listing or user selected
   const activeListing = useMemo(() => {
     if (activePinListingId) {
-      return publishedListings.find((l) => l.id === activePinListingId) || null;
+      return publishedListings.find((l) => l.id === activePinListingId) || publishedListings[0] || null;
     }
-    return listingsWithDistance[0] || null;
-  }, [activePinListingId, publishedListings, listingsWithDistance]);
+    return publishedListings[0] || null;
+  }, [activePinListingId, publishedListings]);
+
+  // Center coordinate around Ton Duc Thang University (District 7, TP.HCM)
+  const centerLat = 10.7324;
+  const centerLng = 106.6992;
 
   // Listen to web postMessage when running in browser
   useEffect(() => {
@@ -99,19 +81,18 @@ export const MapScreen: React.FC = () => {
     }
   };
 
-  // Generate self-contained Leaflet OpenStreetMap HTML
+  // Generate self-contained Leaflet OpenStreetMap HTML with Radius Circle & Highlight Pin
   const mapHtml = useMemo(() => {
-    const primaryColor = colors.primary || '#10B981';
-    const markersJson = JSON.stringify(
-      publishedListings.map((l) => ({
-        id: l.id,
-        title: l.title,
-        lat: l.latitude,
-        lng: l.longitude,
-        priceText: `${(l.monthlyRent / 1000000).toFixed(1).replace('.0', '')}tr`,
-        rentFormatted: formatVND(l.monthlyRent),
-      }))
-    );
+    const primaryColor = '#085F56';
+    const markers = [
+      { id: 'p1', title: 'Studio ban công Nguyễn Văn Linh', lat: 10.7315, lng: 106.7020, priceText: '3.5tr', rating: '4.9', isHighlight: true },
+      { id: 'p2', title: 'Phòng trọ gần RMIT', lat: 10.7360, lng: 106.6930, priceText: '2.8tr', rating: '4.8', isHighlight: false },
+      { id: 'p3', title: 'Ký túc xá D1 Tôn Đức Thắng', lat: 10.7280, lng: 106.7040, priceText: '2.5tr', rating: '4.9', isHighlight: false },
+      { id: 'p4', title: 'Căn hộ mini ĐH FPT', lat: 10.7380, lng: 106.7060, priceText: '4.2tr', rating: '4.7', isHighlight: false },
+      { id: 'p5', title: 'Phòng đúc Trần Xuân Soạn', lat: 10.7290, lng: 106.6970, priceText: '3.2tr', rating: '4.8', isHighlight: false },
+    ];
+
+    const markersJson = JSON.stringify(markers);
 
     return `<!DOCTYPE html>
 <html>
@@ -124,34 +105,73 @@ export const MapScreen: React.FC = () => {
     * { box-sizing: border-box; }
     html, body, #map { margin: 0; padding: 0; width: 100%; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     .price-pin {
-      background-color: ${primaryColor};
-      color: #FFFFFF;
+      background-color: #FFFFFF;
+      color: #0F172A;
       font-size: 12px;
       font-weight: 800;
       padding: 4px 8px;
-      border-radius: 12px;
-      border: 2px solid #FFFFFF;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      border-radius: 14px;
+      border: 1.5px solid #CBD5E1;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-      transition: transform 0.15s ease;
       white-space: nowrap;
+      transition: all 0.2s ease;
     }
-    .price-pin:hover, .price-pin:active {
-      transform: scale(1.15);
-      background-color: #059669;
-    }
-    .landmark-pin {
-      background-color: #2563EB;
+    .price-pin.active {
+      background-color: ${primaryColor};
       color: #FFFFFF;
+      border-color: #FFFFFF;
+      box-shadow: 0 6px 14px rgba(8, 95, 86, 0.45);
+      transform: scale(1.1);
+      position: relative;
+    }
+    .price-pin.active::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 6px 5px 0 5px;
+      border-style: solid;
+      border-color: ${primaryColor} transparent transparent transparent;
+    }
+    .pin-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 2.5px;
+      background-color: #10B981;
+      margin-left: 4px;
+    }
+    .user-location-pulse {
+      width: 22px;
+      height: 22px;
+      border-radius: 11px;
+      background-color: #2563EB;
+      border: 3px solid #FFFFFF;
+      box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.25);
+    }
+    .user-tag {
+      background-color: rgba(255, 255, 255, 0.95);
+      color: #1E293B;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      white-space: nowrap;
+      margin-top: 4px;
+      border: 1px solid #E2E8F0;
+    }
+    .campus-area {
       font-size: 11px;
-      font-weight: 700;
-      padding: 4px 8px;
-      border-radius: 12px;
-      border: 2px solid #FFFFFF;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      font-weight: 800;
+      color: #065F46;
+      background: rgba(209, 250, 229, 0.85);
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px dashed #059669;
       white-space: nowrap;
     }
   </style>
@@ -159,33 +179,66 @@ export const MapScreen: React.FC = () => {
 <body>
   <div id="map"></div>
   <script>
-    var centerLat = ${selectedLandmark.latitude};
-    var centerLng = ${selectedLandmark.longitude};
-    var map = L.map('map', { zoomControl: true }).setView([centerLat, centerLng], 14);
+    var centerLat = ${centerLat};
+    var centerLng = ${centerLng};
+    var map = L.map('map', { zoomControl: false }).setView([centerLat, centerLng], 15);
 
-    // Official OpenStreetMap Tile Layer
+    // Light Theme Tile Layer
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      attribution: '&copy; OpenStreetMap'
     }).addTo(map);
 
-    // Landmark Target Marker
-    var landmarkIcon = L.divIcon({
-      className: 'landmark-icon-container',
-      html: '<div class="landmark-pin">${selectedLandmark.name}</div>',
-      iconSize: [120, 30],
-      iconAnchor: [60, 15]
-    });
-    L.marker([centerLat, centerLng], { icon: landmarkIcon }).addTo(map);
+    // 3km Radius Circle around user
+    var radiusCircle = L.circle([centerLat, centerLng], {
+      radius: 900,
+      color: '#085F56',
+      fillColor: '#085F56',
+      fillOpacity: 0.08,
+      weight: 1.5,
+      dashArray: '4, 4'
+    }).addTo(map);
 
-    // Property Pins
+    // User Location Marker
+    var userIcon = L.divIcon({
+      className: 'user-icon-container',
+      html: '<div style="display:flex; flex-direction:column; align-items:center;"><div class="user-location-pulse"></div><div class="user-tag">Vị trí của bạn (Khu A)</div></div>',
+      iconSize: [120, 50],
+      iconAnchor: [60, 11]
+    });
+    L.marker([centerLat, centerLng], { icon: userIcon }).addTo(map);
+
+    // Campus Overlays
+    var tdtIcon = L.divIcon({
+      className: 'campus-container',
+      html: '<div class="campus-area">ĐH Tôn Đức Thắng</div>',
+      iconSize: [110, 24],
+      iconAnchor: [55, 12]
+    });
+    L.marker([10.7328, 106.7005], { icon: tdtIcon }).addTo(map);
+
+    var rmitIcon = L.divIcon({
+      className: 'campus-container',
+      html: '<div class="campus-area" style="color:#1E40AF; background:rgba(219,234,254,0.85); border-color:#2563EB;">ĐH RMIT</div>',
+      iconSize: [90, 24],
+      iconAnchor: [45, 12]
+    });
+    L.marker([10.7350, 106.6935], { icon: rmitIcon }).addTo(map);
+
+    // Render Price Pins
     var markers = ${markersJson};
     markers.forEach(function(item) {
+      var isHighlight = item.isHighlight;
+      var html = '<div class="price-pin ' + (isHighlight ? 'active' : '') + '">' +
+        item.priceText +
+        (isHighlight && item.rating ? ' ★ ' + item.rating : '<span class="pin-dot"></span>') +
+        '</div>';
+
       var pinIcon = L.divIcon({
-        className: 'price-icon-container',
-        html: '<div class="price-pin">' + item.priceText + '</div>',
-        iconSize: [60, 26],
-        iconAnchor: [30, 13]
+        className: 'price-container',
+        html: html,
+        iconSize: [70, 30],
+        iconAnchor: [35, 15]
       });
 
       var marker = L.marker([item.lat, item.lng], { icon: pinIcon }).addTo(map);
@@ -201,127 +254,266 @@ export const MapScreen: React.FC = () => {
   </script>
 </body>
 </html>`;
-  }, [selectedLandmark, publishedListings, colors.primary]);
+  }, [centerLat, centerLng]);
+
+  const coverUrl = activeListing ? getListingCoverImage(activeListing) : 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=600&q=80';
+  const favorited = activeListing ? isFavorite(activeListing.id) : false;
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
-      {/* Top Header / Landmark Selector */}
-      <View style={[styles.topHeader, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <View style={styles.headerTitleRow}>
-          <Text style={[styles.headerTitle, { color: colors.textPrimary }]}>
-            🗺️ Bản đồ thực tế (OpenStreetMap)
-          </Text>
-          <View style={[styles.statusBadge, { backgroundColor: isDark ? '#1E293B' : '#E0F2FE' }]}>
-            <Text style={{ fontSize: 11, fontWeight: '700', color: '#0284C7' }}>
-              {publishedListings.length} phòng tọa độ thực
-            </Text>
-          </View>
-        </View>
+      <View style={{ flex: 1, maxWidth: contentMaxWidth, width: '100%', alignSelf: 'center' }}>
+        {/* Floating Top Search & Filter Bar */}
+        <View
+          style={[
+            styles.floatingSearchBar,
+            {
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+              marginTop: Math.max(10, insets.top + 6),
+            },
+          ]}
+        >
+          {onBackToHome && (
+            <TouchableOpacity onPress={onBackToHome} style={styles.searchBackBtn}>
+              <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
+            </TouchableOpacity>
+          )}
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.landmarkScroll}>
-          {POPULAR_LANDMARKS.map((lm) => {
-            const active = selectedLandmark.id === lm.id;
-            return (
-              <TouchableOpacity
-                key={lm.id}
-                style={[
-                  styles.landmarkPill,
-                  {
-                    backgroundColor: active ? colors.primary : colors.background,
-                    borderColor: active ? colors.primary : colors.border,
-                  },
-                ]}
-                onPress={() => {
-                  setSelectedLandmark(lm);
-                  setActivePinListingId(null);
-                }}
-              >
-                <Text
-                  style={{
-                    color: active ? '#FFFFFF' : colors.textPrimary,
-                    fontWeight: '700',
-                    fontSize: 12,
-                  }}
-                >
-                  {lm.name}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </View>
+          <Ionicons name="search" size={17} color={colors.textSecondary} style={{ marginRight: 6 }} />
 
-      {/* Real Map Viewport Container */}
-      <View style={[styles.mapViewport, { backgroundColor: isDark ? '#1E293B' : '#E2E8F0' }]}>
-        {Platform.OS === 'web' ? (
-          // Web: Render interactive iframe with Leaflet + OSM tiles
-          <iframe
-            srcDoc={mapHtml}
-            style={{ width: '100%', height: '100%', border: 'none' }}
-            title="RealOpenStreetMap"
+          <TextInput
+            style={[styles.searchInput, { color: colors.textPrimary }]}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Tìm theo khu vực, trường ĐH..."
+            placeholderTextColor={colors.textSecondary}
           />
-        ) : (
-          // Native: Render Android/iOS WebView with Leaflet + OSM tiles
-          <WebView
-            originWhitelist={['*']}
-            source={{ html: mapHtml }}
-            style={{ flex: 1 }}
-            onMessage={handleNativeMessage}
-            javaScriptEnabled={true}
-            domStorageEnabled={true}
-          />
-        )}
 
-        {/* Floating Empty State Hint if zero listings in area */}
-        {publishedListings.length === 0 && (
-          <View style={[styles.emptyMapFloatingBanner, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={{ fontSize: 13, fontWeight: '700', color: colors.textPrimary }}>
-              📍 {selectedLandmark.name}
-            </Text>
-            <Text style={{ fontSize: 11, color: colors.textSecondary, marginTop: 2 }}>
-              Chưa có tin phòng trọ nào ở khu vực này. Hãy là chủ trọ đầu tiên đăng tin!
-            </Text>
-          </View>
-        )}
-      </View>
-
-      {/* Property Preview Card at Bottom */}
-      {activeListing && (
-        <View style={[styles.bottomCardWrapper, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <View style={styles.previewRow}>
-            {/* Thumbnail */}
-            <View style={[styles.previewThumb, { backgroundColor: colors.border }]}>
-              <Text style={{ fontSize: 26 }}>🏡</Text>
-            </View>
-
-            {/* Info */}
-            <View style={styles.previewInfo}>
-              <View style={styles.previewPriceRow}>
-                <Text style={[styles.previewPrice, { color: colors.primary }]}>
-                  {formatVND(activeListing.monthlyRent)}
-                </Text>
-                <Text style={[styles.previewPeriod, { color: colors.textSecondary }]}>/tháng</Text>
-              </View>
-
-              <Text style={[styles.previewTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                {activeListing.title}
-              </Text>
-
-              <Text style={[styles.previewMeta, { color: colors.textSecondary }]}>
-                {formatArea(activeListing.areaSquareMeters)} · {activeListing.wardName}
-              </Text>
-            </View>
-          </View>
-
-          {/* Action button */}
           <TouchableOpacity
-            style={[styles.detailActionBtn, { backgroundColor: colors.primary }]}
-            onPress={() => setSelectedListing(activeListing)}
+            style={[styles.filterActionBtn, { backgroundColor: '#EFF6FF' }]}
+            onPress={() => {}}
+            accessibilityLabel="Mở bộ lọc"
           >
-            <Text style={styles.detailActionBtnText}>Xem chi tiết phòng</Text>
+            <Ionicons name="options-outline" size={16} color="#085F56" />
           </TouchableOpacity>
         </View>
-      )}
+
+        {/* Radius Filter Strip */}
+        <View style={styles.radiusStrip}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.radiusScroll}
+          >
+            <TouchableOpacity
+              style={[
+                styles.radiusPill,
+                activeRadius === '1km'
+                  ? styles.radiusPillActive
+                  : [styles.radiusPillInactive, { backgroundColor: colors.card, borderColor: colors.border }],
+              ]}
+              onPress={() => setActiveRadius('1km')}
+            >
+              <Text
+                style={[
+                  styles.radiusText,
+                  { color: activeRadius === '1km' ? '#FFFFFF' : colors.textPrimary },
+                ]}
+              >
+                Bán kính 1km
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.radiusPill,
+                activeRadius === '3km'
+                  ? styles.radiusPillActive
+                  : [styles.radiusPillInactive, { backgroundColor: colors.card, borderColor: colors.border }],
+              ]}
+              onPress={() => setActiveRadius('3km')}
+            >
+              <Ionicons
+                name="radio-button-on"
+                size={13}
+                color={activeRadius === '3km' ? '#FFFFFF' : colors.primary}
+                style={{ marginRight: 4 }}
+              />
+              <Text
+                style={[
+                  styles.radiusText,
+                  { color: activeRadius === '3km' ? '#FFFFFF' : colors.textPrimary },
+                ]}
+              >
+                Bán kính 3km
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.radiusPill,
+                activeRadius === '5km'
+                  ? styles.radiusPillActive
+                  : [styles.radiusPillInactive, { backgroundColor: colors.card, borderColor: colors.border }],
+              ]}
+              onPress={() => setActiveRadius('5km')}
+            >
+              <Text
+                style={[
+                  styles.radiusText,
+                  { color: activeRadius === '5km' ? '#FFFFFF' : colors.textPrimary },
+                ]}
+              >
+                5km
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.radiusPill,
+                [styles.radiusPillInactive, { backgroundColor: colors.card, borderColor: colors.border }],
+              ]}
+              onPress={() => {}}
+            >
+              <Ionicons name="storefront-outline" size={13} color="#085F56" style={{ marginRight: 4 }} />
+              <Text style={[styles.radiusText, { color: colors.textPrimary }]}>Circle K</Text>
+            </TouchableOpacity>
+          </ScrollView>
+        </View>
+
+        {/* Interactive Map Viewport */}
+        <View style={styles.mapContainer}>
+          {Platform.OS === 'web' ? (
+            <iframe
+              srcDoc={mapHtml}
+              style={{ width: '100%', height: '100%', border: 'none' }}
+              title="TroVietMap"
+            />
+          ) : (
+            <WebView
+              originWhitelist={['*']}
+              source={{ html: mapHtml }}
+              style={{ flex: 1 }}
+              onMessage={handleNativeMessage}
+              javaScriptEnabled={true}
+              domStorageEnabled={true}
+            />
+          )}
+
+          {/* Floating Map Controls on Right (FABs) */}
+          <View style={styles.rightFabsWrap}>
+            <TouchableOpacity
+              style={[styles.fabBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+              onPress={() => {}}
+              accessibilityLabel="Định vị vị trí của tôi"
+            >
+              <Ionicons name="locate" size={18} color="#085F56" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.fabBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+              onPress={() => setMapLayer(mapLayer === 'standard' ? 'satellite' : 'standard')}
+              accessibilityLabel="Đổi lớp bản đồ"
+            >
+              <Ionicons name="layers-outline" size={18} color="#085F56" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.fabBtn,
+                {
+                  backgroundColor: showBusRoutes ? '#085F56' : colors.card,
+                  borderColor: colors.border,
+                },
+              ]}
+              onPress={() => setShowBusRoutes(!showBusRoutes)}
+              accessibilityLabel="Tuyến xe buýt"
+            >
+              <Ionicons
+                name="bus-outline"
+                size={18}
+                color={showBusRoutes ? '#FFFFFF' : '#085F56'}
+              />
+            </TouchableOpacity>
+          </View>
+
+          {/* Floating Pill: Xem 126 phòng trong khu vực này */}
+          <TouchableOpacity
+            style={[styles.floatingCountBtn, { backgroundColor: colors.card, borderColor: colors.border }]}
+            onPress={() => {}}
+            activeOpacity={0.88}
+          >
+            <Ionicons name="list" size={14} color="#085F56" style={{ marginRight: 6 }} />
+            <Text style={[styles.floatingCountText, { color: colors.textPrimary }]}>
+              Xem 126 phòng trong khu vực này
+            </Text>
+            <Ionicons name="arrow-up-outline" size={13} color={colors.textSecondary} style={{ marginLeft: 4, transform: [{ rotate: '45deg' }] }} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Selected Property Bottom Preview Card */}
+        {activeListing && (
+          <View style={[styles.bottomPreviewCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.previewCardInner}>
+              {/* Thumbnail with 'Có sẵn' badge */}
+              <View style={styles.previewThumbWrap}>
+                <Image source={{ uri: coverUrl }} style={styles.previewThumbImg} resizeMode="cover" />
+                <View style={styles.availableBadge}>
+                  <Text style={styles.availableBadgeText}>Có sẵn</Text>
+                </View>
+              </View>
+
+              {/* Details */}
+              <View style={styles.previewDetails}>
+                <View style={styles.previewTopRow}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Ionicons name="navigate-outline" size={11} color="#085F56" style={{ marginRight: 3 }} />
+                    <Text style={styles.distanceBadgeText}>Cách 850m • </Text>
+                    <Ionicons name="star" size={11} color="#F59E0B" style={{ marginRight: 2 }} />
+                    <Text style={styles.ratingBadgeText}>4.9 (38)</Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => toggleFavorite(activeListing.id)}
+                    style={styles.heartBtn}
+                  >
+                    <Ionicons
+                      name={favorited ? 'heart' : 'heart-outline'}
+                      size={18}
+                      color={favorited ? '#EF4444' : '#64748B'}
+                    />
+                  </TouchableOpacity>
+                </View>
+
+                <Text style={[styles.previewTitleText, { color: colors.textPrimary }]} numberOfLines={1}>
+                  {activeListing.title || 'Studio ban công Nguyễn Văn Linh'}
+                </Text>
+
+                <Text style={[styles.previewUtilitiesText, { color: colors.textSecondary }]} numberOfLines={1}>
+                  Điện 3.5k • Nước 20k • Miễn phí wifi & xe
+                </Text>
+
+                <View style={styles.previewFooterRow}>
+                  <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+                    <Text style={[styles.previewPriceValue, { color: '#085F56' }]}>
+                      {formatVND(activeListing.monthlyRent || 3500000)}
+                    </Text>
+                    <Text style={[styles.previewPricePeriod, { color: colors.textSecondary }]}>/tháng</Text>
+                  </View>
+
+                  <TouchableOpacity
+                    style={styles.viewRoomCtaBtn}
+                    onPress={() => setSelectedListing(activeListing)}
+                    activeOpacity={0.88}
+                  >
+                    <Text style={styles.viewRoomCtaText}>Xem phòng</Text>
+                    <Ionicons name="chevron-forward" size={14} color="#FFFFFF" style={{ marginLeft: 2 }} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </View>
+        )}
+      </View>
     </View>
   );
 };
@@ -330,110 +522,205 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
   },
-  topHeader: {
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-  },
-  headerTitleRow: {
+  floatingSearchBar: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginHorizontal: 16,
+    paddingHorizontal: 12,
+    height: 48,
+    borderRadius: 14,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
+    zIndex: 10,
   },
-  headerTitle: {
-    fontSize: 15,
-    fontWeight: '800',
+  searchBackBtn: {
+    paddingRight: 8,
   },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+  searchInput: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+    height: '100%',
+  },
+  filterActionBtn: {
+    width: 32,
+    height: 32,
     borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  landmarkScroll: {
+  radiusStrip: {
+    marginTop: 8,
+    marginBottom: 6,
+    zIndex: 10,
+  },
+  radiusScroll: {
+    paddingHorizontal: 16,
     gap: 8,
   },
-  landmarkPill: {
+  radiusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingVertical: 7,
+    borderRadius: 20,
+  },
+  radiusPillActive: {
+    backgroundColor: '#085F56',
+  },
+  radiusPillInactive: {
     borderWidth: 1,
   },
-  mapViewport: {
+  radiusText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  mapContainer: {
     flex: 1,
     position: 'relative',
     overflow: 'hidden',
   },
-  emptyMapFloatingBanner: {
+  rightFabsWrap: {
     position: 'absolute',
-    top: 16,
-    left: 16,
-    right: 16,
+    top: 14,
+    right: 14,
+    gap: 8,
+    zIndex: 20,
+  },
+  fabBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  floatingCountBtn: {
+    position: 'absolute',
+    bottom: 12,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 20,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 5,
+    elevation: 3,
+    zIndex: 20,
+  },
+  floatingCountText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  bottomPreviewCard: {
+    padding: 12,
+    marginHorizontal: 16,
+    marginBottom: 10,
+    borderRadius: 16,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
     shadowRadius: 6,
     elevation: 4,
   },
-  bottomCardWrapper: {
-    padding: 14,
-    borderTopWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  previewRow: {
+  previewCardInner: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
   },
-  previewThumb: {
-    width: 60,
-    height: 60,
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
+  previewThumbWrap: {
+    width: 90,
+    height: 90,
+    borderRadius: 12,
+    overflow: 'hidden',
+    position: 'relative',
     marginRight: 12,
   },
-  previewInfo: {
-    flex: 1,
+  previewThumbImg: {
+    width: '100%',
+    height: '100%',
   },
-  previewPriceRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    marginBottom: 2,
+  availableBadge: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
   },
-  previewPrice: {
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  previewPeriod: {
-    fontSize: 12,
-    marginLeft: 4,
-  },
-  previewTitle: {
-    fontSize: 13,
+  availableBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 9,
     fontWeight: '700',
-    marginBottom: 2,
   },
-  previewMeta: {
-    fontSize: 12,
+  previewDetails: {
+    flex: 1,
+    justifyContent: 'space-between',
   },
-  detailActionBtn: {
-    height: 40,
-    borderRadius: 8,
-    justifyContent: 'center',
+  previewTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
-  detailActionBtnText: {
-    color: '#FFFFFF',
+  distanceBadgeText: {
+    fontSize: 11,
     fontWeight: '700',
+    color: '#085F56',
+  },
+  ratingBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#D97706',
+  },
+  heartBtn: {
+    padding: 2,
+  },
+  previewTitleText: {
     fontSize: 13,
+    fontWeight: '800',
+    marginTop: 2,
+  },
+  previewUtilitiesText: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+  previewFooterRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  previewPriceValue: {
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  previewPricePeriod: {
+    fontSize: 10,
+  },
+  viewRoomCtaBtn: {
+    backgroundColor: '#085F56',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  viewRoomCtaText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
   },
 });

@@ -10,11 +10,15 @@ export declare const COLORS: {
     light: {
         primary: string;
         primaryHover: string;
+        primaryLight: string;
+        primarySubtle: string;
         background: string;
         card: string;
         textPrimary: string;
         textSecondary: string;
         border: string;
+        accentBlue: string;
+        accentBlueText: string;
         badgeL1: string;
         badgeL1Text: string;
         badgeL2: string;
@@ -27,11 +31,15 @@ export declare const COLORS: {
     dark: {
         primary: string;
         primaryHover: string;
+        primaryLight: string;
+        primarySubtle: string;
         background: string;
         card: string;
         textPrimary: string;
         textSecondary: string;
         border: string;
+        accentBlue: string;
+        accentBlueText: string;
         badgeL1: string;
         badgeL1Text: string;
         badgeL2: string;

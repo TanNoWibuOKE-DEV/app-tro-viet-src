@@ -23,6 +23,8 @@ import { LandlordVerificationModal } from './LandlordVerificationModal';
 import { InteractiveCostCalculatorModal } from '../components/InteractiveCostCalculatorModal';
 import { DepositEscrowModal } from './DepositEscrowModal';
 import { FloodRiskMapModal } from './FloodRiskMapModal';
+import { ViewingAppointmentModal } from './ViewingAppointmentModal';
+import { LandlordProfileModal } from './LandlordProfileModal';
 import {
   ListingSummary,
   formatArea,
@@ -76,6 +78,8 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
   const [isWriteReviewOpen, setIsWriteReviewOpen] = useState(false);
   const [isTrustFactorsOpen, setIsTrustFactorsOpen] = useState(false);
   const [isDepositEscrowOpen, setIsDepositEscrowOpen] = useState(false);
+  const [isAppointmentOpen, setIsAppointmentOpen] = useState(false);
+  const [isLandlordProfileOpen, setIsLandlordProfileOpen] = useState(false);
   const [isFloodMapOpen, setIsFloodMapOpen] = useState(false);
   const [showPhone, setShowPhone] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
@@ -477,34 +481,42 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
             Chủ nhà & Xác thực
           </Text>
 
-          <View style={styles.landlordRow}>
-            <View style={[styles.landlordAvatar, { backgroundColor: colors.primary }]}>
+          <TouchableOpacity
+            style={styles.landlordRow}
+            onPress={() => setIsLandlordProfileOpen(true)}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.landlordAvatar, { backgroundColor: '#085F56' }]}>
               <Text style={styles.landlordAvatarText}>
                 {listing.landlordName.charAt(0).toUpperCase()}
               </Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.landlordName, { color: colors.textPrimary }]}>
-                {listing.landlordName}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Text style={[styles.landlordName, { color: colors.textPrimary }]}>
+                  {listing.landlordName}
+                </Text>
+                <Ionicons name="checkmark-circle" size={14} color="#085F56" style={{ marginLeft: 3 }} />
+              </View>
               <Text style={[styles.landlordStatus, { color: colors.textSecondary }]}>
-                {isVerified ? '✓ Chủ trọ đã xác minh' : 'Đã xác thực SĐT'}
+                {isVerified ? '✓ Chủ trọ đã xác minh CCCD & GPKD' : 'Đã xác thực SĐT'}
               </Text>
             </View>
-          </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+          </TouchableOpacity>
 
-          {/* Button: Xem thông tin xác minh (Section 20) */}
+          {/* Button: Xem hồ sơ & thông tin xác minh */}
           <TouchableOpacity
             style={[styles.verifyTriggerBtn, { backgroundColor: colors.background, borderColor: colors.border }]}
-            onPress={() => setIsVerificationModalOpen(true)}
+            onPress={() => setIsLandlordProfileOpen(true)}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Ionicons name="shield-checkmark" size={16} color={colors.primary} style={{ marginRight: 6 }} />
-              <Text style={[styles.verifyTriggerText, { color: colors.primary }]}>
-                Xem thông tin xác minh
+              <Ionicons name="shield-checkmark" size={16} color="#085F56" style={{ marginRight: 6 }} />
+              <Text style={[styles.verifyTriggerText, { color: '#085F56' }]}>
+                Xem hồ sơ chủ trọ & đánh giá (38)
               </Text>
             </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+            <Ionicons name="chevron-forward" size={16} color="#085F56" />
           </TouchableOpacity>
         </View>
 
@@ -630,11 +642,11 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.scheduleBtn, { borderColor: colors.primary }]}
-          onPress={() => setIsChecklistOpen(true)}
+          style={[styles.scheduleBtn, { borderColor: '#085F56', backgroundColor: isDark ? '#064E3B' : '#E6F4F1' }]}
+          onPress={() => setIsAppointmentOpen(true)}
         >
-          <Ionicons name="calendar-outline" size={14} color={colors.primary} style={{ marginRight: 4 }} />
-          <Text style={[styles.scheduleBtnText, { color: colors.primary }]}>
+          <Ionicons name="calendar-outline" size={14} color="#085F56" style={{ marginRight: 4 }} />
+          <Text style={[styles.scheduleBtnText, { color: '#085F56', fontWeight: 'bold' }]}>
             Đặt lịch xem
           </Text>
         </TouchableOpacity>
@@ -665,6 +677,22 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({
       </View>
 
       {/* Sub-modals */}
+      <ViewingAppointmentModal
+        visible={isAppointmentOpen}
+        listing={listing}
+        onClose={() => setIsAppointmentOpen(false)}
+      />
+
+      <LandlordProfileModal
+        visible={isLandlordProfileOpen}
+        landlordName={listing.landlordName}
+        onClose={() => setIsLandlordProfileOpen(false)}
+        onStartChat={() => {
+          setIsLandlordProfileOpen(false);
+          handleStartChat();
+        }}
+      />
+
       <DepositEscrowModal
         visible={isDepositEscrowOpen}
         listing={listing}
